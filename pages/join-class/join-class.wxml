@@ -1,0 +1,13 @@
+<view class="page">
+  <view class="card">
+    <text class="title">加入班级</text>
+    <text class="desc">扫描二维码后，班级码会在这里展示，后续可继续接入真实加入流程。</text>
+  </view>
+
+  <view class="content-card">
+    <text class="label">班级码</text>
+    <text class="code">{{classCode || '暂无班级码'}}</text>
+    <text class="hint">该页面用于承接班级二维码入口。</text>
+    <button class="primary-btn" bindtap="backToPrevious">返回</button>
+  </view>
+</view>

@@ -13,6 +13,7 @@
     "pages/about/about",
     "pages/contact/contact",
     "pages/video-channel/video-channel",
+    "pages/join-class/join-class",
     "pages/settings/settings",
     "pages/privacy/privacy",
     "pages/teacher-login/teacher-login",

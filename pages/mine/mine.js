@@ -1,5 +1,4 @@
 const { getCurrentOpenId } = require('../../utils/cloud-user')
-const auth = require('../../utils/auth')
 const {
   formatDateTime,
   getClassByCode,
@@ -97,11 +96,47 @@ Page({
     })
   },
 
+  async handleLogin() {
+    wx.showLoading({
+      title: '登录中...'
+    })
+
+    try {
+      const oldUserInfo = wx.getStorageSync('userInfo') || {}
+      const openid = await getCurrentOpenId() || oldUserInfo.openid || ''
+
+      const userInfo = {
+        ...oldUserInfo,
+        openid,
+        nickname: oldUserInfo.nickname || '同学',
+        role: 'student',
+        isLoggedIn: true,
+        loginType: openid ? 'cloudbase-openid' : 'mock'
+      }
+
+      wx.setStorageSync('userInfo', userInfo)
+
+      this.setData({
+        isLoggedIn: true,
+        userInfo,
+        displayName: userInfo.nickname || '同学',
+        roleText: '学员',
+        profileTip: '训练记录和点评反馈将自动保存',
+        avatarText: this.getAvatarText(userInfo.nickname || '同学')
+      })
+
+      wx.showToast({
+        title: '登录成功',
+        icon: 'success'
+      })
+    } finally {
+      wx.hideLoading()
+    }
+  },
+
   handleProfileAction() {
     if (!this.data.isLoggedIn) {
-      auth.goLogin({
-        redirect: '/pages/mine/mine'
-      })
+      this.handleLogin()
       return
     }
 
@@ -146,9 +181,7 @@ Page({
   handleProfileTap() {
     if (this.data.isLoggedIn) return
 
-    auth.goLogin({
-      redirect: '/pages/mine/mine'
-    })
+    this.handleLogin()
   },
 
   joinClass() {

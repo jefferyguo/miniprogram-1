@@ -25,6 +25,7 @@
 
         <view class="class-actions">
           <button class="copy-btn" data-code="{{item.classCode}}" bindtap="copyClassCode">复制班级码</button>
+          <button class="qr-btn" data-id="{{item.id}}" bindtap="showClassQr">班级二维码</button>
           <button class="works-btn" data-id="{{item.id}}" bindtap="viewWorks">查看作品</button>
         </view>
       </view>
@@ -56,6 +57,25 @@
     <view class="teacher-tab-item" data-url="/pages/teacher-home/teacher-home" bindtap="switchTeacherTab">
       <text class="teacher-tab-icon">师</text>
       <text>我的</text>
+    </view>
+  </view>
+
+  <view class="qr-mask" wx:if="{{qrPopupVisible}}" catchtap="closeQrPopup">
+    <view class="qr-popup" catchtap="noop">
+      <text class="qr-popup-title">班级二维码</text>
+      <text class="qr-popup-name">{{currentQrClass.className}}</text>
+      <image
+        wx:if="{{currentQrUrl && !qrLoadError}}"
+        class="qr-image"
+        src="{{currentQrUrl}}"
+        mode="aspectFit"
+        binderror="onQrImageError"
+      />
+      <view wx:else class="qr-placeholder">
+        <text>二维码待生成</text>
+      </view>
+      <text class="qr-tip">让学员扫码加入班级</text>
+      <button class="qr-close-btn" bindtap="closeQrPopup">关闭</button>
     </view>
   </view>
 </view>

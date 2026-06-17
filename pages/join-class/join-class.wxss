@@ -1,0 +1,77 @@
+page {
+  background: #f5f7fb;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32rpx 28rpx 56rpx;
+  box-sizing: border-box;
+}
+
+.card,
+.content-card {
+  border-radius: 32rpx;
+  padding: 34rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.content-card {
+  margin-top: 28rpx;
+}
+
+.title {
+  display: block;
+  color: #111111;
+  font-size: 36rpx;
+  line-height: 1.3;
+  font-weight: 900;
+  margin-bottom: 12rpx;
+}
+
+.desc {
+  display: block;
+  color: #8a8f99;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.label {
+  display: block;
+  color: #111111;
+  font-size: 28rpx;
+  font-weight: 800;
+  margin-bottom: 12rpx;
+}
+
+.code {
+  display: block;
+  color: #07c160;
+  font-size: 36rpx;
+  font-weight: 900;
+  line-height: 1.35;
+  margin-bottom: 10rpx;
+}
+
+.hint {
+  display: block;
+  color: #8a8f99;
+  font-size: 25rpx;
+  line-height: 1.5;
+  margin-bottom: 28rpx;
+}
+
+.primary-btn {
+  height: 78rpx;
+  line-height: 78rpx;
+  border-radius: 999rpx;
+  background: #07c160;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.primary-btn::after {
+  border: none;
+}

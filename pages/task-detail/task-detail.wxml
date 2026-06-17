@@ -5,16 +5,6 @@
     <text class="task-title">{{task.title}}</text>
   </view>
 
-  <view class="content-card">
-    <text class="section-title">训练目标</text>
-    <text class="content-text">{{task.goal}}</text>
-  </view>
-
-  <view class="content-card">
-    <text class="section-title">训练要求</text>
-    <text class="content-text">{{task.requirement}}</text>
-  </view>
-
   <view class="material-card">
     <text class="section-title">训练材料</text>
     <text class="material-text">{{task.material}}</text>
