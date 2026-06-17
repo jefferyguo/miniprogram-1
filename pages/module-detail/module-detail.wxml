@@ -48,8 +48,7 @@
           <text class="day-index">Day {{item.day}}</text>
           <text class="status-tag {{item.completed ? 'done-tag' : 'todo-tag'}}">{{item.status}}</text>
         </view>
-        <text class="day-title">{{item.title}}</text>
-        <text class="day-goal">{{item.goal}}</text>
+        <text class="day-title">{{item.contentTitle || item.title}}</text>
         <text class="day-meta">建议时长：{{item.duration}}</text>
       </view>
     </view>

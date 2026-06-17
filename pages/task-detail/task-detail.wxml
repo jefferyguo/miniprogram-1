@@ -1,8 +1,8 @@
 <view class="page" wx:if="{{moduleInfo && task}}">
   <view class="task-hero {{moduleInfo.className}}">
     <text class="module-name">{{moduleInfo.title}}</text>
-    <text class="day-text">Day {{task.day}}</text>
-    <text class="task-title">{{task.title}}</text>
+    <view class="day-badge">Day {{task.day}}</view>
+    <text class="hero-main-title">{{task.contentTitle || task.title}}</text>
   </view>
 
   <view class="material-card">

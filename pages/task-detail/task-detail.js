@@ -44,6 +44,14 @@ function buildDisplayDraft(draft) {
   }
 }
 
+function resolveContentTitle(task) {
+  if (task && task.contentTitle) {
+    return task.contentTitle
+  }
+
+  return task ? task.title : ''
+}
+
 Page({
   data: {
     // 本页面使用真实录音；录像跳转到 video-record 页面完成
@@ -77,11 +85,18 @@ Page({
       return
     }
 
+    const displayTask = {
+      ...task,
+      contentTitle: resolveContentTitle(task)
+    }
+
+    console.log('[task-detail] 当前任务标题：', displayTask.contentTitle, displayTask.title)
+
     this.setData({
       moduleId,
       day,
       moduleInfo,
-      task
+      task: displayTask
     })
     this.initRecorderManager()
     this.loadDrafts()
@@ -563,7 +578,7 @@ Page({
       moduleId: this.data.moduleId,
       moduleTitle: this.data.moduleInfo && this.data.moduleInfo.title,
       day: this.data.day,
-      taskTitle: this.data.task && this.data.task.title,
+      taskTitle: this.data.task && (this.data.task.contentTitle || this.data.task.title),
       createdAt: Date.now()
     })
 

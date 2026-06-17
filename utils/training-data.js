@@ -227,7 +227,7 @@ function createReadingDays() {
       '这段材料适合录下来回听，重点观察声音是否稳定、句尾是否完整、情绪是否自然。'
     ])
 
-    return buildDay(
+    const dayItem = buildDay(
       day,
       plan.title,
       plan.goal,
@@ -236,6 +236,12 @@ function createReadingDays() {
       commonReadingTips(plan.keyword),
       timing.targetSeconds
     )
+
+    if (day === 1) {
+      dayItem.contentTitle = '白杨礼赞主题朗读'
+    }
+
+    return dayItem
   })
 }
 

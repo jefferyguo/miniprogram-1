@@ -281,14 +281,6 @@ button::after {
   margin-bottom: 8rpx;
 }
 
-.day-goal {
-  display: block;
-  font-size: 25rpx;
-  line-height: 1.45;
-  color: #555555;
-  margin-bottom: 8rpx;
-}
-
 .day-meta {
   display: block;
   font-size: 24rpx;
