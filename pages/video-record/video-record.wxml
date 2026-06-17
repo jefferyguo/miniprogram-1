@@ -1,0 +1,86 @@
+<view class="page">
+  <view class="top-card">
+    <view>
+      <text class="title">录像练习</text>
+      <text class="camera-label">{{cameraLabel}}</text>
+    </view>
+  </view>
+
+  <view class="preview-box">
+    <camera
+      wx:if="{{!hasVideo}}"
+      wx:key="{{cameraKey}}"
+      class="camera-preview"
+      mode="normal"
+      device-position="{{devicePosition}}"
+      flash="off"
+      resolution="medium"
+      frame-size="medium"
+      binderror="onCameraError"
+    ></camera>
+
+    <cover-view class="camera-toolbar" wx:if="{{!hasVideo}}">
+      <cover-view class="camera-status">{{cameraLabel}}</cover-view>
+      <cover-view
+        class="switch-camera-btn {{isRecording || isSwitchingCamera ? 'disabled' : ''}}"
+        bindtap="switchCamera"
+      >翻转摄像头</cover-view>
+    </cover-view>
+
+    <view class="prompt-overlay" wx:if="{{!hasVideo && showPrompt && promptText}}">
+      <view class="prompt-header">
+        <view class="prompt-heading">
+          <text class="prompt-title">{{recordTitle}}</text>
+          <text wx:if="{{recordSubtitle}}" class="prompt-subtitle">{{recordSubtitle}}</text>
+        </view>
+
+        <view class="prompt-tools">
+          <button class="prompt-tool-btn" bindtap="togglePrompt">隐藏文字</button>
+          <button class="prompt-tool-btn" bindtap="decreasePromptFont">A-</button>
+          <button class="prompt-tool-btn" bindtap="increasePromptFont">A+</button>
+        </view>
+      </view>
+
+      <scroll-view
+        class="prompt-scroll"
+        scroll-y="true"
+        enhanced="true"
+        show-scrollbar="false"
+      >
+        <text class="prompt-content" style="font-size: {{promptFontSize}}rpx;">{{promptText}}</text>
+        <text wx:if="{{requirement}}" class="prompt-requirement">训练要求：{{requirement}}</text>
+      </scroll-view>
+    </view>
+
+    <view class="show-prompt-btn" wx:if="{{!hasVideo && !showPrompt && promptText}}" bindtap="togglePrompt">显示文字</view>
+
+    <cover-view wx:if="{{isSwitchingCamera}}" class="camera-switch-mask">
+      <cover-view class="camera-switch-text">切换摄像头中...</cover-view>
+    </cover-view>
+
+    <video
+      wx:if="{{hasVideo}}"
+      class="video-preview"
+      src="{{tempVideoPath}}"
+      controls
+      object-fit="cover"
+    ></video>
+  </view>
+
+  <view class="status-card">
+    <text class="status-title">{{hasVideo ? '已录制' : (isRecording ? '正在录像 ' + recordingTimeText : '准备录像')}}</text>
+    <text class="status-desc">{{hasVideo ? '可以先预览视频，再选择重新录制或使用该视频' : '保持画面稳定，完成一段清晰表达'}}</text>
+  </view>
+
+  <view class="actions" wx:if="{{!hasVideo}}">
+    <button
+      class="record-btn {{isRecording ? 'stop-btn' : ''}}"
+      bindtap="toggleRecord"
+    >{{isRecording ? '停止录像' : '开始录像'}}</button>
+  </view>
+
+  <view class="actions two-actions" wx:else>
+    <button class="reset-btn" bindtap="resetRecord">重新录制</button>
+    <button class="use-btn" bindtap="useVideo">使用该视频</button>
+  </view>
+</view>

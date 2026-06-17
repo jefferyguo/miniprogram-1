@@ -1,0 +1,25 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">关注杨勤口才训练视频号</text>
+    <text class="hero-desc">获取口才训练技巧、课程片段和学员成长案例</text>
+  </view>
+
+  <view class="content-card">
+    <text class="section-title">视频号说明</text>
+    <text class="paragraph">你可以在视频号中观看表达训练方法、朗读示范、普通话练习和课程精彩片段。</text>
+  </view>
+
+  <view class="qr-card">
+    <image
+      wx:if="{{!qrLoadError}}"
+      class="qr-image"
+      src="/images/video-channel-qr.jpg"
+      mode="aspectFit"
+      binderror="onQrImageError"
+    />
+    <view wx:else class="qr-placeholder">视频号二维码待上传</view>
+    <text class="qr-tip">长按识别二维码，关注视频号</text>
+  </view>
+
+  <button class="primary-btn" bindtap="goBack">我知道了</button>
+</view>

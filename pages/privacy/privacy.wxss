@@ -1,0 +1,78 @@
+page {
+  background: #f5f7fb;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32rpx 28rpx 56rpx;
+  box-sizing: border-box;
+}
+
+.hero-card,
+.section-card {
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+}
+
+.hero-card {
+  padding: 38rpx 32rpx;
+  background: linear-gradient(135deg, #27364a 0%, #3a4a63 100%);
+  color: #ffffff;
+}
+
+.hero-title {
+  display: block;
+  font-size: 44rpx;
+  line-height: 1.25;
+  font-weight: 900;
+  margin-bottom: 12rpx;
+}
+
+.hero-desc {
+  display: block;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.section-card {
+  margin-top: 24rpx;
+  padding: 30rpx;
+}
+
+.section-title {
+  display: block;
+  color: #111111;
+  font-size: 32rpx;
+  line-height: 1.35;
+  font-weight: 900;
+  margin-bottom: 18rpx;
+}
+
+.privacy-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+}
+
+.privacy-item:last-child {
+  margin-bottom: 0;
+}
+
+.dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #07c160;
+  margin-top: 16rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.privacy-text {
+  flex: 1;
+  color: #606875;
+  font-size: 27rpx;
+  line-height: 1.6;
+}

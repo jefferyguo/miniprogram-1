@@ -1,0 +1,113 @@
+<view class="page">
+  <view class="header">
+    <text class="title">训练</text>
+    <text class="subtitle">选择一个 21 天模块，今天先完成一次</text>
+  </view>
+
+  <view class="evaluation-card">
+    <view class="evaluation-head">
+      <view class="evaluation-copy">
+        <text class="evaluation-title">表达力测评</text>
+        <text class="evaluation-subtitle">5–7 分钟了解你的表达状态</text>
+      </view>
+      <view class="evaluation-mark">测</view>
+    </view>
+
+    <text class="evaluation-desc">通过 40 道结构化选择题，生成你的表达画像和训练建议。</text>
+
+    <view class="evaluation-tags">
+      <text class="evaluation-tag">5–7 分钟</text>
+      <text class="evaluation-tag">40 道题</text>
+      <text class="evaluation-tag">可选录音题</text>
+    </view>
+
+    <button class="evaluation-btn" bindtap="openEvaluation">开始测评</button>
+  </view>
+
+  <view class="module-grid">
+    <view
+      class="module-card {{item.className}}"
+      wx:for="{{modules}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="openModule"
+    >
+      <view class="module-icon-wrap">
+        <view wx:if="{{item.id === 'reading'}}" class="line-icon book-icon">
+          <view class="book-page book-left"></view>
+          <view class="book-page book-right"></view>
+          <view class="book-spine"></view>
+        </view>
+        <view wx:elif="{{item.id === 'retell'}}" class="line-icon loop-icon">
+          <view class="loop-arc loop-top"></view>
+          <view class="loop-arc loop-bottom"></view>
+          <view class="loop-arrow loop-arrow-top"></view>
+          <view class="loop-arrow loop-arrow-bottom"></view>
+        </view>
+        <view wx:elif="{{item.id === 'topic'}}" class="line-icon bubble-icon">
+          <view class="bubble-box"></view>
+          <view class="bubble-tail"></view>
+        </view>
+        <view wx:else class="line-icon mic-icon">
+          <view class="mic-head"></view>
+          <view class="mic-stem"></view>
+          <view class="mic-base"></view>
+        </view>
+      </view>
+      <text class="module-title">{{item.title}}</text>
+      <text class="module-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <view class="extra-card">
+    <text class="section-title">每日额外训练</text>
+    <text class="section-subtitle">不想按课程练时，可以随机加练一次</text>
+
+    <view class="extra-list">
+      <view
+        class="extra-item"
+        wx:for="{{extraTrainings}}"
+        wx:key="title"
+        data-id="{{item.id}}"
+        bindtap="openExtraTraining"
+      >
+        <view class="extra-icon {{item.iconClass}}">
+          <view wx:if="{{item.id === 'dailyQuote'}}" class="extra-line-icon quote-icon">
+            <view class="quote-mark"></view>
+            <view class="quote-mark"></view>
+          </view>
+          <view wx:elif="{{item.id === 'randomTopic'}}" class="extra-line-icon dice-icon">
+            <view class="dice-dot dot-one"></view>
+            <view class="dice-dot dot-two"></view>
+            <view class="dice-dot dot-three"></view>
+          </view>
+          <view wx:else class="extra-line-icon wave-icon">
+            <view class="wave-line wave-one"></view>
+            <view class="wave-line wave-two"></view>
+            <view class="wave-line wave-three"></view>
+          </view>
+        </view>
+        <view class="extra-content">
+          <text class="extra-title">{{item.title}}</text>
+          <text class="extra-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="record-card">
+    <view class="record-head">
+      <text class="record-heading">最近训练记录</text>
+      <button class="continue-btn" bindtap="continueTraining">继续训练</button>
+    </view>
+
+    <view wx:if="{{hasRecentRecord}}">
+      <text class="record-title">{{recentRecord.moduleTitle}} Day {{recentRecord.day}}</text>
+      <text class="record-desc">{{recentRecord.taskTitle}} · {{recentRecord.displayTime}}</text>
+    </view>
+
+    <view class="empty" wx:else>
+      <text>暂无训练记录，先从朗读训练 Day 1 开始。</text>
+    </view>
+  </view>
+</view>

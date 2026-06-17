@@ -1,0 +1,57 @@
+<view class="page" wx:if="{{moduleInfo}}">
+  <view class="module-hero {{moduleInfo.className}}">
+    <view class="module-icon-wrap">
+      <view wx:if="{{moduleInfo.id === 'reading'}}" class="line-icon book-icon">
+        <view class="book-page book-left"></view>
+        <view class="book-page book-right"></view>
+        <view class="book-spine"></view>
+      </view>
+      <view wx:elif="{{moduleInfo.id === 'retell'}}" class="line-icon loop-icon">
+        <view class="loop-arc loop-top"></view>
+        <view class="loop-arc loop-bottom"></view>
+        <view class="loop-arrow loop-arrow-top"></view>
+        <view class="loop-arrow loop-arrow-bottom"></view>
+      </view>
+      <view wx:elif="{{moduleInfo.id === 'topic'}}" class="line-icon bubble-icon">
+        <view class="bubble-box"></view>
+        <view class="bubble-tail"></view>
+      </view>
+      <view wx:else class="line-icon mic-icon">
+        <view class="mic-head"></view>
+        <view class="mic-stem"></view>
+        <view class="mic-base"></view>
+      </view>
+    </view>
+    <text class="module-title">{{moduleInfo.title}}</text>
+    <text class="module-desc">{{moduleInfo.desc}}</text>
+    <view class="progress-panel">
+      <view class="progress-row">
+        <text class="module-progress">当前进度：已完成 {{completedCount}} / 21 天</text>
+        <text class="progress-text">{{progressText}}</text>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="day-list">
+    <view
+      class="day-card {{item.completed ? 'completed-card' : ''}}"
+      wx:for="{{days}}"
+      wx:key="day"
+      data-day="{{item.day}}"
+      bindtap="openTask"
+    >
+      <view class="day-main">
+        <view class="day-head">
+          <text class="day-index">Day {{item.day}}</text>
+          <text class="status-tag {{item.completed ? 'done-tag' : 'todo-tag'}}">{{item.status}}</text>
+        </view>
+        <text class="day-title">{{item.title}}</text>
+        <text class="day-goal">{{item.goal}}</text>
+        <text class="day-meta">建议时长：{{item.duration}}</text>
+      </view>
+    </view>
+  </view>
+</view>

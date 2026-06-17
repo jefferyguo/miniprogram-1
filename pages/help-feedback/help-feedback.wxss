@@ -1,0 +1,130 @@
+page {
+  background: #f5f7fb;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32rpx 28rpx 56rpx;
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+.hero-card {
+  border-radius: 36rpx;
+  padding: 40rpx 34rpx;
+  color: #ffffff;
+  background: linear-gradient(135deg, #07c160, #3478f6);
+  box-shadow: 0 16rpx 42rpx rgba(7, 193, 96, 0.20);
+}
+
+.hero-title,
+.section-title,
+.contact-title {
+  display: block;
+  color: #111111;
+  font-weight: 900;
+}
+
+.hero-title {
+  color: #ffffff;
+  font-size: 44rpx;
+  line-height: 1.25;
+  margin-bottom: 12rpx;
+}
+
+.hero-desc {
+  display: block;
+  font-size: 27rpx;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.section-card,
+.contact-card {
+  margin-top: 26rpx;
+  border-radius: 32rpx;
+  padding: 30rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-size: 33rpx;
+  line-height: 1.35;
+  margin-bottom: 18rpx;
+}
+
+.section-desc,
+.contact-desc {
+  display: block;
+  color: #8a8f99;
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.question-item {
+  min-height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #111111;
+  font-size: 28rpx;
+  font-weight: 700;
+  border-bottom: 1rpx solid #f0f2f6;
+}
+
+.question-item:last-child {
+  border-bottom: none;
+}
+
+.arrow {
+  flex-shrink: 0;
+  color: #a0a6b1;
+  font-size: 46rpx;
+  line-height: 1;
+}
+
+.feedback-input {
+  margin-top: 22rpx;
+  width: 100%;
+  min-height: 220rpx;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-sizing: border-box;
+  color: #111111;
+  background: #f5f7fb;
+  font-size: 27rpx;
+  line-height: 1.5;
+}
+
+.input-placeholder {
+  color: #a3a8b2;
+}
+
+.primary-btn {
+  height: 82rpx;
+  line-height: 82rpx;
+  margin-top: 24rpx;
+  padding: 0;
+  border-radius: 999rpx;
+  color: #ffffff;
+  background: #07c160;
+  font-size: 28rpx;
+  font-weight: 900;
+}
+
+.contact-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.contact-title {
+  font-size: 30rpx;
+  line-height: 1.35;
+  margin-bottom: 8rpx;
+}

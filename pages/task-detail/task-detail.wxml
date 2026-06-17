@@ -1,0 +1,101 @@
+<view class="page" wx:if="{{moduleInfo && task}}">
+  <view class="task-hero {{moduleInfo.className}}">
+    <text class="module-name">{{moduleInfo.title}}</text>
+    <text class="day-text">Day {{task.day}}</text>
+    <text class="task-title">{{task.title}}</text>
+  </view>
+
+  <view class="content-card">
+    <text class="section-title">训练目标</text>
+    <text class="content-text">{{task.goal}}</text>
+  </view>
+
+  <view class="content-card">
+    <text class="section-title">训练要求</text>
+    <text class="content-text">{{task.requirement}}</text>
+  </view>
+
+  <view class="material-card">
+    <text class="section-title">训练材料</text>
+    <text class="material-text">{{task.material}}</text>
+  </view>
+
+  <view class="content-card">
+    <text class="section-title">训练提示</text>
+    <view class="tip-item" wx:for="{{task.tips}}" wx:key="*this">
+      <text class="tip-dot"></text>
+      <text class="tip-text">{{item}}</text>
+    </view>
+  </view>
+
+  <view class="content-card">
+    <text class="section-title">建议时长</text>
+    <text class="content-text">建议时长：{{task.duration}}</text>
+    <text wx:if="{{task.targetSeconds}}" class="content-text">目标时长：{{task.targetSeconds}} 秒</text>
+    <text wx:if="{{task.estimatedChars}}" class="content-text">目标字数：约 {{task.estimatedChars}} 字</text>
+  </view>
+
+  <view class="record-card">
+    <text class="section-title">录制操作</text>
+    <text class="record-status">{{actionStatus}}</text>
+    <view class="record-actions">
+      <button
+        class="audio-btn {{isAudioRecording ? 'recording-btn' : ''}} {{isVideoRecording ? 'disabled-btn' : ''}}"
+        disabled="{{isVideoRecording}}"
+        bindtap="toggleAudioRecord"
+      >{{isAudioRecording ? '停止录音' : '开始录音'}}</button>
+      <button
+        class="video-btn {{isVideoRecording ? 'recording-btn' : ''}} {{isAudioRecording ? 'disabled-btn' : ''}}"
+        disabled="{{isAudioRecording}}"
+        bindtap="toggleVideoRecord"
+      >{{isVideoRecording ? '停止录像' : '开始录像'}}</button>
+    </view>
+  </view>
+
+  <view class="feedback-card">
+    <view class="feedback-head">
+      <view>
+        <text class="section-title no-margin">本日反馈</text>
+        <text class="feedback-desc">{{feedbackDesc}}</text>
+      </view>
+      <button class="feedback-link-btn" bindtap="openTaskReview">去点评中心查看</button>
+    </view>
+  </view>
+
+  <view class="history-card">
+    <text class="section-title">作品历史</text>
+
+    <view wx:if="{{hasDrafts}}">
+      <view class="work-item" wx:for="{{drafts}}" wx:key="id">
+        <view class="work-top">
+          <view class="work-name">
+            <text class="work-icon">{{item.icon}}</text>
+            <text class="work-title">{{item.typeTitle}}</text>
+          </view>
+          <text class="work-status {{item.submitted ? 'submitted-tag' : 'draft-tag'}}">{{item.statusText}}</text>
+        </view>
+
+        <view class="work-meta-row">
+          <text class="work-meta">时长：{{item.duration}}</text>
+          <text class="work-meta">创建时间：{{item.createdAt}}</text>
+        </view>
+        <text class="work-content">{{item.taskTitle}}</text>
+
+        <view class="work-actions">
+          <button class="play-small" data-id="{{item.id}}" catchtap="playWork">{{item.actionText}}</button>
+          <button
+            class="submit-small {{item.submitted ? 'submitted-small' : ''}}"
+            disabled="{{item.submitted}}"
+            data-id="{{item.id}}"
+            catchtap="submitDraft"
+          >{{item.submitted ? '已提交' : '提交'}}</button>
+          <button class="delete-small" data-id="{{item.id}}" catchtap="deleteDraft">删除</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:else>
+      <text>还没有录音或录像作品，先完成一次练习吧。</text>
+    </view>
+  </view>
+</view>

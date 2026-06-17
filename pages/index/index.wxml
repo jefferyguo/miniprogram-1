@@ -1,0 +1,7 @@
+<view class="page">
+  <view class="placeholder-card">
+    <text class="title">首页</text>
+    <text class="desc">训练功能已移至“训练”页</text>
+    <button class="primary-btn" bindtap="goTraining">进入训练</button>
+  </view>
+</view>

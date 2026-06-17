@@ -1,0 +1,98 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">点评中心</text>
+    <text class="hero-desc">查看训练作品、AI反馈和老师点评状态</text>
+  </view>
+
+  <view class="overview-row">
+    <view class="overview-card">
+      <text class="overview-value">{{pendingCount}}</text>
+      <text class="overview-label">待点评</text>
+    </view>
+    <view class="overview-card">
+      <text class="overview-value blue-value">{{reviewedCount}}</text>
+      <text class="overview-label">已点评</text>
+    </view>
+    <view class="overview-card">
+      <text class="overview-value purple-value">{{aiFeedbackCount}}</text>
+      <text class="overview-label">AI反馈</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">我的训练反馈</text>
+    <view
+      class="feedback-card"
+      wx:for="{{feedbackCards}}"
+      wx:key="title"
+      data-type="{{item.type}}"
+      bindtap="handleFeedbackCardTap"
+      hover-class="card-hover"
+    >
+      <view class="feedback-main">
+        <text class="feedback-title">{{item.title}}</text>
+        <text class="feedback-desc">{{item.desc}}</text>
+      </view>
+      <text class="feedback-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view>
+        <text class="section-title no-margin">作品列表</text>
+        <text wx:if="{{filterType !== 'all'}}" class="filter-text">当前查看：{{filterTitle || filterText}}</text>
+      </view>
+      <button wx:if="{{filterType !== 'all'}}" class="clear-filter-btn" bindtap="clearFilter">查看全部</button>
+      <text wx:else class="section-count">共 {{totalCount}} 个</text>
+    </view>
+
+    <view wx:if="{{filteredWorks.length > 0}}">
+      <view class="work-card" wx:for="{{filteredWorks}}" wx:key="key">
+        <view class="work-top">
+          <text class="work-type">{{item.displayType}}</text>
+          <text class="status-tag {{item.displayStatusClass}}">{{item.displayStatus}}</text>
+        </view>
+
+        <view class="work-body">
+          <text class="work-title">{{item.displayTitle}}</text>
+          <text class="work-subtitle">{{item.displaySubtitle}}</text>
+        </view>
+
+        <view class="work-meta">
+          <text>时长：{{item.displayDuration}}</text>
+          <text>提交时间：{{item.displayCreatedAt}}</text>
+          <text wx:if="{{item.className}}">班级：{{item.className}}</text>
+        </view>
+
+        <text wx:if="{{item.aiTip}}" class="ai-tip">{{item.aiTip}}</text>
+
+        <view class="work-actions">
+          <button
+            class="play-btn"
+            data-key="{{item.key}}"
+            bindtap="playWork"
+          >{{item.displayActionText}}</button>
+          <button
+            class="feedback-btn {{item.feedbackActionClass}}"
+            data-key="{{item.key}}"
+            disabled="{{item.feedbackActionDisabled}}"
+            bindtap="handleFeedbackAction"
+          >{{item.feedbackActionText}}</button>
+          <button
+            wx:if="{{item.hasTeacherFeedback}}"
+            class="teacher-feedback-btn"
+            data-key="{{item.key}}"
+            bindtap="showTeacherFeedback"
+          >查看老师点评</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-card" wx:else>
+      <text class="empty-title">{{emptyTitle}}</text>
+      <text class="empty-desc">{{emptyDesc}}</text>
+      <button class="empty-btn" bindtap="switchToTraining">{{emptyButtonText}}</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,67 @@
+<view class="page">
+  <view class="header">
+    <text class="title">成长</text>
+    <text class="subtitle">训练完成情况会自动记录在本地</text>
+  </view>
+
+  <view class="stats-row">
+    <view class="stats-card">
+      <text class="stats-num">{{totalSubmissions}}</text>
+      <text class="stats-label">总提交次数</text>
+    </view>
+    <view class="stats-card">
+      <text class="stats-num small-num">{{weekDone}} / {{weekTotal}}</text>
+      <text class="stats-label">本周完成次数</text>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <text class="section-title">四个模块完成进度</text>
+    <view class="progress-item" wx:for="{{moduleProgress}}" wx:key="id">
+      <view class="progress-head">
+        <text class="progress-title">{{item.title}}</text>
+        <text class="progress-count">{{item.done}} / {{item.total}}</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-inner" style="width: {{item.percent}}%;"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <text class="section-title">最近训练记录</text>
+    <view wx:if="{{hasRecord}}">
+      <view class="record-item" wx:for="{{recentRecords}}" wx:key="id">
+        <text class="record-title">{{item.moduleTitle}} Day {{item.day}}</text>
+        <text class="record-desc">{{item.taskTitle}} · {{item.displayDate}}</text>
+      </view>
+    </view>
+    <view class="empty" wx:else>
+      <text>暂无训练记录，先从朗读训练 Day 1 开始。</text>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <text class="section-title">每日额外训练</text>
+
+    <view class="extra-summary">
+      <text class="extra-total">{{extraTotalSubmissions}}</text>
+      <text class="extra-label">额外训练总提交次数</text>
+    </view>
+
+    <view class="extra-stat" wx:for="{{extraStats}}" wx:key="id">
+      <text class="extra-name">{{item.icon}} {{item.title}}</text>
+      <text class="extra-count">{{item.count}} 次</text>
+    </view>
+
+    <view class="extra-recent" wx:if="{{hasExtraRecord}}">
+      <text class="recent-label">最近一次额外训练</text>
+      <text class="record-title">{{recentExtraRecord.extraTitle}} · {{recentExtraRecord.typeTitle}}</text>
+      <text class="record-desc">{{recentExtraRecord.content}} · {{recentExtraRecord.displayTime}}</text>
+    </view>
+
+    <view class="empty extra-empty" wx:else>
+      <text>暂无额外训练记录，可以从首页的每日额外训练开始。</text>
+    </view>
+  </view>
+</view>

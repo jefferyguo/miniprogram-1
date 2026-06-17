@@ -1,0 +1,256 @@
+<view class="page {{step === 'question' ? 'question-page' : ''}}">
+  <view wx:if="{{step === 'intro'}}">
+    <view class="hero-card">
+      <text class="hero-badge">YQ-E6 表达力模型 × AI 智能分析</text>
+      <text class="hero-title">表达力测评</text>
+      <text class="hero-desc">通过 40 道表达量表题，了解你的表达习惯、优势和提升方向。</text>
+
+      <view class="info-tags">
+        <text class="info-tag" wx:for="{{introTags}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">测评维度</text>
+      <view class="dimension-grid">
+        <view class="dimension-card" wx:for="{{dimensions}}" wx:key="key">
+          <text class="dimension-code">{{item.shortLabel}}</text>
+          <text class="dimension-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <button class="primary-btn intro-btn" bindtap="startEvaluation">开始测评</button>
+
+    <view class="record-entry-card" bindtap="openEvaluationRecords">
+      <view>
+        <text class="record-entry-title">测评记录</text>
+        <text class="record-entry-desc">查看你的历史表达画像和六维分数变化</text>
+      </view>
+      <view class="record-entry-side">
+        <text wx:if="{{hasResultRecords}}" class="record-entry-count">已完成 {{recordCount}} 次测评</text>
+        <text class="record-entry-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="latest-card" wx:if="{{hasResultRecords}}">
+      <view class="section-head">
+        <text class="section-title no-margin">最近一次测评</text>
+        <button class="text-btn detail-btn" bindtap="viewLatestResult">查看详情</button>
+      </view>
+      <view class="latest-grid">
+        <view class="latest-item">
+          <text class="latest-label">表达画像</text>
+          <text class="latest-value">{{latestResult.profileType}}</text>
+        </view>
+        <view class="latest-item">
+          <text class="latest-label">综合分</text>
+          <text class="latest-value">{{latestAverageScore}}</text>
+        </view>
+        <view class="latest-item">
+          <text class="latest-label">最高维度</text>
+          <text class="latest-value">{{latestTopDimension}}</text>
+        </view>
+        <view class="latest-item">
+          <text class="latest-label">最低维度</text>
+          <text class="latest-value">{{latestLowDimension}}</text>
+        </view>
+      </view>
+      <text class="latest-time">测评时间：{{latestResult.createdAt}}</text>
+    </view>
+  </view>
+
+  <view wx:elif="{{step === 'question'}}">
+    <view class="question-head">
+      <view>
+        <text class="question-count">{{currentIndex + 1}} / {{totalQuestions}}</text>
+        <text class="question-hint">请选择最符合你最近一个月状态的答案</text>
+      </view>
+      <text class="question-percent">{{progressPercent}}%</text>
+    </view>
+
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+    </view>
+
+    <view class="question-card">
+      <view class="assessment-pill">
+        <view class="assessment-dot"></view>
+        <text class="assessment-label">正在评估：{{currentQuestion.dimensionLabel}}</text>
+        <text class="sub-dimension-tag">{{currentQuestion.subDimension}}</text>
+      </view>
+
+      <text class="question-title">{{currentQuestion.title}}</text>
+
+      <view class="option-list">
+        <view
+          class="option-card {{selectedValue === option.value ? 'option-selected' : ''}}"
+          wx:for="{{scaleOptions}}"
+          wx:for-item="option"
+          wx:for-index="optionIndex"
+          wx:key="value"
+          data-value="{{option.value}}"
+          bindtap="selectScaleOption"
+        >
+          <text class="option-value">{{optionIndex + 1}}</text>
+          <text class="option-text">{{option.label}}</text>
+        </view>
+      </view>
+
+      <view class="question-tip">
+        <view class="tip-dot"></view>
+        <text>本题没有标准答案，请根据真实状态选择。</text>
+      </view>
+    </view>
+
+    <view class="question-nav">
+      <button
+        class="nav-btn prev-btn {{currentIndex === 0 ? 'nav-disabled' : ''}}"
+        disabled="{{currentIndex === 0}}"
+        bindtap="goPrevQuestion"
+      >
+        上一题
+      </button>
+      <button class="nav-btn next-btn" bindtap="goNextQuestion">
+        {{currentIndex === totalQuestions - 1 ? '进入录音题' : '下一题'}}
+      </button>
+    </view>
+  </view>
+
+  <view wx:elif="{{step === 'record'}}">
+    <view class="record-hero">
+      <text class="hero-badge record-badge">可跳过</text>
+      <text class="record-title">可选录音题</text>
+      <text class="record-desc">完成 1 分钟即兴表达，可以让测评结果更贴近真实状态。</text>
+      <text class="record-tip">这一步可以跳过。跳过后也能生成测评结果。</text>
+    </view>
+
+    <view class="record-topic-card">
+      <view class="section-head">
+        <text class="section-title no-margin">本次话题</text>
+        <button class="text-btn" bindtap="changeRecordTopic">换一个话题</button>
+      </view>
+      <text class="record-topic">{{currentRecordTopic}}</text>
+    </view>
+
+    <view class="record-action-card">
+      <text class="section-title">录音操作</text>
+      <text class="record-action-desc">当前为 mock 录音，用于完成测评流程，后续可接入真实录音能力。</text>
+
+      <view class="record-status">
+        <text wx:if="{{isRecording}}">正在录音 {{recordingTimeText}}</text>
+        <text wx:elif="{{hasRecording}}">已录音 {{recordingTimeText}}</text>
+        <text wx:else>尚未开始录音</text>
+      </view>
+
+      <button class="record-btn {{isRecording ? 'stop-record-btn' : ''}}" bindtap="toggleRecording">
+        {{isRecording ? '停止录音' : '开始录音'}}
+      </button>
+
+      <view class="result-actions">
+        <button class="secondary-btn" bindtap="skipRecording">跳过录音，查看结果</button>
+        <button class="primary-btn compact-btn" bindtap="finishWithRecording">完成录音，查看结果</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{step === 'result' && result}}">
+    <view class="result-hero">
+      <text class="hero-badge">表达画像</text>
+      <text class="profile-type">{{result.profileType}}</text>
+      <text class="profile-desc">{{result.profileDesc}}</text>
+      <view class="score-circle">
+        <text class="score-number">{{result.averageScore}}</text>
+        <text class="score-label">综合分</text>
+      </view>
+      <text class="recording-result-status">
+        {{result.recordingAnswer && !result.recordingAnswer.skipped ? '已完成录音题' : '未完成录音题'}}
+      </text>
+    </view>
+
+    <view class="ai-report-card">
+      <view class="section-head">
+        <text class="section-title no-margin">AI 表达力报告</text>
+        <text class="ai-report-badge" wx:if="{{result.aiReportError}}">基础报告</text>
+      </view>
+
+      <view class="report-loading" wx:if="{{isGeneratingReport}}">
+        <text class="loading-title">正在生成表达力报告...</text>
+        <text class="loading-desc">正在整理你的表达优势和训练建议</text>
+      </view>
+
+      <view wx:elif="{{result.aiReport}}">
+        <text class="fallback-tip" wx:if="{{result.aiReportError}}">当前为基础测评报告，AI 深度报告稍后开放。</text>
+        <text class="ai-source-text">报告来源：{{result.aiReportSource === 'cloudbase-ai' ? '云开发 AI' : '基础报告'}}</text>
+        <text wx:if="{{result.aiReportModel}}" class="ai-source-text">AI模型：{{result.aiReportModel}}</text>
+
+        <view class="report-section">
+          <text class="report-title">总体评价</text>
+          <text class="report-content">{{result.aiReport.summary}}</text>
+        </view>
+
+        <view class="report-section">
+          <text class="report-title">你的表达优势</text>
+          <text class="report-list-item" wx:for="{{result.aiReport.strengths}}" wx:key="*this">{{item}}</text>
+        </view>
+
+        <view class="report-section">
+          <text class="report-title">当前提升点</text>
+          <text class="report-list-item" wx:for="{{result.aiReport.weaknesses}}" wx:key="*this">{{item}}</text>
+        </view>
+
+        <view class="report-section">
+          <text class="report-title">训练建议</text>
+          <text class="report-list-item" wx:for="{{result.aiReport.trainingAdvice}}" wx:key="*this">{{item}}</text>
+        </view>
+
+        <view class="report-module">
+          <text class="report-module-label">推荐训练</text>
+          <text class="report-module-value">{{result.aiReport.recommendedModule}}</text>
+        </view>
+
+        <text class="report-encouragement">{{result.aiReport.encouragement}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">六维分数</text>
+      <view class="score-card" wx:for="{{result.scoreList}}" wx:key="key">
+        <view class="score-row">
+          <text class="score-name">{{item.label}}</text>
+          <text class="score-value">{{item.score}}</text>
+        </view>
+        <view class="score-track">
+          <view class="score-fill" style="width: {{item.score}}%;"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">优势分析</text>
+      <view class="analysis-card" wx:for="{{result.strengths}}" wx:key="title">
+        <text class="analysis-title">{{item.title}}</text>
+        <text class="analysis-content">{{item.content}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">提升建议</text>
+      <view class="analysis-card suggestion-card" wx:for="{{result.suggestions}}" wx:key="title">
+        <text class="analysis-title">{{item.title}}</text>
+        <text class="analysis-content">{{item.content}}</text>
+      </view>
+    </view>
+
+    <view class="recommend-card">
+      <text class="recommend-label">推荐训练</text>
+      <text class="recommend-title">{{result.recommendedTraining}}</text>
+      <text class="recommend-desc">从当前短板出发，先完成一个 21 天模块，会更容易看到进步。</text>
+    </view>
+
+    <view class="bottom-actions">
+      <button class="primary-btn" bindtap="startRecommendedTraining">开始推荐训练</button>
+      <button class="secondary-btn" bindtap="restartEvaluation">重新测评</button>
+    </view>
+  </view>
+</view>

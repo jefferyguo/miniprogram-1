@@ -1,0 +1,274 @@
+page {
+  background: #f5f7fb;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32rpx 28rpx 170rpx;
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+.hero-card {
+  border-radius: 34rpx;
+  padding: 42rpx 34rpx;
+  color: #ffffff;
+  background: linear-gradient(135deg, #27364a 0%, #3a4a63 100%);
+  box-shadow: 0 16rpx 42rpx rgba(38, 50, 70, 0.16);
+}
+
+.hero-title {
+  display: block;
+  font-size: 44rpx;
+  line-height: 1.25;
+  font-weight: 900;
+  margin-bottom: 12rpx;
+}
+
+.hero-desc {
+  display: block;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.create-btn {
+  height: 86rpx;
+  line-height: 86rpx;
+  margin: 28rpx 0 0;
+  border-radius: 999rpx;
+  color: #ffffff;
+  background: #07c160;
+  font-size: 29rpx;
+  font-weight: 900;
+}
+
+.section {
+  margin-top: 34rpx;
+}
+
+.section-title {
+  display: block;
+  color: #111111;
+  font-size: 34rpx;
+  line-height: 1.35;
+  font-weight: 900;
+  margin-bottom: 18rpx;
+}
+
+.folder-card,
+.work-card,
+.empty-card {
+  border-radius: 30rpx;
+  padding: 30rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+}
+
+.folder-card,
+.work-card {
+  margin-bottom: 24rpx;
+}
+
+.folder-top,
+.work-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 14rpx;
+}
+
+.folder-name,
+.work-type {
+  min-width: 0;
+  color: #111111;
+  font-size: 31rpx;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.count-tag,
+.status-tag {
+  flex-shrink: 0;
+  padding: 9rpx 18rpx;
+  border-radius: 999rpx;
+  color: #8a6d1f;
+  background: #fff7dc;
+  font-size: 23rpx;
+  font-weight: 900;
+}
+
+.folder-desc,
+.student-name,
+.work-desc {
+  display: block;
+  color: #737b88;
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.folder-actions,
+.work-actions {
+  margin-top: 24rpx;
+  display: flex;
+  gap: 14rpx;
+}
+
+.view-btn,
+.rename-btn,
+.delete-btn,
+.play-btn,
+.feedback-btn,
+.remove-btn,
+.back-btn {
+  height: 70rpx;
+  line-height: 70rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.view-btn,
+.rename-btn,
+.delete-btn,
+.play-btn,
+.feedback-btn,
+.remove-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.view-btn,
+.play-btn {
+  color: #3478f6;
+  background: #eef4ff;
+}
+
+.rename-btn,
+.feedback-btn {
+  color: #07c160;
+  background: #eaf8f0;
+}
+
+.delete-btn,
+.remove-btn {
+  color: #d84d4d;
+  background: #fff0f0;
+}
+
+.disabled-btn {
+  color: #a0a6b1;
+  background: #f2f4f7;
+}
+
+.detail-head {
+  margin: 28rpx 0 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.back-btn {
+  width: 170rpx;
+  color: #3478f6;
+  background: #eef4ff;
+}
+
+.detail-title {
+  color: #111111;
+  font-size: 34rpx;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.work-title {
+  display: block;
+  color: #111111;
+  font-size: 30rpx;
+  line-height: 1.45;
+  font-weight: 900;
+  margin: 8rpx 0;
+}
+
+.work-meta {
+  margin-top: 18rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  color: #9aa1aa;
+  font-size: 24rpx;
+}
+
+.empty-card {
+  margin-top: 28rpx;
+  text-align: center;
+}
+
+.empty-title {
+  display: block;
+  color: #111111;
+  font-size: 31rpx;
+  font-weight: 900;
+  margin-bottom: 10rpx;
+}
+
+.empty-desc {
+  display: block;
+  color: #8a8f99;
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.teacher-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 112rpx;
+  background: #ffffff;
+  border-top: 1rpx solid #eef0f4;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 99;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -8rpx 28rpx rgba(38, 50, 70, 0.05);
+}
+
+.teacher-tab-item {
+  flex: 1;
+  text-align: center;
+  color: #8a8f99;
+  font-size: 22rpx;
+  line-height: 1.25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.teacher-tab-item.active {
+  color: #1f6feb;
+  font-weight: 700;
+}
+
+.teacher-tab-icon {
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
+  border-radius: 14rpx;
+  background: #f2f5fa;
+  font-size: 21rpx;
+  font-weight: 900;
+}
+
+.teacher-tab-item.active .teacher-tab-icon {
+  color: #ffffff;
+  background: #1f6feb;
+}

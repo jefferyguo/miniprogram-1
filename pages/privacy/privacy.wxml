@@ -1,0 +1,14 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">隐私协议</text>
+    <text class="hero-desc">以下内容为小程序内简明说明，上线前还需在微信公众平台完善官方用户隐私保护指引。</text>
+  </view>
+
+  <view class="section-card" wx:for="{{sections}}" wx:key="title">
+    <text class="section-title">{{item.title}}</text>
+    <view class="privacy-item" wx:for="{{item.items}}" wx:for-item="line" wx:key="*this">
+      <text class="dot"></text>
+      <text class="privacy-text">{{line}}</text>
+    </view>
+  </view>
+</view>

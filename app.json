@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/training/training",
+    "pages/module-detail/module-detail",
+    "pages/task-detail/task-detail",
+    "pages/extra-training/extra-training",
+    "pages/video-record/video-record",
+    "pages/ai-evaluation/ai-evaluation",
+    "pages/login/login",
+    "pages/evaluation-records/evaluation-records",
+    "pages/my-works/my-works",
+    "pages/help-feedback/help-feedback",
+    "pages/about/about",
+    "pages/contact/contact",
+    "pages/video-channel/video-channel",
+    "pages/settings/settings",
+    "pages/privacy/privacy",
+    "pages/teacher-login/teacher-login",
+    "pages/teacher-home/teacher-home",
+    "pages/teacher-classes/teacher-classes",
+    "pages/teacher-review/teacher-review",
+    "pages/teacher-favorites/teacher-favorites",
+    "pages/review/review",
+    "pages/growth/growth",
+    "pages/mine/mine",
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "杨勤口才训练KEEP",
+    "navigationBarBackgroundColor": "#f5f7fb",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#8a8f99",
+    "selectedColor": "#07c160",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/training/training",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/review/review",
+        "text": "点评"
+      },
+      {
+        "pagePath": "pages/growth/growth",
+        "text": "成长"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

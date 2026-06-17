@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">登录杨勤口才训练KEEP</text>
+    <text class="hero-desc">登录后可保存训练记录、测评结果和点评反馈。</text>
+  </view>
+
+  <view class="benefit-card">
+    <text class="section-title">登录后你可以</text>
+    <view class="benefit-item">
+      <text class="benefit-dot"></text>
+      <text class="benefit-text">保存每日训练记录</text>
+    </view>
+    <view class="benefit-item">
+      <text class="benefit-dot"></text>
+      <text class="benefit-text">查看 AI 测评结果</text>
+    </view>
+    <view class="benefit-item">
+      <text class="benefit-dot"></text>
+      <text class="benefit-text">接收老师点评反馈</text>
+    </view>
+    <view class="benefit-item">
+      <text class="benefit-dot"></text>
+      <text class="benefit-text">回看成长报告</text>
+    </view>
+  </view>
+
+  <button
+    class="login-btn {{isLoggingIn ? 'disabled-btn' : ''}}"
+    loading="{{isLoggingIn}}"
+    disabled="{{isLoggingIn}}"
+    bindtap="handleLogin"
+  >
+    微信一键登录
+  </button>
+
+  <text class="login-tip">登录仅用于保存你的训练数据和反馈记录。</text>
+</view>

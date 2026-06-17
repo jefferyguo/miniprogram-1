@@ -1,0 +1,29 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">设置</text>
+    <text class="hero-desc">管理本机缓存和登录状态</text>
+  </view>
+
+  <view class="section-card">
+    <view class="setting-item" bindtap="clearLocalCache">
+      <view class="setting-copy">
+        <text class="setting-title">清除本地缓存</text>
+        <text class="setting-desc">清除本机训练草稿、临时记录和缓存数据</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view class="setting-item" bindtap="logout">
+      <view class="setting-copy">
+        <text class="setting-title danger-title">退出登录</text>
+        <text class="setting-desc">退出后，本机将不再显示当前登录状态</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="version-card">
+    <text class="version-label">关于版本</text>
+    <text class="version-text">{{versionText}}</text>
+  </view>
+</view>

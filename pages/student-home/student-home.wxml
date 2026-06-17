@@ -1,0 +1,55 @@
+<view class="page">
+
+  <view class="header">
+    <text class="title">学员中心</text>
+    <text class="subtitle">完成今日表达任务，记录每一次进步</text>
+  </view>
+
+  <view class="task-card">
+    <view class="task-top">
+      <text class="task-label">{{todayTask.day}}</text>
+      <text class="task-progress">{{todayTask.progress}}</text>
+    </view>
+    <text class="task-title">今日训练任务</text>
+    <text class="task-name">{{todayTask.title}}</text>
+    <text class="task-desc">{{todayTask.desc}}</text>
+    <button class="record-btn" bindtap="startRecord">开始录音打卡</button>
+  </view>
+
+  <view class="section-title">学习进度</view>
+
+  <view class="feature-list">
+    <view class="feature-card green-card" bindtap="openRecordList">
+      <view>
+        <text class="feature-title">我的打卡记录</text>
+        <text class="feature-desc">已完成 {{checkinCount}} 次训练打卡</text>
+      </view>
+      <text class="feature-arrow">›</text>
+    </view>
+
+    <view class="feature-card blue-card" bindtap="openTeacherComment">
+      <view>
+        <text class="feature-title">老师点评</text>
+        <text class="feature-desc">{{teacherComment}}</text>
+      </view>
+      <text class="feature-arrow">›</text>
+    </view>
+
+    <view class="feature-card white-card" bindtap="openGrowthReport">
+      <view>
+        <text class="feature-title dark-title">成长报告</text>
+        <text class="feature-desc dark-desc">当前表达力评分 {{reportScore}} 分</text>
+      </view>
+      <text class="feature-arrow dark-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="buy-card" bindtap="openCampBuy">
+    <view>
+      <text class="buy-title">21天口才训练营</text>
+      <text class="buy-desc">系统训练表达结构、语速节奏和临场发挥</text>
+    </view>
+    <text class="buy-action">购买入口</text>
+  </view>
+
+</view>

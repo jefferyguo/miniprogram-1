@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">帮助与反馈</text>
+    <text class="hero-desc">遇到问题，或者想提出建议，都可以在这里反馈。</text>
+  </view>
+
+  <view class="section-card">
+    <text class="section-title">常见问题</text>
+    <view
+      class="question-item"
+      wx:for="{{questions}}"
+      wx:key="*this"
+      bindtap="handleQuestionTap"
+    >
+      <text>{{item}}</text>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <text class="section-title">提交反馈</text>
+    <text class="section-desc">你可以告诉我们使用中遇到的问题或建议。</text>
+    <textarea
+      class="feedback-input"
+      placeholder="请输入你的问题或建议"
+      placeholder-class="input-placeholder"
+      value="{{feedbackText}}"
+      bindinput="onFeedbackInput"
+    />
+    <button class="primary-btn" bindtap="submitFeedback">提交反馈</button>
+  </view>
+
+  <view class="contact-card" bindtap="contactService">
+    <text class="contact-title">联系客服</text>
+    <text class="contact-desc">遇到使用问题，可以先给我们留言。</text>
+    <text class="arrow">›</text>
+  </view>
+</view>

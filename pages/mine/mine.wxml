@@ -1,0 +1,102 @@
+<view class="page">
+  <view class="profile-card">
+    <view class="profile-main">
+      <view class="user-avatar-text">{{avatarText}}</view>
+
+      <view class="profile-info">
+        <text class="nickname">{{displayName}}</text>
+        <view class="role-row">
+          <text class="role-badge">{{roleText}}</text>
+        </view>
+        <text class="profile-tip">{{profileTip}}</text>
+      </view>
+    </view>
+
+    <button class="edit-profile-btn" bindtap="handleProfileAction">{{isLoggedIn ? '编辑资料' : '登录'}}</button>
+  </view>
+
+  <view class="quick-card">
+    <view
+      class="quick-item"
+      wx:for="{{quickActions}}"
+      wx:key="title"
+      data-index="{{index}}"
+      bindtap="handleQuickTap"
+    >
+      <view class="quick-icon-wrap">
+        <text class="quick-icon">{{item.iconText}}</text>
+      </view>
+      <text class="quick-title">{{item.title}}</text>
+      <text class="quick-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">我的班级</text>
+    <view class="class-card">
+      <view wx:if="{{hasClass}}">
+        <text class="class-name">{{currentClass.className}}</text>
+        <text class="class-desc">老师：{{currentClass.teacherName}}</text>
+        <text class="class-desc">班级码：{{currentClass.classCode}}</text>
+        <view class="class-actions">
+          <button class="class-info-btn" bindtap="viewClassInfo">查看班级信息</button>
+          <button class="class-exit-btn" bindtap="exitClass">退出班级</button>
+        </view>
+      </view>
+      <view wx:else>
+        <text class="class-name">还未加入班级</text>
+        <text class="class-desc">输入老师提供的班级码，加入后老师可以看到你的训练作品并进行点评。</text>
+        <button class="join-class-btn" bindtap="joinClass">加入班级</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">训练</text>
+    <view class="list-card">
+      <view
+        class="list-item"
+        wx:for="{{trainingItems}}"
+        wx:key="title"
+        data-group="training"
+        data-index="{{index}}"
+        bindtap="handleListTap"
+      >
+        <text class="list-title">{{item.title}}</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">关于</text>
+    <view class="list-card">
+      <block wx:for="{{aboutItems}}" wx:key="title">
+        <button
+          wx:if="{{item.type === 'share'}}"
+          class="list-item share-list-item"
+          open-type="share"
+          bindtap="handleShareTap"
+        >
+          <text class="list-title">{{item.title}}</text>
+          <text class="arrow">›</text>
+        </button>
+        <view
+          wx:else
+          class="list-item"
+          data-group="about"
+          data-index="{{index}}"
+          bindtap="handleListTap"
+        >
+          <text class="list-title">{{item.title}}</text>
+          <text class="arrow">›</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <view class="footer">
+    <text>杨勤口才训练KEEP v1.0.0</text>
+    <text>每天 3 分钟，练成好口才</text>
+  </view>
+</view>

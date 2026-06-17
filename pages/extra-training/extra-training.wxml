@@ -1,0 +1,77 @@
+<view class="page">
+  <view class="hero-card {{heroClass}}">
+    <view class="hero-icon-wrap">
+      <text class="hero-icon">{{icon}}</text>
+    </view>
+    <view class="hero-copy">
+      <text class="hero-title">{{title}}</text>
+      <text class="hero-desc">{{desc}}</text>
+    </view>
+  </view>
+
+  <view class="content-card today-card">
+    <view class="card-head">
+      <view>
+        <text class="eyebrow">今日内容</text>
+        <text class="section-title">{{contentTitle}}</text>
+      </view>
+      <button class="change-btn" bindtap="changeContent">换一条</button>
+    </view>
+    <text wx:if="{{contentCategory}}" class="content-tag">{{contentCategory}}</text>
+    <text class="content">{{content}}</text>
+    <text wx:if="{{contentUsageTip}}" class="usage-tip">练习提示：{{contentUsageTip}}</text>
+    <text class="content-tip">{{contentTip}}</text>
+  </view>
+
+  <view class="record-card">
+    <text class="section-title">录制操作</text>
+    <text class="record-desc">录一段声音或视频，保存你的训练作品</text>
+
+    <view class="record-actions">
+      <button
+        class="audio-btn {{isAudioRecording ? 'stop-btn' : ''}} {{isVideoRecording ? 'disabled-btn' : ''}}"
+        disabled="{{isVideoRecording}}"
+        bindtap="toggleAudio"
+      >{{isAudioRecording ? '停止录音' : '开始录音'}}</button>
+
+      <button
+        class="video-btn {{isVideoRecording ? 'stop-btn' : ''}} {{isAudioRecording ? 'disabled-btn' : ''}}"
+        disabled="{{isAudioRecording}}"
+        bindtap="toggleVideo"
+      >{{isVideoRecording ? '停止录像' : '开始录像'}}</button>
+    </view>
+
+    <text wx:if="{{isRecording}}" class="record-status">
+      正在{{recordingTypeText}}中 {{recordingTimeText}}
+    </text>
+  </view>
+
+  <view class="history-card">
+    <text class="section-title">作品历史</text>
+
+    <view wx:if="{{hasDrafts}}">
+      <view class="work-item" wx:for="{{drafts}}" wx:key="id">
+        <view class="work-head">
+          <text class="work-title">{{item.typeIcon}} {{item.typeTitle}}</text>
+          <text class="work-status">{{item.submitted ? '已提交' : '未提交'}}</text>
+        </view>
+        <text class="work-meta">{{item.duration}} · {{item.createdAt}}</text>
+        <text class="work-content">{{item.content}}</text>
+        <view class="work-actions">
+          <button class="play-small" data-id="{{item.id}}" catchtap="playWork">{{item.actionText}}</button>
+          <button
+            class="submit-small {{item.submitted ? 'submitted-small' : ''}}"
+            disabled="{{item.submitted}}"
+            data-id="{{item.id}}"
+            catchtap="submitDraft"
+          >{{item.submitted ? '已提交' : '提交'}}</button>
+          <button class="delete-small" data-id="{{item.id}}" catchtap="deleteDraft">删除</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:else>
+      <text>还没有录音或录像作品，先完成一次加练吧。</text>
+    </view>
+  </view>
+</view>

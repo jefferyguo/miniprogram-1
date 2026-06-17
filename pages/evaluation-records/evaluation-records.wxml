@@ -1,0 +1,153 @@
+<view class="page">
+  <view wx:if="{{mode === 'list'}}">
+    <view class="hero-card">
+      <text class="hero-title">测评记录</text>
+      <text class="hero-desc">回看每一次表达力测评，观察自己的表达变化。</text>
+    </view>
+
+    <view class="stats-card">
+      <view class="stat-item">
+        <text class="stat-value">{{recordCount}}</text>
+        <text class="stat-label">测评次数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value small-value">{{latestCreatedAt}}</text>
+        <text class="stat-label">最近测评</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value small-value">{{latestProfileType}}</text>
+        <text class="stat-label">最近画像</text>
+      </view>
+    </view>
+
+    <view wx:if="{{hasResults}}">
+      <view class="record-card" wx:for="{{results}}" wx:key="id">
+        <view class="record-top">
+          <text class="profile-tag">{{item.profileType}}</text>
+          <text class="record-time">{{item.displayCreatedAt}}</text>
+        </view>
+
+        <view class="record-grid">
+          <view class="record-field">
+            <text class="field-label">综合分</text>
+            <text class="field-value">{{item.displayAverageScore}}</text>
+          </view>
+          <view class="record-field">
+            <text class="field-label">最高维度</text>
+            <text class="field-value">{{item.displayTopDimension}}</text>
+          </view>
+          <view class="record-field">
+            <text class="field-label">最低维度</text>
+            <text class="field-value">{{item.displayLowDimension}}</text>
+          </view>
+          <view class="record-field">
+            <text class="field-label">录音题</text>
+            <text class="field-value">{{item.displayRecordingStatus}}</text>
+          </view>
+        </view>
+
+        <view class="record-actions">
+          <button class="view-btn" data-id="{{item.id}}" bindtap="viewResult">查看结果</button>
+          <button class="delete-btn" data-id="{{item.id}}" bindtap="deleteResult">删除</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-card" wx:else>
+      <text class="empty-title">暂无测评记录</text>
+      <text class="empty-desc">完成一次表达力测评后，这里会保存你的测评结果。</text>
+      <button class="view-btn empty-btn" bindtap="goEvaluation">去测评</button>
+    </view>
+  </view>
+
+  <view wx:elif="{{mode === 'detail' && selectedResult}}">
+    <view class="detail-hero">
+      <text class="detail-badge">表达画像</text>
+      <text class="detail-title">{{selectedResult.profileType}}</text>
+      <text class="detail-desc">{{selectedResult.profileDesc}}</text>
+      <text class="detail-time">测评时间：{{selectedResult.displayCreatedAt}}</text>
+    </view>
+
+    <view class="ai-report-card" wx:if="{{selectedResult.aiReport}}">
+      <view class="section-head">
+        <text class="section-title no-margin">AI 表达力报告</text>
+        <text class="ai-report-badge" wx:if="{{selectedResult.aiReportError}}">基础报告</text>
+      </view>
+      <text class="fallback-tip" wx:if="{{selectedResult.aiReportError}}">当前为基础测评报告，AI 深度报告稍后开放。</text>
+      <text class="ai-source-text">报告来源：{{selectedResult.displayAiReportSource}}</text>
+      <text wx:if="{{selectedResult.displayAiReportModel}}" class="ai-source-text">AI模型：{{selectedResult.displayAiReportModel}}</text>
+
+      <view class="report-section">
+        <text class="report-title">总体评价</text>
+        <text class="report-content">{{selectedResult.aiReport.summary}}</text>
+      </view>
+
+      <view class="report-section">
+        <text class="report-title">你的表达优势</text>
+        <text class="report-list-item" wx:for="{{selectedResult.aiReport.strengths}}" wx:key="*this">{{item}}</text>
+      </view>
+
+      <view class="report-section">
+        <text class="report-title">当前提升点</text>
+        <text class="report-list-item" wx:for="{{selectedResult.aiReport.weaknesses}}" wx:key="*this">{{item}}</text>
+      </view>
+
+      <view class="report-section">
+        <text class="report-title">训练建议</text>
+        <text class="report-list-item" wx:for="{{selectedResult.aiReport.trainingAdvice}}" wx:key="*this">{{item}}</text>
+      </view>
+
+      <view class="report-module">
+        <text class="report-module-label">推荐训练</text>
+        <text class="report-module-value">{{selectedResult.aiReport.recommendedModule}}</text>
+      </view>
+
+      <text class="report-encouragement">{{selectedResult.aiReport.encouragement}}</text>
+    </view>
+
+    <view class="section">
+      <text class="section-title">六维分数</text>
+      <view class="score-card" wx:for="{{selectedResult.displayScoreList}}" wx:key="key">
+        <view class="score-row">
+          <text class="score-name">{{item.label}}</text>
+          <text class="score-value">{{item.score}}</text>
+        </view>
+        <view class="score-track">
+          <view class="score-fill" style="width: {{item.score}}%;"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">优势分析</text>
+      <view class="analysis-card" wx:for="{{selectedResult.strengths}}" wx:key="title">
+        <text class="analysis-title">{{item.title}}</text>
+        <text class="analysis-content">{{item.content}}</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <text class="section-title">提升建议</text>
+      <view class="analysis-card" wx:for="{{selectedResult.suggestions}}" wx:key="title">
+        <text class="analysis-title">{{item.title}}</text>
+        <text class="analysis-content">{{item.content}}</text>
+      </view>
+    </view>
+
+    <view class="recommend-card">
+      <text class="recommend-label">推荐训练</text>
+      <text class="recommend-title">{{selectedResult.recommendedTraining}}</text>
+    </view>
+
+    <view class="recording-card">
+      <text class="section-title">录音题信息</text>
+      <view wx:if="{{selectedResult.recordingAnswer && !selectedResult.recordingAnswer.skipped}}">
+        <text class="recording-line">录音话题：{{selectedResult.recordingAnswer.topic}}</text>
+        <text class="recording-line">录音时长：{{selectedResult.displayRecordingDuration}}</text>
+      </view>
+      <text class="recording-line" wx:else>本次测评未完成录音题</text>
+    </view>
+
+    <button class="back-btn" bindtap="backToList">返回记录列表</button>
+  </view>
+</view>
