@@ -1,25 +1,28 @@
 <view class="page">
   <view class="hero-card">
     <text class="hero-title">联系周老师</text>
-    <text class="hero-desc">课程咨询、训练问题、报名体验，都可以扫码联系老师</text>
+    <text class="hero-desc">线下课程咨询、手机号核对和小程序使用问题，都可以扫码联系周老师</text>
   </view>
 
   <view class="qr-card">
-    <text class="qr-title">客服老师二维码</text>
+    <text class="qr-title">周老师微信二维码</text>
     <image
       wx:if="{{!qrLoadError}}"
       class="qr-image"
-      src="/images/customer-service-qr.jpg"
+      src="/images/customer-service-qr.png"
       mode="aspectFit"
+      show-menu-by-longpress="true"
       binderror="onQrImageError"
     />
-    <view wx:else class="qr-placeholder">客服老师二维码待上传</view>
-    <text class="qr-tip">添加时请备注：口才训练小程序</text>
+    <view wx:else class="qr-placeholder">周老师二维码待上传</view>
+    <text class="qr-tip">长按识别二维码，添加周老师微信</text>
   </view>
 
   <view class="content-card">
     <text class="section-title">联系说明</text>
-    <text class="paragraph">如需了解课程安排、训练营报名、老师点评服务或遇到使用问题，可以扫码添加周老师。</text>
+    <text class="paragraph">已报名线下课程的学员可联系周老师核对报名信息和上课安排。</text>
+    <text class="paragraph">未报名用户可咨询线下课程内容、上课时间和到店体验。</text>
+    <text class="paragraph">如果手机号授权失败，也可以扫码联系周老师人工核对。</text>
   </view>
 
   <view class="content-card">

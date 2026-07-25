@@ -1,0 +1,85 @@
+.phone-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(20, 28, 40, 0.48);
+}
+
+.phone-panel {
+  width: 100%;
+  padding: 34rpx 34rpx calc(34rpx + env(safe-area-inset-bottom));
+  border-radius: 32rpx 32rpx 0 0;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.phone-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.phone-title,
+.phone-subtitle {
+  display: block;
+}
+
+.phone-title {
+  color: #17202e;
+  font-size: 40rpx;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.phone-subtitle {
+  margin-top: 12rpx;
+  color: #707989;
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.phone-close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #87909f;
+  background: #f3f5f8;
+  font-size: 36rpx;
+}
+
+.phone-primary,
+.phone-secondary {
+  height: 80rpx;
+  line-height: 80rpx;
+  margin: 28rpx 0 0;
+  padding: 0;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.phone-primary {
+  color: #ffffff;
+  background: #07c160;
+}
+
+.phone-secondary {
+  margin-top: 12rpx;
+  color: #8a92a3;
+  background: transparent;
+}
+
+.phone-primary::after,
+.phone-secondary::after {
+  border: none;
+}

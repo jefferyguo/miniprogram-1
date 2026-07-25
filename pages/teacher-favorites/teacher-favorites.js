@@ -6,6 +6,11 @@ const {
   saveFavoriteFolders,
   saveFavoriteWorks
 } = require('../../utils/local-data')
+const { getVideoPath, previewVideoByPath } = require('../../utils/work-media')
+
+function normalizeModuleTitle(title) {
+  return String(title || '训练作品').replace(/^21天/, '')
+}
 
 function buildFolderView(folder, works, index) {
   return {
@@ -20,7 +25,7 @@ function getDisplayWork(item) {
     ...item,
     displayType: item.workType === 'video' ? '录像作品' : '录音作品',
     displayActionText: item.workType === 'video' ? '查看' : '播放',
-    displayTitle: `${item.moduleTitle || '训练作品'}${item.day ? ` Day ${item.day}` : ''}`,
+    displayTitle: `${normalizeModuleTitle(item.moduleTitle)}${item.day ? ` Day ${item.day}` : ''}`,
     teacherStatusText: item.teacherFeedback || item.teacherFeedbackStatus === 'done' ? '老师已点评' : '待老师点评',
     aiStatusText: item.aiFeedbackStatus === 'done'
       ? 'AI已反馈'
@@ -217,7 +222,9 @@ Page({
     if (!target) return
 
     if (target.workType === 'video') {
-      if (!target.filePath) {
+      const videoPath = getVideoPath(target)
+
+      if (!videoPath) {
         wx.showToast({
           title: '录像文件不存在',
           icon: 'none'
@@ -225,22 +232,7 @@ Page({
         return
       }
 
-      wx.previewMedia({
-        sources: [
-          {
-            url: target.filePath,
-            type: 'video',
-            poster: target.thumbPath || ''
-          }
-        ],
-        fail: error => {
-          console.error('favorite video preview error', error)
-          wx.showToast({
-            title: '查看失败',
-            icon: 'none'
-          })
-        }
-      })
+      previewVideoByPath(videoPath, target.displayTitle || '收藏录像')
       return
     }
 

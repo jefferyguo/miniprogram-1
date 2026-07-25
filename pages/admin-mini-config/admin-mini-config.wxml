@@ -1,0 +1,291 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-kicker">杨勤口才训练 KEEP 管理端</text>
+    <text class="hero-title">小程序配置</text>
+    <text class="hero-desc">编辑首页训练内容和每日训练内容，云端修改会覆盖本地默认展示。</text>
+  </view>
+
+  <view wx:if="{{checkingAdmin}}" class="state-card">
+    <text class="state-title">正在检查管理员权限</text>
+    <text class="state-desc">请稍候...</text>
+  </view>
+
+  <view wx:elif="{{!isAdmin}}" class="state-card">
+    <text class="state-title">暂无配置权限</text>
+    <text class="state-desc">{{adminMessage || '请联系超级管理员完成授权。'}}</text>
+  </view>
+
+  <block wx:else>
+    <block wx:if="{{mode === 'home'}}">
+      <view class="section">
+        <view class="section-head">
+          <text class="section-title">训练模块</text>
+          <text class="section-desc">四类主训练 Day 内容</text>
+        </view>
+        <view class="config-grid">
+          <view
+            class="config-card {{item.theme}}"
+            wx:for="{{trainingCategories}}"
+            wx:key="category"
+            data-category="{{item.category}}"
+            bindtap="openCategory"
+          >
+            <view class="config-icon">{{item.iconText}}</view>
+            <view class="config-info">
+              <text class="config-title">{{item.categoryName}}</text>
+              <text class="config-desc">{{item.desc}}</text>
+            </view>
+            <text class="config-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section">
+        <view class="section-head">
+          <text class="section-title">每日训练</text>
+          <text class="section-desc">金句、话题与绕口令内容库</text>
+        </view>
+        <view class="daily-list">
+          <view
+            class="daily-card {{item.theme}}"
+            wx:for="{{dailyCategories}}"
+            wx:key="category"
+            data-category="{{item.category}}"
+            bindtap="openCategory"
+          >
+            <view class="config-icon">{{item.iconText}}</view>
+            <view class="config-info">
+              <text class="config-title">{{item.categoryName}}</text>
+              <text class="config-desc">{{item.desc}}</text>
+            </view>
+            <text class="config-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{mode === 'list'}}">
+      <view class="toolbar-card">
+        <button class="back-btn" bindtap="backHome">返回配置首页</button>
+        <view class="toolbar-info">
+          <text class="toolbar-title">{{currentCategory.categoryName}}</text>
+          <text class="toolbar-desc">{{listLoading ? '正在读取云端修改...' : '点击条目编辑标题和内容'}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{listError}}" class="hint-card">{{listError}}</view>
+
+      <view class="content-list">
+        <view class="content-card" wx:for="{{currentItems}}" wx:key="contentId">
+          <view class="content-head">
+            <view class="content-title-wrap">
+              <text class="content-title">{{item.displayTitle || item.title}}</text>
+              <text class="content-meta">{{item.metaText || item.contentId}}</text>
+            </view>
+            <view class="content-tags">
+              <text class="status-tag {{item.statusClass}}">{{item.statusText}}</text>
+              <text class="membership-tag {{item.membershipClass}}">{{item.membershipText}}</text>
+              <text class="source-tag {{item.isCloudModified ? 'source-cloud' : ''}}">{{item.sourceText}}</text>
+            </view>
+          </view>
+          <text class="content-excerpt">{{item.excerpt || '暂无内容'}}</text>
+          <view class="content-actions">
+            <button class="edit-btn" data-index="{{index}}" bindtap="editContent">编辑</button>
+            <button class="publish-btn {{item.status === 'disabled' || item.status === 'draft' ? 'publish-on' : 'publish-off'}}" data-index="{{index}}" bindtap="toggleContentStatus">{{item.status === 'disabled' || item.status === 'draft' ? '发布' : '下架'}}</button>
+            <button class="delete-btn" data-index="{{index}}" bindtap="deleteContent">删除</button>
+          </view>
+        </view>
+        <view class="add-content-card" bindtap="addContent">
+          <text class="add-content-plus">+</text>
+          <view class="add-content-copy">
+            <text class="add-content-title">添加内容</text>
+            <text class="add-content-desc">新增内容会保存到云端，并追加到当前分类列表</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{mode === 'edit'}}">
+      <view class="toolbar-card">
+        <button class="back-btn" bindtap="cancelEdit">返回列表</button>
+        <view class="toolbar-info">
+          <text class="toolbar-title">{{isCreatingContent ? '新增内容' : '编辑内容'}}</text>
+          <text class="toolbar-desc">{{editItem.categoryName}} · {{isCreatingContent ? '新增' : (editItem.metaText || editItem.contentId)}}</text>
+        </view>
+      </view>
+
+      <view class="form-card">
+        <view class="form-field">
+          <text class="field-label">标题</text>
+          <input class="title-input" value="{{editTitle}}" placeholder="请输入标题" bindinput="handleTitleInput" />
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">作者</text>
+          <input class="title-input" value="{{editAuthor}}" placeholder="请输入作者，没有可不填" bindinput="handleAuthorInput" />
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">文章分类</text>
+          <input class="title-input" value="{{editArticleCategory}}" placeholder="如：项目建设、党建工作、励志演讲" bindinput="handleArticleCategoryInput" />
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">封面（可选）</text>
+          <input class="title-input" value="{{editCover}}" placeholder="可填写云文件 ID 或图片路径" bindinput="handleCoverInput" />
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">内容权限</text>
+          <view class="membership-switch">
+            <view
+              class="membership-option {{editMembershipLevel === 'free' ? 'active-free' : ''}}"
+              data-level="free"
+              bindtap="selectMembershipLevel"
+            >
+              <text class="membership-option-title">免费内容</text>
+              <text class="membership-option-desc">所有学员可训练</text>
+            </view>
+            <view
+              class="membership-option {{editMembershipLevel === 'member' ? 'active-member' : ''}}"
+              data-level="member"
+              bindtap="selectMembershipLevel"
+            >
+              <text class="membership-option-title">会员内容</text>
+              <text class="membership-option-desc">仅会员可训练</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">内容</text>
+          <view class="import-row">
+            <button class="import-file-btn" bindtap="importTrainingFile">上传 DOC/DOCX 或导入文本</button>
+            <text class="import-file-tip">{{editSourceFileID ? '源文件已上传' : 'DOC/DOCX 会保存为源文件，txt/md 可直接导入正文'}}</text>
+          </view>
+          <text wx:if="{{editSourceFileID}}" class="source-file-id">{{editSourceFileID}}</text>
+          <textarea
+            class="content-textarea"
+            value="{{editContent}}"
+            placeholder="请输入训练正文、题目或提示内容"
+            maxlength="-1"
+            auto-height="{{false}}"
+            bindinput="handleContentInput"
+            bindselect="handleContentSelect"
+          />
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">文字样式</text>
+          <view class="style-panel">
+            <view class="style-group">
+              <text class="style-label">字号</text>
+              <view class="style-options">
+                <view
+                  class="style-option {{editContentStyle.fontSize === item.value ? 'active-style' : ''}}"
+                  wx:for="{{fontSizeOptions}}"
+                  wx:key="value"
+                  data-value="{{item.value}}"
+                  bindtap="selectFontSize"
+                >{{item.label}}</view>
+              </view>
+            </view>
+
+            <view class="style-group">
+              <text class="style-label">颜色</text>
+              <view class="style-options">
+                <view
+                  class="style-option color-option color-{{item.value}} {{editContentStyle.color === item.value ? 'active-style' : ''}}"
+                  wx:for="{{colorOptions}}"
+                  wx:key="value"
+                  data-value="{{item.value}}"
+                  bindtap="selectContentColor"
+                >{{item.label}}</view>
+              </view>
+            </view>
+
+            <view class="style-group">
+              <text class="style-label">粗体</text>
+              <view
+                class="style-option bold-option {{editContentStyle.bold ? 'active-style' : ''}}"
+                bindtap="toggleContentBold"
+              >{{editContentStyle.bold ? '已加粗' : '加粗'}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="form-field">
+          <text class="field-label">局部样式</text>
+          <view class="rich-style-panel">
+            <view class="rich-range-row">
+              <view class="rich-range-field">
+                <text class="style-label">开始位置</text>
+                <input class="range-input" type="number" value="{{richStart}}" placeholder="0" bindinput="handleRichStartInput" />
+              </view>
+              <view class="rich-range-field">
+                <text class="style-label">结束位置</text>
+                <input class="range-input" type="number" value="{{richEnd}}" placeholder="10" bindinput="handleRichEndInput" />
+              </view>
+            </view>
+
+            <view class="style-group">
+              <text class="style-label">局部字号</text>
+              <view class="style-options">
+                <view
+                  class="style-option {{richFontSize === item.value ? 'active-style' : ''}}"
+                  wx:for="{{fontSizeOptions}}"
+                  wx:key="value"
+                  data-value="{{item.value}}"
+                  bindtap="selectRichFontSize"
+                >{{item.label}}</view>
+              </view>
+            </view>
+
+            <view class="style-group">
+              <text class="style-label">局部颜色</text>
+              <view class="style-options">
+                <view
+                  class="style-option color-option color-{{item.value}} {{richColor === item.value ? 'active-style' : ''}}"
+                  wx:for="{{colorOptions}}"
+                  wx:key="value"
+                  data-value="{{item.value}}"
+                  bindtap="selectRichColor"
+                >{{item.label}}</view>
+              </view>
+            </view>
+
+            <view class="rich-toolbar">
+              <view
+                class="style-option bold-option {{richBold ? 'active-style' : ''}}"
+                bindtap="toggleRichBold"
+              >{{richBold ? '局部加粗' : '局部不加粗'}}</view>
+              <button class="rich-apply-btn" bindtap="applyRichStyleRange">应用到选区</button>
+              <button class="rich-clear-btn" bindtap="clearRichStyleRanges">清空局部样式</button>
+            </view>
+
+            <view class="range-list" wx:if="{{editContentRichStyle.ranges.length}}">
+              <view class="range-item" wx:for="{{editContentRichStyle.ranges}}" wx:key="index">
+                <text class="range-copy">{{item.start}}-{{item.end}} · {{item.fontSize}} · {{item.color}}{{item.bold ? ' · 粗体' : ''}}</text>
+                <button class="range-delete-btn" data-index="{{index}}" bindtap="deleteRichStyleRange">删除</button>
+              </view>
+            </view>
+
+            <view class="rich-preview">
+              <text class="rich-preview-title">实时预览</text>
+              <view class="rich-preview-body">
+                <text
+                  wx:for="{{richPreviewSegments}}"
+                  wx:key="index"
+                  class="rich-preview-text {{item.className}}"
+                >{{item.text}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <button class="save-btn {{saving ? 'saving' : ''}}" loading="{{saving}}" bindtap="saveEdit">{{saving ? '保存中...' : '保存到云端'}}</button>
+        <button class="cancel-btn" bindtap="cancelEdit">取消返回</button>
+      </view>
+    </block>
+  </block>
+</view>

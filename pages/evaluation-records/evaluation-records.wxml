@@ -73,6 +73,7 @@
         <text class="section-title no-margin">AI 表达力报告</text>
         <text class="ai-report-badge" wx:if="{{selectedResult.aiReportError}}">基础报告</text>
       </view>
+      <view class="ai-generated-notice">本报告由人工智能生成，仅供训练参考</view>
       <text class="fallback-tip" wx:if="{{selectedResult.aiReportError}}">当前为基础测评报告，AI 深度报告稍后开放。</text>
       <text class="ai-source-text">报告来源：{{selectedResult.displayAiReportSource}}</text>
       <text wx:if="{{selectedResult.displayAiReportModel}}" class="ai-source-text">AI模型：{{selectedResult.displayAiReportModel}}</text>

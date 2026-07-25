@@ -96,3 +96,7 @@ page {
 .paragraph {
   color: #606875;
 }
+
+.paragraph + .paragraph {
+  margin-top: 12rpx;
+}

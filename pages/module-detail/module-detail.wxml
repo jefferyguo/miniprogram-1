@@ -16,17 +16,27 @@
         <view class="bubble-box"></view>
         <view class="bubble-tail"></view>
       </view>
-      <view wx:else class="line-icon mic-icon">
+      <view wx:elif="{{moduleInfo.id === 'mandarin'}}" class="line-icon mic-icon">
         <view class="mic-head"></view>
         <view class="mic-stem"></view>
         <view class="mic-base"></view>
+      </view>
+      <view wx:elif="{{moduleInfo.id === 'speech'}}" class="line-icon podium-icon">
+        <view class="podium-board"></view>
+        <view class="podium-stand"></view>
+        <view class="podium-base"></view>
+      </view>
+      <view wx:else class="line-icon document-icon">
+        <view class="document-page"></view>
+        <view class="document-line document-line-one"></view>
+        <view class="document-line document-line-two"></view>
       </view>
     </view>
     <text class="module-title">{{moduleInfo.title}}</text>
     <text class="module-desc">{{moduleInfo.desc}}</text>
     <view class="progress-panel">
       <view class="progress-row">
-        <text class="module-progress">当前进度：已完成 {{completedCount}} / 21 天</text>
+        <text class="module-progress">当前进度：已完成 {{completedCount}} / {{totalDays}} 天</text>
         <text class="progress-text">{{progressText}}</text>
       </view>
       <view class="progress-track">
@@ -37,19 +47,19 @@
 
   <view class="day-list">
     <view
-      class="day-card {{item.completed ? 'completed-card' : ''}}"
+      class="day-card {{item.completed ? 'completed-card' : ''}} {{item.isLocked ? 'locked-card' : ''}} {{item.isUnlocked && !item.completed ? 'unlocked-card' : ''}}"
       wx:for="{{days}}"
       wx:key="day"
       data-day="{{item.day}}"
+      data-content-id="{{item.contentId}}"
       bindtap="openTask"
     >
       <view class="day-main">
         <view class="day-head">
           <text class="day-index">Day {{item.day}}</text>
-          <text class="status-tag {{item.completed ? 'done-tag' : 'todo-tag'}}">{{item.status}}</text>
+          <text class="status-tag {{item.isLocked ? 'lock-tag' : (item.isMemberContent && !item.completed ? 'member-tag' : (item.isUnlocked && !item.completed ? 'unlock-tag' : (item.completed ? 'done-tag' : 'todo-tag')))}}">{{item.status}}</text>
         </view>
-        <text class="day-title">{{item.contentTitle || item.title}}</text>
-        <text class="day-meta">建议时长：{{item.duration}}</text>
+        <text class="day-title">{{item.displayTitle || item.contentTitle || item.title}}</text>
       </view>
     </view>
   </view>

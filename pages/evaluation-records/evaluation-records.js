@@ -1,4 +1,10 @@
 const RESULT_STORAGE_KEY = 'expressionTestResults'
+const {
+  enableShareMenu,
+  getDefaultShareMessage,
+  getDefaultShareTimeline,
+  getShareImage
+} = require('../../utils/share-config')
 
 const DIMENSIONS = [
   { key: 'confidence', label: '表达自信' },
@@ -97,6 +103,7 @@ Page({
   },
 
   onShow() {
+    enableShareMenu()
     this.loadResults()
   },
 
@@ -173,6 +180,23 @@ Page({
   goEvaluation() {
     wx.navigateTo({
       url: '/pages/ai-evaluation/ai-evaluation'
+    })
+  },
+
+  onShareAppMessage() {
+    // 不分享当前用户的分数和报告，只邀请好友进入测评入口。
+    return getDefaultShareMessage({
+      title: '表达力测评｜测一测你的表达状态',
+      path: '/pages/ai-evaluation/ai-evaluation?source=share',
+      imageUrl: getShareImage('assessment')
+    })
+  },
+
+  onShareTimeline() {
+    return getDefaultShareTimeline({
+      title: '表达力测评｜测一测你的表达状态',
+      targetPage: 'ai-evaluation',
+      imageUrl: getShareImage('assessment')
     })
   }
 })

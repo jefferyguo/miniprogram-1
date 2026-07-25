@@ -1,0 +1,41 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-kicker">杨勤口才训练 KEEP 管理端</text>
+    <text class="hero-title">管理中心</text>
+    <text class="hero-desc">选择需要管理的模块，集中处理学员权限和课程安排。</text>
+  </view>
+
+  <view class="admin-status-card {{isAdmin ? 'admin-active-card' : 'admin-empty-card'}}">
+    <view>
+      <text class="status-label">当前身份</text>
+      <text class="status-title">{{checkingAdmin ? '正在检查管理员权限' : adminRoleText}}</text>
+      <text wx:if="{{!checkingAdmin}}" class="status-desc">{{adminSourceText}}</text>
+    </view>
+    <text class="status-dot {{isAdmin ? 'status-dot-active' : ''}}"></text>
+  </view>
+
+  <view wx:if="{{showInitSuperAdminButton}}" class="init-card">
+    <text class="init-tip">{{initSuperAdminTip}}</text>
+    <button class="init-btn" bindtap="initSuperAdmin">{{initSuperAdminButtonText}}</button>
+  </view>
+
+  <view wx:if="{{isAdmin}}" class="menu-grid">
+    <view
+      class="menu-card {{item.theme}}"
+      wx:for="{{menuItems}}"
+      wx:key="id"
+      data-index="{{index}}"
+      bindtap="openMenu"
+    >
+      <view class="menu-icon"><text>{{item.iconText}}</text></view>
+      <text class="menu-title">{{item.title}}</text>
+      <text class="menu-desc">{{item.desc}}</text>
+      <view class="menu-enter"><text>进入</text><text class="menu-arrow">›</text></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{!checkingAdmin}}" class="empty-card">
+    <text class="empty-title">当前账号暂无管理员权限</text>
+    <text class="empty-desc">请联系超级管理员完成授权后再进入管理功能。</text>
+  </view>
+</view>

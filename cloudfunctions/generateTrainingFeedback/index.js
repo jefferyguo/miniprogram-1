@@ -1,93 +1,576 @@
 const cloud = require('wx-server-sdk')
-const MODEL = process.env.CLOUDBASE_AI_MODEL || 'qwen3.5-flash'
+const AI_MODEL = process.env.CLOUDBASE_AI_MODEL || 'hy3-preview'
+const NORMAL_AI_MODEL = AI_MODEL
+const DEEP_AI_MODEL = AI_MODEL
+const { analyzeSpeechForTraining } = require('./speech-analysis')
 
+// CloudBase 控制台中建议将 generateTrainingFeedback / generateExpressionReport / transcribeAudio 执行超时设置为 60 秒。
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
+  env: cloud.DYNAMIC_CURRENT_ENV,
+  timeout: 60000
 })
 
-function normalizeFeedback(feedback) {
-  if (!feedback || typeof feedback !== 'object') return null
+const db = cloud.database()
 
-  const summary = String(feedback.summary || '').trim()
-
-  if (!summary) return null
-
-  return {
-    summary,
-    highlights: Array.isArray(feedback.highlights) ? feedback.highlights.slice(0, 2) : [],
-    improvements: Array.isArray(feedback.improvements) ? feedback.improvements.slice(0, 2) : [],
-    suggestions: Array.isArray(feedback.suggestions) ? feedback.suggestions.slice(0, 3) : [],
-    score: Math.max(0, Math.min(100, Number(feedback.score || 0))),
-    level: String(feedback.level || '').trim()
+async function hasBoundPhone() {
+  try {
+    const openid = cloud.getWXContext().OPENID || ''
+    if (!openid) return false
+    const res = await db.collection('users').where({ openid, phoneBound: true }).limit(1).get()
+    const user = res.data && res.data[0]
+    return Boolean(user && /^1\d{10}$/.test(String(user.phone || '')))
+  } catch (error) {
+    console.warn('[generateTrainingFeedback] phone binding check failed:', error.message)
+    return false
   }
 }
 
-function buildPrompt(submission) {
-  const sourceType = submission.sourceType === 'extra' ? '额外训练' : '主训练'
-  const workType = submission.workType === 'video' ? '录像作品' : '录音作品'
-
-  return `你是一名专业口才训练老师，请根据学员提交的训练作品信息，生成简短、温和、具体的表达训练点评。
-
-要求：
-1. 不做医学诊断。
-2. 不做心理诊断。
-3. 不夸大 AI 能力。
-4. 第一版没有真实语音识别，只能基于训练任务、训练材料摘要、作品类型、提交时长和提交信息给建议。
-5. 不要假装已经听到声音，不要写“你的语速是多少”“你停顿几次”“口头禅出现几次”等无法得出的结论。
-6. 语言像老师点评学生，鼓励但不空泛。
-7. 总字数控制在 160–240 字。
-8. 输出必须是 JSON，不要输出 markdown，不要添加解释文字。
-
-作品信息：
-来源：${sourceType}
-模块：${submission.moduleTitle || ''}
-Day：${submission.day || ''}
-任务：${submission.taskTitle || ''}
-训练要求：${submission.requirement || ''}
-训练材料摘要：${submission.materialSummary || ''}
-作品类型：${workType}
-时长：${submission.durationSeconds || 0} 秒
-目标时长：${submission.targetSeconds || 0} 秒
-最低点评时长：${submission.minRequiredSeconds || 0} 秒
-班级：${submission.className || '未加入班级'}
-提交时间：${submission.createdAt || ''}
-
-请严格输出 JSON：
-{
-  "summary": "",
-  "highlights": [],
-  "improvements": [],
-  "suggestions": [],
-  "score": 0,
-  "level": ""
-}`
+function toText(value, fallback = '') {
+  return String(value || fallback).trim()
 }
 
-function getCloudBaseAIModel() {
-  // 兼容 wx-server-sdk 不同版本的云开发 AI 扩展入口。
-  if (typeof cloud.ai === 'function') {
-    const ai = cloud.ai()
-    if (ai && typeof ai.createModel === 'function') {
-      return ai.createModel('cloudbase')
+function firstText(...values) {
+  for (const value of values) {
+    const text = toText(value)
+    if (text) return text
+  }
+  return ''
+}
+
+function getSubmissionTranscript(submission = {}) {
+  return firstText(
+    submission.transcript,
+    submission.recognizedText,
+    submission.speechText,
+    submission.asrText,
+    submission.asrResult,
+    submission.transcription,
+    submission.audioText,
+    submission.recordText,
+    submission.text
+  )
+}
+
+function getOriginalText(submission = {}) {
+  return firstText(
+    submission.originalText,
+    submission.materialText,
+    submission.material,
+    submission.content,
+    submission.promptText,
+    submission.materialSummary
+  )
+}
+
+function toList(value, max = 3) {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+    .slice(0, max)
+}
+
+const METADATA_ONLY_FORBIDDEN_PATTERNS = [
+  /声音.{0,6}(清晰|清楚|稳定|洪亮|饱满)/,
+  /发音.{0,6}(准确|标准|清晰|清楚)/,
+  /语速.{0,6}(稳定|自然|适中)/,
+  /停顿.{0,6}(自然|准确|合理)/,
+  /情绪.{0,6}(饱满|到位)/,
+  /内容.{0,6}(完整|充实|准确)/,
+  /完整.{0,6}(朗读|覆盖|表达)/,
+  /听得出/,
+  /能听到/
+]
+
+const EVALUATION_STANDARDS = {
+  reading: {
+    label: '朗读',
+    dimensions: ['字音清晰度', '声音状态', '停连节奏', '情感表达']
+  },
+  retelling: {
+    label: '复述',
+    dimensions: ['复述表达能力', '重点提取能力', '语言组织能力', '表达流畅度']
+  },
+  topic: {
+    label: '即兴话题',
+    dimensions: ['观点明确度', '内容展开能力', '逻辑结构', '语言流畅度']
+  },
+  mandarin: {
+    label: '普通话',
+    dimensions: ['声母准确度', '韵母准确度', '声调准确度', '语流音变', '吐字归音', '朗读自然度']
+  },
+  speech: {
+    label: '演讲',
+    dimensions: ['观点聚焦度', '结构推进', '节奏与停顿', '情绪感染力', '说服表达']
+  },
+  leaderSpeech: {
+    label: '领导发言',
+    dimensions: ['立意与主题', '结构层次', '重点突出度', '语言稳重度', '现场带动感']
+  }
+}
+
+const EVALUATION_FOCUS = {
+  reading: '重点结合内容完整度、字词清楚程度、语句连贯、重音停顿、情绪投入、文字理解和文章氛围来评价。',
+  retelling: '重点结合核心信息完整度、逻辑顺序、重要内容遗漏、是否能用自己的语言组织，以及开头和结尾是否完整来评价。',
+  topic: '重点结合观点明确度、结构完整度、内容展开、具体例子、重复情况、结尾完整度和交流感来评价。',
+  mandarin: '重点结合本次训练内容中的字词表达、语句清楚程度、语速和停连来评价；没有精细发音评测数据时，不判断具体声母、韵母或声调准确度。',
+  speech: '重点结合主题观点、开头吸引力、结构推进、事例与画面、情绪感染方向和结尾力量来评价。',
+  leaderSpeech: '重点结合立场清晰度、表达稳重度、逻辑层次、措辞分寸、总结号召作用，以及温度与权威感来评价。'
+}
+
+function getEvaluationType(submission = {}) {
+  const moduleId = String(submission.moduleId || submission.category || submission.moduleType || '').trim().toLowerCase()
+  const extraType = String(submission.extraType || '').trim()
+  const titleText = `${submission.moduleTitle || ''} ${submission.extraTitle || ''} ${submission.contentTitle || ''} ${submission.taskTitle || ''} ${submission.title || ''}`
+
+  if (moduleId === 'leaderspeech' || moduleId === 'leader_speech' || /领导发言|讲话稿|致辞|署名文章/.test(titleText)) return 'leaderSpeech'
+  if (moduleId === 'speech' || /演讲/.test(titleText)) return 'speech'
+  if (moduleId === 'retell' || moduleId === 'retelling' || /复述/.test(titleText)) return 'retelling'
+  if (moduleId === 'topic' || extraType === 'randomTopic' || /话题|即兴/.test(titleText)) return 'topic'
+  if (moduleId === 'mandarin' || extraType === 'tongueTwister' || /普通话|绕口令/.test(titleText)) return 'mandarin'
+  return 'reading'
+}
+
+function getLevelByScore(score) {
+  const value = Number(score || 0)
+  if (value >= 90) return 'S级 表现优秀'
+  if (value >= 80) return 'A级 表现良好'
+  if (value >= 70) return 'B级 基本完成'
+  return 'C级 继续加油'
+}
+
+function clampScore(value) {
+  const score = Math.round(Number(value || 0))
+  if (!Number.isFinite(score)) return 0
+  return Math.max(0, Math.min(100, score))
+}
+
+function normalizeDimensionScores(feedback = {}, speechContext = {}) {
+  const dimensions = speechContext.evaluationDimensions || EVALUATION_STANDARDS.reading.dimensions
+  const source = Array.isArray(feedback.dimensionScores) ? feedback.dimensionScores : []
+  return dimensions.map((name, index) => {
+    const raw = source.find(item => String(item && item.name || '').trim() === name) || source[index] || {}
+    let score = clampScore(raw.score)
+    let comment = toText(raw.comment)
+
+    if (speechContext.feedbackMode === 'no_valid_speech') {
+      score = 0
+      comment = '未识别到有效表达内容，建议重新录制后再判断该维度。'
+    } else if (speechContext.feedbackMode === 'metadata_only') {
+      if (!comment || hasForbiddenMetadataClaim(comment)) {
+        comment = '暂未分析真实语音内容，此维度仅作为训练方向参考。'
+      }
+    } else if (!comment) {
+      comment = '可结合本次训练内容继续优化。'
+    }
+
+    return {
+      name,
+      score,
+      comment: comment.slice(0, 72)
+    }
+  })
+}
+
+function hasForbiddenMetadataClaim(text) {
+  return METADATA_ONLY_FORBIDDEN_PATTERNS.some(pattern => pattern.test(String(text || '')))
+}
+
+function sanitizeMetadataOnlyList(list, fallbackList) {
+  const nextList = list.filter(item => !hasForbiddenMetadataClaim(item))
+  return nextList.length ? nextList : fallbackList
+}
+
+function getTranscribeFailureCode(error = {}) {
+  const code = String(error.code || error.errCode || error.name || '')
+  const message = String(error.message || '')
+  const text = `${code} ${message}`.toLowerCase()
+  if (text.includes('timeout') || text.includes('timed out')) return 'ASR_TIMEOUT'
+  if (text.includes('authfailure') || text.includes('unauthorized')) return 'AuthFailure'
+  return code || 'TRANSCRIBE_FUNCTION_FAILED'
+}
+
+function createParseFallback(rawText, feedbackMode) {
+  if (feedbackMode === 'no_valid_speech') {
+    return {
+      title: 'AI点评',
+      summary: '本次未识别到有效表达内容，建议重新录制。',
+      basis: '系统尝试识别语音内容，但没有得到足够可用于点评的表达文本。',
+      contentReview: '暂无法判断内容是否围绕任务展开。',
+      voiceStateReview: '暂无法判断声音状态。',
+      strengths: [],
+      improvements: ['重新录制时，开始后尽快朗读或表达，不要长时间空录。'],
+      nextPractice: ['确认麦克风可用，保持适当距离，再完整录制一遍。'],
+      totalScore: 0,
+      level: 'C级 继续加油',
+      dimensionScores: [],
+      caution: '如果本次录音中没有实际朗读，请重新录制后再生成反馈。',
+      teacherToneTip: rawText ? '反馈原文已保存，便于后续排查。' : ''
     }
   }
 
-  if (cloud.ai && typeof cloud.ai.createModel === 'function') {
-    return cloud.ai.createModel('cloudbase')
+  return {
+    title: 'AI点评',
+    summary: '本次反馈已生成，但格式解析不完整。',
+    basis: feedbackMode === 'metadata_only'
+      ? '本次点评基于训练任务和作品信息生成。'
+      : '本次点评基于训练任务、作品信息和训练内容生成。',
+    contentReview: '',
+    voiceStateReview: '',
+    strengths: [],
+    improvements: ['请重新生成一次，或稍后再试。'],
+    nextPractice: [],
+    totalScore: 0,
+    level: 'C级 继续加油',
+    dimensionScores: [],
+    caution: '当前反馈格式解析不完整，请以实际训练体验为准。',
+    teacherToneTip: rawText ? '反馈原文已保存，便于后续排查。' : ''
+  }
+}
+
+function normalizeFeedback(feedback, speechContext) {
+  if (!feedback || typeof feedback !== 'object') return null
+
+  const feedbackMode = speechContext.feedbackMode
+  const summary = toText(feedback.summary, '本次作品已提交，可以作为一次训练记录。')
+  const defaultBasis = feedbackMode === 'metadata_only'
+    ? '本次点评基于训练任务、作品时长和提交信息生成，暂未分析真实语音内容。'
+    : feedbackMode === 'no_valid_speech'
+      ? '系统尝试识别语音内容，但没有得到足够可用于点评的表达文本。'
+      : '本次点评基于训练任务、作品时长、训练内容和基础表达分析生成。'
+  const defaultCaution = feedbackMode === 'metadata_only'
+    ? '当前系统暂未识别真实语音内容。如果本次录音中没有实际朗读，请重新录制后再生成反馈。'
+    : feedbackMode === 'no_valid_speech'
+      ? '请确认麦克风正常，录制开始后直接朗读或表达，录完后先回听一次。'
+      : ''
+
+  const normalized = {
+    title: toText(feedback.title, 'AI点评') || 'AI点评',
+    summary,
+    basis: toText(feedback.basis, defaultBasis),
+    contentReview: toText(feedback.contentReview),
+    voiceStateReview: toText(feedback.voiceStateReview),
+    strengths: toList(feedback.strengths, 3),
+    improvements: toList(feedback.improvements, 3),
+    nextPractice: toList(feedback.nextPractice, 3),
+    dimensionScores: normalizeDimensionScores(feedback, speechContext),
+    totalScore: clampScore(feedback.totalScore || feedback.score),
+    level: toText(feedback.level),
+    caution: toText(feedback.caution, defaultCaution),
+    teacherToneTip: toText(feedback.teacherToneTip || feedback.encouragement),
+    encouragement: toText(feedback.encouragement || feedback.teacherToneTip)
   }
 
-  if (cloud.extend && cloud.extend.AI && typeof cloud.extend.AI.createModel === 'function') {
-    return cloud.extend.AI.createModel('cloudbase')
+  if (!normalized.totalScore && normalized.dimensionScores.length) {
+    normalized.totalScore = Math.round(
+      normalized.dimensionScores.reduce((sum, item) => sum + Number(item.score || 0), 0) / normalized.dimensionScores.length
+    )
+  }
+  normalized.level = normalized.level || getLevelByScore(normalized.totalScore)
+
+  if (feedbackMode === 'metadata_only') {
+    if (hasForbiddenMetadataClaim(normalized.summary)) {
+      normalized.summary = '本次作品达到基础时长要求，可以作为一次训练记录。'
+    }
+
+    normalized.basis = defaultBasis
+    normalized.contentReview = normalized.contentReview || '暂未分析真实语音内容，不能判断内容完整度和材料匹配度。'
+    normalized.voiceStateReview = '当前没有音量、音色或发音评测数据，不对声音质量作结论。'
+    normalized.strengths = sanitizeMetadataOnlyList(normalized.strengths, [
+      '完成了一次训练提交，说明你已经开始建立表达练习习惯。',
+      '本次时长达到基础要求，便于后续进行连续训练记录。'
+    ])
+    normalized.improvements = sanitizeMetadataOnlyList(normalized.improvements, [
+      '下次录制时，请确保全程真实朗读，不要空录或长时间停顿。',
+      '朗读时可以放慢语速，在句号、逗号处自然停顿。'
+    ])
+    normalized.nextPractice = sanitizeMetadataOnlyList(normalized.nextPractice, [
+      '重新录制一遍，目标是完整读完材料。',
+      '录完后先自己回听一次，检查有没有漏读、卡顿或无声。'
+    ])
+    normalized.caution = defaultCaution
   }
 
-  throw new Error('CloudBase AI SDK is unavailable')
+  if (feedbackMode === 'no_valid_speech') {
+    normalized.summary = '本次未识别到有效表达内容，建议重新录制。'
+    normalized.basis = defaultBasis
+    normalized.contentReview = '暂无法判断是否围绕题目或材料完成表达。'
+    normalized.voiceStateReview = '未识别到有效表达，请先检查麦克风和录制距离。'
+    normalized.strengths = []
+    normalized.improvements = normalized.improvements.length ? normalized.improvements : [
+      '开始录制后尽快朗读或表达，避免长时间空录。',
+      '保持手机和嘴部适当距离，尽量在安静环境中完成。'
+    ]
+    normalized.nextPractice = normalized.nextPractice.length ? normalized.nextPractice : [
+      '重新录制一遍，先慢一点读清楚，再提交作品。',
+      '录完后先回听确认有声音和完整表达。'
+    ]
+    normalized.dimensionScores = normalizeDimensionScores(feedback, speechContext)
+    normalized.totalScore = 0
+    normalized.level = 'C级 继续加油'
+    normalized.caution = defaultCaution
+  }
+
+  return normalized
+}
+
+async function tryTranscribeAudio(submission) {
+  const cloudFileID = submission.cloudFileID || submission.fileID || submission.fileId || submission.audioFileID || submission.audioFileId || ''
+  const audioUrl = submission.audioUrl || submission.audioURL || submission.audioFileUrl || submission.audioFileURL || ''
+  const workType = submission.workType || submission.type || ''
+
+  if (workType !== 'audio' || (!cloudFileID && !audioUrl)) {
+    return {
+      success: false,
+      hasTranscript: false,
+      transcript: '',
+      asrStatus: 'not_started',
+      asrProvider: '',
+      message: workType === 'audio' ? (cloudFileID || audioUrl ? '训练内容暂未识别' : '没有可识别的云端录音文件或音频地址') : '视频作品暂不支持训练内容识别',
+      debugCode: workType === 'audio' ? (cloudFileID || audioUrl ? 'ASR_UNAVAILABLE' : 'ASR_NO_FILE') : 'VIDEO_ASR_NOT_SUPPORTED'
+    }
+  }
+
+  try {
+    console.log('[generateTrainingFeedback] will call ASR:', {
+      workId: submission.workId || submission.id || '',
+      hasCloudFileID: Boolean(cloudFileID),
+      hasAudioUrl: Boolean(audioUrl),
+      durationSeconds: Number(submission.durationSeconds || 0)
+    })
+    const res = await cloud.callFunction({
+      name: 'transcribeAudio',
+      data: {
+        cloudFileID,
+        fileID: cloudFileID,
+        audioFileID: submission.audioFileID || submission.audioFileId || '',
+        audioUrl,
+        workId: submission.workId || submission.id || '',
+        durationSeconds: submission.durationSeconds || 0,
+        sourceType: submission.sourceType || '',
+        filePath: submission.filePath || submission.tempFilePath || submission.audioPath || '',
+        fileName: submission.fileName || ''
+      }
+    })
+    const result = res && res.result ? res.result : {}
+
+    console.log('[generateTrainingFeedback] transcribeAudio result:', {
+      success: result.success === true,
+      asrStatus: result.success ? 'success' : (result.debugCode === 'ASR_NOT_CONFIGURED' ? 'not_configured' : 'failed'),
+      debugCode: result.debugCode || '',
+      message: result.message || '',
+      transcriptLength: String(result.transcript || result.asrText || '').trim().length
+    })
+
+    if (result.success) {
+      return {
+        ...result,
+        asrStatus: 'success',
+        asrProvider: result.asrProvider || 'tencent-cloud-asr'
+      }
+    }
+
+    return {
+      ...result,
+      success: false,
+      hasTranscript: false,
+      transcript: '',
+      asrStatus: result.debugCode === 'ASR_NOT_CONFIGURED' ? 'not_configured' : 'failed',
+      asrProvider: result.asrProvider || 'tencent-cloud-asr',
+      message: result.message || '训练内容暂未识别'
+    }
+  } catch (error) {
+    console.warn('[generateTrainingFeedback] transcribeAudio failed:', error)
+    return {
+      success: false,
+      hasTranscript: false,
+      transcript: '',
+      asrStatus: 'failed',
+      asrProvider: 'tencent-cloud-asr',
+      message: error.message || '训练内容暂未识别',
+      debugCode: getTranscribeFailureCode(error),
+      rawError: error
+    }
+  }
+}
+
+async function prepareSpeechContext(submission) {
+  let transcript = getSubmissionTranscript(submission)
+  let asrStatus = transcript ? 'success' : 'not_started'
+  let asrErrorMessage = ''
+  let asrProvider = transcript ? (submission.asrProvider || 'provided') : ''
+  let audioAnalysis = submission.audioAnalysis || null
+  let debugCode = ''
+  const originalText = getOriginalText(submission)
+
+  if (!transcript && (submission.workType || submission.type) === 'audio') {
+    const asrResult = await tryTranscribeAudio(submission)
+    transcript = getSubmissionTranscript(asrResult)
+    asrStatus = asrResult.asrStatus || (transcript ? 'success' : 'failed')
+    asrErrorMessage = asrResult.success ? '' : (asrResult.asrErrorMessage || asrResult.message || '')
+    asrProvider = asrResult.asrProvider || ''
+    audioAnalysis = asrResult.audioAnalysis || audioAnalysis
+    debugCode = asrResult.debugCode || ''
+  }
+
+  const speechAnalysis = analyzeSpeechForTraining({
+    transcript,
+    durationSeconds: submission.durationSeconds || 0,
+    targetSeconds: submission.targetSeconds || 0,
+    materialText: originalText,
+    materialSummary: submission.materialSummary || '',
+    taskTitle: submission.contentTitle || submission.taskTitle || '',
+    moduleId: submission.moduleId || '',
+    moduleTitle: submission.moduleTitle || submission.extraTitle || '',
+    sourceType: submission.sourceType || '',
+    extraType: submission.extraType || '',
+    workType: submission.workType || submission.type || ''
+  })
+  let feedbackMode = 'metadata_only'
+  const evaluationType = getEvaluationType(submission)
+  const evaluationStandard = EVALUATION_STANDARDS[evaluationType] || EVALUATION_STANDARDS.reading
+
+  if (transcript) {
+    feedbackMode = speechAnalysis.possibleEmptyRecording ? 'no_valid_speech' : 'transcript_based'
+  } else {
+    feedbackMode = 'no_valid_speech'
+  }
+
+  return {
+    transcript,
+    hasTranscript: Boolean(transcript),
+    asrStatus,
+    asrErrorMessage,
+    asrProvider,
+    debugCode,
+    transcriptLength: transcript.length,
+    originalText,
+    originalTextLength: originalText.length,
+    audioAnalysis,
+    speechAnalysis,
+    feedbackMode,
+    evaluationType,
+    evaluationLabel: evaluationStandard.label,
+    evaluationDimensions: evaluationStandard.dimensions
+  }
+}
+
+function truncateTranscript(transcript, feedbackType) {
+  const text = String(transcript || '').trim()
+  const maxLength = feedbackType === 'deep' ? 1200 : 300
+
+  if (text.length <= maxLength) return text
+  if (feedbackType === 'deep') return `${text.slice(0, 800)}…${text.slice(-400)}`
+  return `${text.slice(0, 200)}…${text.slice(-100)}`
+}
+
+function truncateOriginalText(originalText, feedbackType) {
+  const text = String(originalText || '').trim()
+  const maxLength = feedbackType === 'deep' ? 1200 : 420
+  if (text.length <= maxLength) return text
+  if (feedbackType === 'deep') return `${text.slice(0, 800)}…${text.slice(-400)}`
+  return `${text.slice(0, 280)}…${text.slice(-140)}`
+}
+
+function getCompactRuleAnalysis(analysis = {}) {
+  return {
+    durationLevel: analysis.durationLevel || 'unknown',
+    speechRate: analysis.speechRate || null,
+    speechRateLevel: analysis.speechRateLevel || 'unknown',
+    contentMatchScore: analysis.contentMatchScore,
+    contentMatchLevel: analysis.contentMatchLevel || 'unknown',
+    repetitionRiskLevel: analysis.repetitionRiskLevel || 'unknown',
+    structureLevel: analysis.structureLevel || 'unknown',
+    possibleEmptyRecording: Boolean(analysis.possibleEmptyRecording),
+    possibleTooShort: Boolean(analysis.possibleTooShort),
+    possibleOffTopic: Boolean(analysis.possibleOffTopic),
+    possibleIncomplete: Boolean(analysis.possibleIncomplete),
+    overallRuleScore: Number(analysis.overallRuleScore || 0)
+  }
+}
+
+function buildPrompt(submission, speechContext, feedbackType) {
+  const isDeep = feedbackType === 'deep'
+  const analysis = speechContext.speechAnalysis || {}
+  const promptData = {
+    feedbackType,
+    feedbackMode: speechContext.feedbackMode,
+    moduleTitle: submission.moduleTitle || submission.extraTitle || '',
+    taskTitle: submission.contentTitle || submission.taskTitle || '',
+    workType: submission.workType === 'video' ? '视频' : '音频',
+    durationSeconds: Number(submission.durationSeconds || 0),
+    targetSeconds: Number(submission.targetSeconds || 0),
+    transcript: truncateTranscript(speechContext.transcript, feedbackType) || '无',
+    transcriptLength: speechContext.transcriptLength,
+    originalText: truncateOriginalText(speechContext.originalText, feedbackType) || '无',
+    originalTextLength: speechContext.originalTextLength,
+    ruleSummary: analysis.ruleSummary || '',
+    ruleTags: Array.isArray(analysis.ruleTags) ? analysis.ruleTags.slice(0, 6) : [],
+    metrics: isDeep
+      ? getCompactRuleAnalysis(analysis)
+      : {
+        durationLevel: analysis.durationLevel || 'unknown',
+        speechRateLevel: analysis.speechRateLevel || 'unknown',
+        contentMatchLevel: analysis.contentMatchLevel || 'unknown',
+        structureLevel: analysis.structureLevel || 'unknown',
+        possibleEmptyRecording: Boolean(analysis.possibleEmptyRecording)
+      },
+    evaluationType: speechContext.evaluationType,
+    evaluationLabel: speechContext.evaluationLabel,
+    evaluationDimensions: speechContext.evaluationDimensions,
+    evaluationFocus: EVALUATION_FOCUS[speechContext.evaluationType] || EVALUATION_FOCUS.reading
+  }
+  if (isDeep) {
+    promptData.materialSummary = String(submission.materialSummary || '').slice(0, 300)
+  }
+  const detailRule = isDeep
+    ? '可结合训练内容和规则指标做更细的结构分析，但仍不能超出已有数据做判断'
+    : '基于训练内容和规则指标给出完整但克制的训练点评'
+
+  return `你是一位有20年一线经验的口才与演讲教练，正在为“杨勤口才训练KEEP”的学员点评作品。${detailRule}。
+要求：
+1. 总字数控制在500-900个中文字符，语气温暖、专业、鼓励，避免套话；每条建议都要能在下一次练习中执行。
+2. 不做心理或医学诊断，不夸大 AI 能力，不使用 Markdown；只输出 JSON。
+3. transcript 是学员实际说出的内容；originalText 只是训练材料或参考原文，绝不能把 originalText 当成学员发言。
+4. 点评、内容匹配、逻辑展开和建议必须围绕 transcript；originalText 仅用于判断训练任务背景和参考方向。
+5. 必须按照 evaluationDimensions 对应维度评分，并针对当前 evaluationType 评价，不同训练类型不要混用标准。
+6. 可结合已有训练内容和规则指标讨论表达清晰度、流畅度、语速、停顿、逻辑组织、叙事或说服表达；没有音量、音色、精细发音评测数据时，不得判断音量、音色、平翘舌或发音准确度。
+7. 当 workType 为视频时，只能把肢体语言、眼神和姿态写成下一次可尝试的训练动作；没有视觉分析数据时，不能声称已经看见其表现。
+8. summary 是“综合评价”，必须写120-220个中文字符、4-6句话，并自然包含：温暖且真实的整体肯定、本次做得较好的具体方面、1-2个可直接执行的改进动作、带期待感的鼓励结尾。使用第二人称“你”，先肯定已经做到的部分，再用成长型措辞说明下一步，不机械套模板，不重复凑字数。
+9. 综合评价必须遵循输入中的 evaluationFocus，结合真实 transcript、训练时长和已有规则指标变化表达；不能用同一套话覆盖不同训练类型。
+10. 内容还要在对应字段中自然包含以下部分，并以少量 emoji 引导：🌟 综合表现、😊 做得好的地方、🎯 可以提升的地方、📚 下一次练习目标、🌈 鼓励。
+11. 不得编造未提供的录音事实；只能根据输入中的真实字段判断。没有音量、音色、视觉或精细发音数据时，使用“从训练内容来看”等克制表述；无有效语音内容会由系统在调用模型前直接返回重录提醒。
+12. 所有用户可见评价统一称“本次训练内容”，不要向用户暴露内部识别流程或技术字段名。
+
+输入：${JSON.stringify(promptData)}
+
+输出结构：
+{"title":"AI点评","summary":"🌟 120-220个中文字符、4-6句话的综合评价","totalScore":0,"level":"","dimensionScores":[{"name":"","score":0,"comment":""}],"contentReview":"","voiceStateReview":"","strengths":["😊 "],"improvements":["🎯 "],"nextPractice":["📚 "],"encouragement":"🌈 ","caution":""}`
+}
+
+function estimateTokenCount(text) {
+  const value = String(text || '')
+  const cjkCount = (value.match(/[\u3400-\u9fff]/g) || []).length
+  const asciiWordCount = (value.replace(/[\u3400-\u9fff]/g, ' ').match(/[A-Za-z0-9_]+/g) || []).length
+  const otherCount = Math.max(value.length - cjkCount, 0)
+  return Math.max(1, Math.ceil(cjkCount / 1.5 + asciiWordCount * 1.3 + otherCount / 8))
 }
 
 function getAIResponseText(response) {
   if (!response) return ''
   if (typeof response === 'string') return response
   if (response.text) return response.text
+  if (response.content) return response.content
   if (response.output_text) return response.output_text
+  if (response.data && typeof response.data === 'string') return response.data
+  if (response.data && response.data.text) return response.data.text
+  if (response.data && response.data.content) return response.data.content
+  if (response.data && response.data.output_text) return response.data.output_text
+  if (response.result && typeof response.result === 'string') return response.result
+  if (response.result && response.result.text) return response.result.text
+  if (response.result && response.result.content) return response.result.content
+  if (response.result && response.result.output_text) return response.result.output_text
 
   const candidates = [
     response.choices,
@@ -111,8 +594,9 @@ function getAIResponseText(response) {
   return ''
 }
 
-async function callCloudBaseAI(prompt) {
-  const model = getCloudBaseAIModel()
+async function callCloudBaseAI(prompt, actualModel) {
+  const ai = cloud.ai()
+  const model = ai.createModel('cloudbase')
   const messages = [
     {
       role: 'user',
@@ -120,25 +604,22 @@ async function callCloudBaseAI(prompt) {
     }
   ]
 
-  try {
-    const response = await model.generateText({
-      model: MODEL,
-      messages
-    })
-    const text = getAIResponseText(response)
-    if (text) return text
-  } catch (error) {
-    console.log('cloudbase ai direct generateText failed, retry with data wrapper', error)
-  }
-
-  const response = await model.generateText({
-    data: {
-      model: MODEL,
-      messages
-    }
+  const result = await model.generateText({
+    model: actualModel,
+    messages
   })
 
-  return getAIResponseText(response)
+  console.log('[generateTrainingFeedback] ai result raw:', result)
+  console.log('[generateTrainingFeedback] cloudbase ai result:', {
+    type: typeof result,
+    hasText: Boolean(getAIResponseText(result)),
+    hasUsage: Boolean(result && result.usage)
+  })
+
+  return {
+    text: getAIResponseText(result),
+    usage: result && result.usage ? result.usage : null
+  }
 }
 
 function parseJsonOutput(outputText) {
@@ -164,30 +645,219 @@ function parseJsonOutput(outputText) {
   }
 }
 
+function buildNoValidSpeechResponse(submission, speechContext, feedbackType) {
+  return {
+    success: false,
+    error: true,
+    code: 'EMPTY_TRANSCRIPT',
+    source: 'none',
+    model: 'none',
+    feedbackVersion: 'v4-cost-optimized',
+    feedbackType,
+    feedbackMode: 'no_valid_speech',
+    evaluationType: speechContext.evaluationType,
+    evaluationDimensions: speechContext.evaluationDimensions,
+    transcript: '',
+    speechText: '',
+    recognizedText: '',
+    asrText: '',
+    hasTranscript: false,
+    asrStatus: speechContext.asrStatus,
+    debugCode: speechContext.debugCode || 'NO_VALID_SPEECH',
+    asrErrorMessage: speechContext.asrErrorMessage,
+    transcriptLength: 0,
+    originalTextLength: speechContext.originalTextLength,
+    asrProvider: speechContext.asrProvider,
+    audioAnalysis: speechContext.audioAnalysis,
+    speechAnalysis: speechContext.speechAnalysis,
+    ruleAnalysis: speechContext.speechAnalysis,
+    feedback: null,
+    rawText: '',
+    usage: null,
+    tokenUsage: null,
+    estimatedInputTokens: 0,
+    estimatedOutputTokens: 0,
+    message: '暂未识别到有效语音内容，请确认录音声音清晰后重试。'
+  }
+}
+
 exports.main = async event => {
-  const submission = event.submission || {}
+  const submission = {
+    ...event,
+    ...(event.submission || {})
+  }
+  const feedbackType = submission.feedbackType === 'deep' || event.feedbackType === 'deep'
+    ? 'deep'
+    : 'normal'
+  const actualModel = feedbackType === 'deep' ? DEEP_AI_MODEL : NORMAL_AI_MODEL
+  const willCallASR = (submission.workType || submission.type) === 'audio' && Boolean(submission.cloudFileID || submission.fileID)
+  let speechContext = null
+
+  console.log('[generateTrainingFeedback] start:', {
+    workId: submission.workId || submission.id || '',
+    feedbackType,
+    model: actualModel,
+    workType: submission.workType || submission.type || '',
+    cloudFileID: submission.cloudFileID || '',
+    fileID: submission.fileID || '',
+    hasCloudFileID: Boolean(submission.cloudFileID),
+    hasFileID: Boolean(submission.fileID),
+    durationSeconds: Number(submission.durationSeconds || 0),
+    targetSeconds: Number(submission.targetSeconds || 0),
+    willCallASR
+  })
+  console.log('[generateTrainingFeedback] model:', actualModel)
 
   try {
-    const outputText = await callCloudBaseAI(buildPrompt(submission))
-    const feedback = normalizeFeedback(parseJsonOutput(outputText))
+    if (!(await hasBoundPhone())) {
+      return {
+        success: false,
+        error: true,
+        message: '生成 AI 点评需要先绑定手机号。',
+        debugCode: 'phone_required',
+        source: 'none',
+        model: 'none'
+      }
+    }
+
+    speechContext = await prepareSpeechContext(submission)
+    console.log('[AI Feedback] moduleType/category:', {
+      moduleType: submission.moduleType || submission.moduleId || '',
+      category: submission.category || '',
+      trainingType: submission.trainingType || '',
+      evaluationType: speechContext.evaluationType
+    })
+    console.log('[AI Feedback] transcript length:', speechContext.transcriptLength)
+    console.log('[AI Feedback] originalText length:', speechContext.originalTextLength)
+    console.log('[AI Feedback] dimensions:', speechContext.evaluationDimensions)
+
+    const payloadSummary = {
+      sourceType: submission.sourceType || '',
+      moduleTitle: submission.moduleTitle || '',
+      day: submission.day || '',
+      taskTitle: submission.contentTitle || submission.taskTitle || '',
+      workType: submission.workType || '',
+      durationSeconds: submission.durationSeconds || 0,
+      minRequiredSeconds: submission.minRequiredSeconds || 0,
+      cloudFileID: submission.cloudFileID || submission.fileID || '',
+      feedbackMode: speechContext.feedbackMode,
+      hasTranscript: speechContext.hasTranscript,
+      asrStatus: speechContext.asrStatus,
+      debugCode: speechContext.debugCode,
+      asrErrorMessage: speechContext.asrErrorMessage,
+      transcriptLength: speechContext.transcriptLength,
+      originalTextLength: speechContext.originalTextLength
+    }
+    payloadSummary.feedbackType = feedbackType
+    console.log('[generateTrainingFeedback] payload summary:', payloadSummary)
+
+    if (!speechContext.transcript || speechContext.feedbackMode === 'no_valid_speech') {
+      const response = buildNoValidSpeechResponse(submission, speechContext, feedbackType)
+      console.log('[generateTrainingFeedback] no valid speech, skip model:', {
+        workId: submission.workId || submission.id || '',
+        asrStatus: speechContext.asrStatus,
+        debugCode: response.debugCode,
+        transcriptLength: 0
+      })
+      return response
+    }
+
+    const prompt = buildPrompt(submission, speechContext, feedbackType)
+    const estimatedInputTokens = estimateTokenCount(prompt)
+    console.log('[generateTrainingFeedback] token estimate:', {
+      estimatedInputTokens,
+      transcriptLength: speechContext.transcriptLength
+    })
+    const aiResult = await callCloudBaseAI(prompt, actualModel)
+    const rawText = aiResult.text || ''
+    const estimatedOutputTokens = estimateTokenCount(rawText)
+    let parsedFeedback = null
+
+    try {
+      parsedFeedback = parseJsonOutput(rawText)
+    } catch (parseError) {
+      console.error('[generateTrainingFeedback] parse error:', parseError)
+      parseError.code = 'AI_RESPONSE_PARSE_FAILED'
+      throw parseError
+    }
+
+    const feedback = normalizeFeedback(parsedFeedback, speechContext)
 
     if (!feedback) {
       throw new Error('invalid feedback payload')
     }
 
-    return {
-      success: true,
-      feedback,
-      source: 'cloudbase-ai',
-      model: MODEL
+    if (speechContext.feedbackMode === 'transcript_based' && feedback.summary.length < 80) {
+      console.warn('[generateTrainingFeedback] summary shorter than expected:', {
+        workId: submission.workId || submission.id || '',
+        evaluationType: speechContext.evaluationType,
+        summaryLength: feedback.summary.length
+      })
     }
+
+    const response = {
+      success: true,
+      source: 'cloudbase-ai',
+      model: actualModel,
+      feedbackVersion: 'v4-cost-optimized',
+      feedbackType,
+      feedbackMode: speechContext.feedbackMode,
+      evaluationType: speechContext.evaluationType,
+      evaluationDimensions: speechContext.evaluationDimensions,
+      transcript: speechContext.transcript,
+      speechText: speechContext.transcript,
+      recognizedText: speechContext.transcript,
+      asrText: speechContext.transcript,
+      hasTranscript: speechContext.hasTranscript,
+      asrStatus: speechContext.asrStatus,
+      debugCode: speechContext.debugCode,
+      asrErrorMessage: speechContext.asrErrorMessage,
+      transcriptLength: speechContext.transcriptLength,
+      asrProvider: speechContext.asrProvider,
+      audioAnalysis: speechContext.audioAnalysis,
+      speechAnalysis: speechContext.speechAnalysis,
+      ruleAnalysis: speechContext.speechAnalysis,
+      feedback,
+      rawText,
+      usage: aiResult.usage,
+      tokenUsage: aiResult.usage,
+      estimatedInputTokens,
+      estimatedOutputTokens
+    }
+
+    console.log('[generateTrainingFeedback] success:', {
+      workId: submission.workId || submission.id || '',
+      model: actualModel,
+      feedbackMode: speechContext.feedbackMode,
+      asrStatus: speechContext.asrStatus,
+      debugCode: speechContext.debugCode,
+      transcriptLength: speechContext.transcriptLength,
+      tokenUsage: aiResult.usage || null,
+      estimatedInputTokens,
+      estimatedOutputTokens
+    })
+
+    return response
   } catch (error) {
-    console.log('generateTrainingFeedback cloudbase ai failed', error)
+    console.error('[generateTrainingFeedback] failed:', {
+      workId: submission.workId || submission.id || '',
+      model: actualModel,
+      feedbackType,
+      feedbackMode: speechContext && speechContext.feedbackMode,
+      asrStatus: speechContext && speechContext.asrStatus,
+      debugCode: error.code || error.errCode || error.name || 'generate_training_feedback_failed',
+      message: error.message || 'AI反馈生成失败'
+    })
 
     return {
       success: false,
       error: true,
-      message: 'AI反馈生成失败',
+      message: error.message || 'AI反馈生成失败',
+      debugCode: error.code || error.errCode || error.name || 'generate_training_feedback_failed',
+      feedbackMode: speechContext ? speechContext.feedbackMode : 'metadata_only',
+      asrStatus: speechContext ? speechContext.asrStatus : 'not_started',
+      asrErrorMessage: speechContext ? speechContext.asrErrorMessage : '',
+      transcriptLength: speechContext ? speechContext.transcriptLength : 0,
       source: 'none',
       model: 'none'
     }

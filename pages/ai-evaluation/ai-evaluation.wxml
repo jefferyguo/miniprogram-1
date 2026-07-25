@@ -171,8 +171,10 @@
     <view class="ai-report-card">
       <view class="section-head">
         <text class="section-title no-margin">AI 表达力报告</text>
-        <text class="ai-report-badge" wx:if="{{result.aiReportError}}">基础报告</text>
+        <text class="ai-report-badge" wx:if="{{result.aiReportError}}">生成失败</text>
       </view>
+
+      <view class="ai-generated-notice" wx:if="{{result.aiReport}}">本报告由人工智能生成，仅供训练参考</view>
 
       <view class="report-loading" wx:if="{{isGeneratingReport}}">
         <text class="loading-title">正在生成表达力报告...</text>
@@ -180,8 +182,7 @@
       </view>
 
       <view wx:elif="{{result.aiReport}}">
-        <text class="fallback-tip" wx:if="{{result.aiReportError}}">当前为基础测评报告，AI 深度报告稍后开放。</text>
-        <text class="ai-source-text">报告来源：{{result.aiReportSource === 'cloudbase-ai' ? '云开发 AI' : '基础报告'}}</text>
+        <text class="ai-source-text">报告来源：{{result.aiReportSource === 'cloudbase-ai' ? '云开发 AI' : result.aiReportSource}}</text>
         <text wx:if="{{result.aiReportModel}}" class="ai-source-text">AI模型：{{result.aiReportModel}}</text>
 
         <view class="report-section">
@@ -210,6 +211,13 @@
         </view>
 
         <text class="report-encouragement">{{result.aiReport.encouragement}}</text>
+      </view>
+
+      <view class="report-error" wx:elif="{{result.aiReportError}}">
+        <text class="loading-title">AI 报告暂未生成</text>
+        <text class="loading-desc">本次测评分数和维度分析已保存，AI 报告可稍后重新生成。</text>
+        <text class="ai-source-text">报告来源：{{result.aiReportSource || 'none'}}</text>
+        <text class="ai-source-text">AI模型：{{result.aiReportModel || 'none'}}</text>
       </view>
     </view>
 
@@ -254,3 +262,4 @@
     </view>
   </view>
 </view>
+<member-benefit-modal id="memberBenefitModal" />

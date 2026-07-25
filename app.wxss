@@ -7,4 +7,25 @@
   justify-content: space-between;
   padding: 200rpx 0;
   box-sizing: border-box;
-} 
+}
+
+/* AI 生成内容统一标识：用于审核识别，也提醒用户理性参考生成结果。 */
+.ai-generated-notice {
+  display: block;
+  margin: 16rpx 0 20rpx;
+  padding: 16rpx 20rpx;
+  border: 1rpx solid #dbe7ff;
+  border-radius: 18rpx;
+  background: #eef4ff;
+  color: #3458c8;
+  font-size: 24rpx;
+  line-height: 1.5;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+/* 弹窗中的标识紧跟标题区，左右与正文保持一致。 */
+.ai-feedback-panel > .ai-generated-notice {
+  flex-shrink: 0;
+  margin: 16rpx 32rpx 0;
+}

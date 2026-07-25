@@ -1,0 +1,88 @@
+function formatSeconds(seconds) {
+  const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0
+  const minute = Math.floor(safeSeconds / 60)
+  const second = safeSeconds % 60
+  return `${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`
+}
+
+Page({
+  data: {
+    src: '',
+    title: '视频预览',
+    rotate: 0,
+    objectFit: 'contain',
+    fitText: '铺满画面',
+    currentText: '00:00',
+    durationText: '00:00',
+    isReady: false,
+    hasError: false
+  },
+
+  onLoad(options) {
+    const src = options.src ? decodeURIComponent(options.src) : ''
+    const title = options.title ? decodeURIComponent(options.title) : '视频预览'
+
+    this.setData({
+      src,
+      title
+    })
+
+    if (!src) {
+      this.setData({
+        hasError: true
+      })
+      wx.showToast({
+        title: '视频文件暂时无法查看',
+        icon: 'none'
+      })
+    }
+  },
+
+  onVideoLoaded(e) {
+    const duration = Number(e.detail && e.detail.duration)
+
+    this.setData({
+      isReady: true,
+      hasError: false,
+      durationText: formatSeconds(duration)
+    })
+  },
+
+  onTimeUpdate(e) {
+    const currentTime = Number(e.detail && e.detail.currentTime)
+    const duration = Number(e.detail && e.detail.duration)
+
+    this.setData({
+      currentText: formatSeconds(currentTime),
+      durationText: formatSeconds(duration)
+    })
+  },
+
+  onVideoError(error) {
+    console.error('video preview error', error)
+    this.setData({
+      hasError: true
+    })
+    wx.showToast({
+      title: '视频文件暂时无法查看',
+      icon: 'none'
+    })
+  },
+
+  rotateVideo() {
+    const next = (this.data.rotate + 90) % 360
+
+    this.setData({
+      rotate: next
+    })
+  },
+
+  toggleFit() {
+    const isContain = this.data.objectFit === 'contain'
+
+    this.setData({
+      objectFit: isContain ? 'cover' : 'contain',
+      fitText: isContain ? '完整显示' : '铺满画面'
+    })
+  }
+})

@@ -35,6 +35,14 @@ button::after {
   background: linear-gradient(135deg, #5C9FD6 0%, #78A7E3 100%);
 }
 
+.module-speech {
+  background: linear-gradient(135deg, #8B6DD8 0%, #A184EF 100%);
+}
+
+.module-leader {
+  background: linear-gradient(135deg, #C58B4C 0%, #D9A763 100%);
+}
+
 .module-icon-wrap {
   width: 72rpx;
   height: 72rpx;
@@ -179,11 +187,74 @@ button::after {
   background: rgba(255, 255, 255, 0.92);
 }
 
+.podium-board {
+  position: absolute;
+  left: 5rpx;
+  top: 5rpx;
+  width: 30rpx;
+  height: 17rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.92);
+  border-radius: 8rpx;
+  box-sizing: border-box;
+}
+
+.podium-stand {
+  position: absolute;
+  left: 19rpx;
+  top: 22rpx;
+  width: 3rpx;
+  height: 13rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.podium-base {
+  position: absolute;
+  left: 8rpx;
+  bottom: 2rpx;
+  width: 24rpx;
+  height: 3rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.document-page {
+  position: absolute;
+  left: 8rpx;
+  top: 4rpx;
+  width: 24rpx;
+  height: 32rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.92);
+  border-radius: 7rpx;
+  box-sizing: border-box;
+}
+
+.document-line {
+  position: absolute;
+  left: 13rpx;
+  width: 14rpx;
+  height: 3rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.document-line-one {
+  top: 15rpx;
+}
+
+.document-line-two {
+  top: 24rpx;
+}
+
 .module-title {
   display: block;
   font-size: 44rpx;
   font-weight: 900;
   margin-bottom: 16rpx;
+}
+
+.module-reading .module-title {
+  font-size: 40rpx;
 }
 
 .module-desc {
@@ -231,23 +302,39 @@ button::after {
 }
 
 .day-list {
-  margin-top: 28rpx;
+  margin-top: 24rpx;
   display: flex;
   flex-direction: column;
-  gap: 22rpx;
+  gap: 16rpx;
 }
 
 .day-card {
-  border-radius: 30rpx;
-  padding: 28rpx;
+  border-radius: 26rpx;
+  padding: 22rpx 24rpx;
   background: #ffffff;
-  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
-  border-left: 8rpx solid transparent;
+  box-shadow: 0 10rpx 26rpx rgba(0, 0, 0, 0.045);
+  border-left: 7rpx solid transparent;
   box-sizing: border-box;
 }
 
 .completed-card {
   border-left-color: #07c160;
+  background: #fbfffd;
+  border-top: 1rpx solid #dff5e8;
+  border-right: 1rpx solid #dff5e8;
+  border-bottom: 1rpx solid #dff5e8;
+}
+
+.locked-card {
+  border-left-color: #d89b3d;
+  background: #fffaf0;
+  border-top: 1rpx solid #f6e7c8;
+  border-right: 1rpx solid #f6e7c8;
+  border-bottom: 1rpx solid #f6e7c8;
+}
+
+.unlocked-card {
+  border-left-color: #16c784;
   background: #fbfffd;
   border-top: 1rpx solid #dff5e8;
   border-right: 1rpx solid #dff5e8;
@@ -262,12 +349,12 @@ button::after {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18rpx;
-  margin-bottom: 10rpx;
+  gap: 14rpx;
+  margin-bottom: 8rpx;
 }
 
 .day-index {
-  font-size: 24rpx;
+  font-size: 23rpx;
   color: #07c160;
   font-weight: 900;
 }
@@ -275,24 +362,17 @@ button::after {
 .day-title {
   display: block;
   font-size: 30rpx;
-  line-height: 1.35;
-  color: #111111;
-  font-weight: 900;
-  margin-bottom: 8rpx;
-}
-
-.day-meta {
-  display: block;
-  font-size: 24rpx;
-  color: #7f8794;
-  line-height: 1.4;
+  line-height: 1.3;
+  color: #111827;
+  font-weight: 600;
+  word-break: break-word;
 }
 
 .status-tag {
   display: inline-block;
-  padding: 8rpx 16rpx;
+  padding: 6rpx 13rpx;
   border-radius: 999rpx;
-  font-size: 22rpx;
+  font-size: 20rpx;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -305,4 +385,19 @@ button::after {
 .todo-tag {
   background: #f1f3f6;
   color: #8a8f99;
+}
+
+.lock-tag {
+  background: #fff3e0;
+  color: #b7791f;
+}
+
+.member-tag {
+  background: #fff1c2;
+  color: #8a5a00;
+}
+
+.unlock-tag {
+  background: #eaf8ef;
+  color: #16c784;
 }

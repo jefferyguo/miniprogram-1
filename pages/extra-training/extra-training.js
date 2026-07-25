@@ -1,20 +1,63 @@
 // pages/extra-training/extra-training.js
-const { extraTraining } = require('../../utils/training-data')
-const { requestTrainingFeedback } = require('../../utils/ai-feedback')
-const { buildClassSubmissionPatch } = require('../../utils/local-data')
+const { getExtraTraining } = require('../../utils/training-data')
+const {
+  getDailyQuote,
+  getDailyTopic,
+  getDailyTongueTwister
+} = require('../../utils/daily-training-data')
+const { FEATURE_FLAGS } = require('../../utils/feature-flags')
+const {
+  generateFeedbackForSubmission,
+  getFeedbackActionState,
+  getFeedbackStatus,
+  normalizeAiFeedback
+} = require('../../utils/ai-feedback')
+const {
+  buildClassSubmissionPatch,
+  ensureSavedWorks,
+  getSavedStatusClass,
+  getSavedStatusText,
+  getTeacherButtonText,
+  getTeacherFeedbackState,
+  getTeacherStatusClass,
+  getTeacherStatusText,
+  patchWorkInStorages,
+  saveWorkWithSubmission
+} = require('../../utils/local-data')
+const {
+  createAudioPlayer,
+  getAudioPath,
+  getInitialAudioPlayer,
+  getVideoPath,
+  previewVideoByPath
+} = require('../../utils/work-media')
+const { publishWorkToSquare, unpublishWorkFromSquare } = require('../../utils/work-public')
+const { uploadWorkFile } = require('../../utils/cloud-upload')
+const { submitWorkRecord } = require('../../utils/cloud-api')
+const { getActiveMemberAccess } = require('../../utils/access-control')
+const { requirePhoneBound } = require('../../utils/phone-auth')
+const { refreshRemoteTrainingContents } = require('../../utils/remote-training')
+const {
+  enableShareMenu,
+  getDefaultShareMessage,
+  getDefaultShareTimeline
+} = require('../../utils/share-config')
 
 const PAGE_CONFIG = {
   dailyQuote: {
     contentTitle: '今日金句',
-    contentTip: '先朗读，再用自己的话表达理解'
+    contentTip: '朗读这句金句，注意停顿、重音和情绪。',
+    changeButtonText: '换一条'
   },
   randomTopic: {
     contentTitle: '今日话题',
-    contentTip: '先表明观点，再补充原因和例子'
+    contentTip: '围绕该话题完成 60 秒以上即兴表达。',
+    changeButtonText: '换一题'
   },
   tongueTwister: {
     contentTitle: '今日绕口令',
-    contentTip: '先慢读清楚，再逐渐加快速度'
+    contentTip: '慢速读清楚，再逐渐加快速度，注意气息、平翘舌和前后鼻音。',
+    changeButtonText: '换一条'
   }
 }
 
@@ -34,17 +77,97 @@ function formatDate(date) {
 }
 
 function buildWorkItem(item) {
+  const feedbackAction = getFeedbackActionState(item)
+  const teacherState = getTeacherFeedbackState(item)
+
   return {
     ...item,
+    audioKey: `extra-${item.id}`,
     typeTitle: item.type === 'audio' ? '录音作品' : '录像作品',
     typeIcon: item.type === 'audio' ? '🎤' : '🎥',
-    actionText: item.type === 'audio' ? '播放' : '查看'
+    actionText: item.type === 'audio' ? '播放' : '查看',
+    statusText: getSavedStatusText(item),
+    statusClass: getSavedStatusClass(item),
+    feedbackActionText: feedbackAction.text,
+    feedbackActionDisabled: feedbackAction.disabled,
+    feedbackActionClass: feedbackAction.className,
+    aiStatusText: getAiStatusText(item),
+    aiStatusClass: getAiStatusClass(item),
+    teacherButtonText: getTeacherButtonText(item),
+    teacherStatusText: getTeacherStatusText(item),
+    teacherStatusClass: getTeacherStatusClass(item),
+    teacherActionClass: teacherState === 'done' ? 'teacher-done-btn' : teacherState === 'pending' ? 'teacher-pending-btn' : 'teacher-ready-btn',
+    hasTeacherFeedback: teacherState === 'done',
+    teacherState
   }
+}
+
+function applyAiGeneratingState(item, generatingWorkId) {
+  if (!generatingWorkId || String(item.id) !== String(generatingWorkId)) return item
+
+  return {
+    ...item,
+    feedbackActionText: '生成中...',
+    feedbackActionDisabled: true,
+    feedbackActionClass: 'feedback-generating-btn',
+    aiStatusText: 'AI生成中',
+    aiStatusClass: 'ai-pending-tag',
+    aiGeneratingTip: '正在分析录音内容，请稍候...'
+  }
+}
+
+function getAiStatusText(work) {
+  const status = getFeedbackStatus(work)
+  if (status === 'done' && work.aiFeedback) return 'AI已生成'
+  if (status === 'pending') return 'AI生成中'
+  if (status === 'error') return 'AI失败'
+  if (status === 'blocked') return '时长不足'
+  return 'AI待生成'
+}
+
+function getAiStatusClass(work) {
+  const status = getFeedbackStatus(work)
+  if (status === 'done' && work.aiFeedback) return 'ai-done-tag'
+  if (status === 'pending') return 'ai-pending-tag'
+  if (status === 'error') return 'ai-error-tag'
+  if (status === 'blocked') return 'ai-blocked-tag'
+  return 'ai-wait-tag'
+}
+
+function mergeDraftWithSubmission(draft, submission) {
+  if (!submission) return draft
+
+  return {
+    ...draft,
+    ...submission,
+    submitted: true,
+    filePath: submission.filePath || draft.filePath || '',
+    tempFilePath: submission.tempFilePath || draft.tempFilePath || draft.filePath || '',
+    thumbPath: submission.thumbPath || draft.thumbPath || ''
+  }
+}
+
+function getDurationSeconds(durationText) {
+  const match = String(durationText || '').match(/(\d+)/)
+  return match ? Number(match[1]) : 0
+}
+
+function patchStoredWork(storageKey, id, patch) {
+  const list = wx.getStorageSync(storageKey) || []
+  wx.setStorageSync(storageKey, list.map(item => (
+    String(item.id) === String(id)
+      ? {
+        ...item,
+        ...patch
+      }
+      : item
+  )))
 }
 
 function normalizeExtraItem(item) {
   if (typeof item === 'string') {
     return {
+      id: '',
       text: item,
       category: '',
       usageTip: ''
@@ -52,14 +175,58 @@ function normalizeExtraItem(item) {
   }
 
   return {
-    text: item && item.text ? item.text : '',
+    id: item && item.id ? item.id : '',
+    text: item && (item.text || item.content || item.title) ? (item.text || item.content || item.title) : '',
+    title: item && item.title ? item.title : '',
+    author: item && item.author ? item.author : '',
     category: item && item.category ? item.category : '',
-    usageTip: item && item.usageTip ? item.usageTip : ''
+    usageTip: item && item.usageTip ? item.usageTip : '',
+    membershipLevel: item && item.membershipLevel === 'member' ? 'member' : 'free'
   }
 }
 
 function getExtraItemText(item) {
   return normalizeExtraItem(item).text
+}
+
+function buildSavedSubmission(draft) {
+  return {
+    id: draft.id,
+    sourceType: 'extra',
+    ...buildClassSubmissionPatch(),
+    extraType: draft.extraType,
+    extraTitle: draft.extraTitle,
+    taskTitle: draft.extraTitle,
+    contentTitle: draft.content,
+    content: draft.content,
+    promptText: draft.promptText || draft.content || '',
+    requirement: '',
+    type: draft.type,
+    workType: draft.type,
+    duration: draft.duration,
+    durationSeconds: getDurationSeconds(draft.duration),
+    targetSeconds: 0,
+    createdAt: draft.createdAt,
+    submittedAt: draft.createdAt,
+    submitted: true,
+    isSubmitted: true,
+    status: 'saved',
+    savedStatus: 'saved',
+    teacherFeedbackRequestStatus: 'none',
+    teacherFeedbackSubmittedAt: '',
+    teacherFeedbackCloudSync: true,
+    teacherFeedbackStatus: '',
+    teacherFeedback: null,
+    filePath: draft.filePath || '',
+    tempFilePath: draft.tempFilePath || draft.filePath || '',
+    thumbPath: draft.thumbPath || '',
+    fileSize: draft.fileSize || 0,
+    isPublic: false,
+    publicPermissionConfirmed: false,
+    aiFeedbackStatus: '',
+    aiFeedbackSource: '',
+    aiFeedbackModel: ''
+  }
 }
 
 Page({
@@ -72,8 +239,11 @@ Page({
     contentTitle: '',
     contentTip: '',
     content: '',
+    currentItemId: '',
     contentCategory: '',
     contentUsageTip: '',
+    currentItemMembershipLevel: 'free',
+    changeButtonText: '换一条',
     items: [],
 
     isAudioRecording: false,
@@ -82,16 +252,28 @@ Page({
     recordingSeconds: 0,
     recordingTypeText: '',
     recordingTimeText: '00:00',
+    maxVideoDuration: '',
+    videoMaxDuration: '',
+    durationLimit: '',
     drafts: [],
-    hasDrafts: false
+    hasDrafts: false,
+    teacherFeedbackEnabled: FEATURE_FLAGS.teacherFeedbackEnabled,
+    audioPlayer: getInitialAudioPlayer(),
+    showAiFeedbackPanel: false,
+    currentAiFeedback: null,
+    aiFeedbackScrollTop: 0,
+    aiGeneratingWorkId: ''
   },
 
-  onLoad(options) {
+  onLoad(options = {}) {
+    enableShareMenu()
     const type = options.type || 'dailyQuote'
+
+    const extraTraining = getExtraTraining()
     const training = extraTraining.find(item => item.id === type) || extraTraining[0]
     const config = PAGE_CONFIG[training.id] || PAGE_CONFIG.dailyQuote
     const items = (training.items || []).concat(training.importedQuotes || [])
-    const firstItem = this.getRandomItem(items)
+    const firstItem = this.getInitialItem(training.id, items)
     const normalizedItem = this.normalizeExtraItem(firstItem)
 
     this.setData({
@@ -102,16 +284,28 @@ Page({
       heroClass: training.className,
       contentTitle: config.contentTitle,
       contentTip: config.contentTip,
+      changeButtonText: config.changeButtonText,
       items,
       content: normalizedItem.text,
+      currentItemId: normalizedItem.id,
       contentCategory: normalizedItem.category,
-      contentUsageTip: normalizedItem.usageTip
+      contentUsageTip: normalizedItem.usageTip,
+      currentItemMembershipLevel: normalizedItem.membershipLevel,
+      maxVideoDuration: training.maxVideoDuration || '',
+      videoMaxDuration: training.videoMaxDuration || '',
+      durationLimit: training.durationLimit || ''
     })
+    this.audioPlayer = createAudioPlayer(this)
     this.initRecorderManager()
     this.loadDrafts()
+    const cloudCategory = training.id === 'randomTopic' ? 'dailyTopic' : training.id
+    refreshRemoteTrainingContents({ force: true, category: cloudCategory })
+      .then(() => this.reloadExtraTrainingFromRemote())
+      .catch(error => console.warn('[extra-training] 云端额外训练覆盖读取失败，继续使用本地内容:', error))
   },
 
   onShow() {
+    enableShareMenu()
     if (this.data.type) {
       this.loadDrafts()
     }
@@ -119,6 +313,108 @@ Page({
 
   normalizeExtraItem(item) {
     return normalizeExtraItem(item)
+  },
+
+  findItemInList(items, id) {
+    if (!id) return null
+    return (items || []).find(item => String(this.normalizeExtraItem(item).id) === String(id)) || null
+  },
+
+  findCloudOverrideItem(items, localItem) {
+    const normalizedItem = this.normalizeExtraItem(localItem)
+    return this.findItemInList(items, normalizedItem.id) || localItem
+  },
+
+  hasMemberAccess() {
+    const access = getActiveMemberAccess()
+    return access.isAdmin === true ||
+      access.isMember === true ||
+      ['monthly', 'yearly', 'admin'].includes(access.membershipType)
+  },
+
+  getAvailableItems(items = []) {
+    if (this.hasMemberAccess()) return items
+    return (items || []).filter(item => this.normalizeExtraItem(item).membershipLevel !== 'member')
+  },
+
+  showMemberModal() {
+    wx.showModal({
+      title: '会员内容',
+      content: '该训练为会员内容，开通会员后即可解锁更多训练。',
+      confirmText: '开通会员',
+      cancelText: '稍后再说',
+      success: res => {
+        if (res.confirm) {
+          wx.navigateTo({
+            url: '/pages/member-center/member-center'
+          })
+        }
+      }
+    })
+  },
+
+  ensureCurrentExtraAccess() {
+    if (this.data.currentItemMembershipLevel !== 'member' || this.hasMemberAccess()) return true
+    this.showMemberModal()
+    return false
+  },
+
+  getInitialItem(type, items) {
+    const availableItems = this.getAvailableItems(items)
+    if (!availableItems.length) {
+      this.showMemberModal()
+      return { id: '', text: '当前额外训练内容为会员内容，开通会员后即可训练。', membershipLevel: 'member' }
+    }
+
+    if (type === 'dailyQuote') {
+      const dailyItem = this.normalizeExtraItem(getDailyQuote())
+      return this.findItemInList(availableItems, dailyItem.id) || this.getRandomItem(availableItems)
+    }
+
+    if (type === 'randomTopic') {
+      const dailyItem = this.normalizeExtraItem(getDailyTopic())
+      return this.findItemInList(availableItems, dailyItem.id) || this.getRandomItem(availableItems)
+    }
+
+    if (type === 'tongueTwister') {
+      const dailyItem = this.normalizeExtraItem(getDailyTongueTwister())
+      return this.findItemInList(availableItems, dailyItem.id) || this.getRandomItem(availableItems)
+    }
+
+    return this.getRandomItem(availableItems)
+  },
+
+  reloadExtraTrainingFromRemote() {
+    if (!this.data.type) return
+
+    const extraTraining = getExtraTraining()
+    const training = extraTraining.find(item => item.id === this.data.type)
+    if (!training) return
+
+    const config = PAGE_CONFIG[training.id] || PAGE_CONFIG.dailyQuote
+    const items = (training.items || []).concat(training.importedQuotes || [])
+    const availableItems = this.getAvailableItems(items)
+    const currentItem = this.findItemInList(availableItems, this.data.currentItemId) || this.getInitialItem(training.id, items)
+    const normalizedItem = this.normalizeExtraItem(currentItem)
+
+    this.setData({
+      title: training.title,
+      desc: training.desc,
+      icon: training.icon,
+      heroClass: training.className,
+      contentTitle: config.contentTitle,
+      contentTip: config.contentTip,
+      changeButtonText: config.changeButtonText,
+      items,
+      content: normalizedItem.text,
+      currentItemId: normalizedItem.id,
+      contentCategory: normalizedItem.category,
+      contentUsageTip: normalizedItem.usageTip,
+      currentItemMembershipLevel: normalizedItem.membershipLevel,
+      maxVideoDuration: training.maxVideoDuration || '',
+      videoMaxDuration: training.videoMaxDuration || '',
+      durationLimit: training.durationLimit || ''
+    })
   },
 
   getRandomItem(items, currentContent = '') {
@@ -138,26 +434,51 @@ Page({
   },
 
   changeContent() {
-    const nextItem = this.getRandomItem(this.data.items, this.data.content)
+    const availableItems = this.getAvailableItems(this.data.items)
+    if (!availableItems.length) {
+      this.showMemberModal()
+      return
+    }
+
+    let nextItem = this.getRandomItem(availableItems, this.data.content)
+
+    nextItem = this.findCloudOverrideItem(availableItems, nextItem)
     const normalizedItem = this.normalizeExtraItem(nextItem)
 
     this.setData({
       content: normalizedItem.text,
+      currentItemId: normalizedItem.id,
       contentCategory: normalizedItem.category,
-      contentUsageTip: normalizedItem.usageTip
+      contentUsageTip: normalizedItem.usageTip,
+      currentItemMembershipLevel: normalizedItem.membershipLevel
     })
 
     wx.showToast({
-      title: '已换一条',
+      title: this.data.type === 'randomTopic' ? '已换一题' : '已换一条',
       icon: 'none'
     })
   },
 
   loadDrafts() {
-    const drafts = wx.getStorageSync('extraTrainingDrafts') || []
-    const currentDrafts = drafts
+    const saved = ensureSavedWorks('extra')
+    const currentMap = {}
+
+    saved.drafts
       .filter(item => item.extraType === this.data.type)
-      .map(buildWorkItem)
+      .forEach(item => {
+        currentMap[String(item.id)] = item
+      })
+
+    saved.submissions
+      .filter(item => item.extraType === this.data.type)
+      .forEach(item => {
+        const key = String(item.id)
+        currentMap[key] = mergeDraftWithSubmission(currentMap[key] || item, item)
+      })
+
+    const currentDrafts = Object.keys(currentMap)
+      .map(key => applyAiGeneratingState(buildWorkItem(currentMap[key]), this.data.aiGeneratingWorkId))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
 
     this.setData({
       drafts: currentDrafts,
@@ -205,10 +526,15 @@ Page({
 
   toggleAudio() {
     if (this.data.isVideoRecording) return
+    if (!this.ensureCurrentExtraAccess()) return
 
     if (this.data.isAudioRecording) {
       this.stopAudioRecord()
     } else {
+      if (!requirePhoneBound('提交训练作品', {
+        page: this,
+        onSuccess: () => this.toggleAudio()
+      })) return
       this.ensureRecordPermission(() => {
         this.startAudioRecord()
       })
@@ -217,6 +543,12 @@ Page({
 
   toggleVideo() {
     if (this.data.isAudioRecording) return
+    if (!this.ensureCurrentExtraAccess()) return
+
+    if (!requirePhoneBound('提交训练作品', {
+      page: this,
+      onSuccess: () => this.toggleVideo()
+    })) return
 
     wx.navigateTo({
       url: '/pages/video-record/video-record',
@@ -225,13 +557,16 @@ Page({
           this.createVideoDraft(data)
         }
       },
-      success: res => {
+      success: async res => {
         res.eventChannel.emit('videoRecordContext', {
           sourceType: 'extra',
           title: this.data.title,
           subtitle: '额外训练',
           promptText: this.data.content || '',
-          requirement: ''
+          requirement: '',
+          maxVideoDuration: this.data.maxVideoDuration,
+          videoMaxDuration: this.data.videoMaxDuration,
+          durationLimit: this.data.durationLimit
         })
       }
     })
@@ -249,7 +584,8 @@ Page({
     })
 
     this.recorderManager.start({
-      duration: 60000,
+      // 微信录音 API 需要传入 duration；这里使用 10 分钟上限，避免业务侧 60 秒强制停止。
+      duration: 600000,
       sampleRate: 16000,
       numberOfChannels: 1,
       encodeBitRate: 48000,
@@ -285,15 +621,23 @@ Page({
       type: 'audio',
       duration: `${seconds}秒`,
       createdAt: formatDate(new Date()),
-      submitted: false,
+      submitted: true,
+      isSubmitted: true,
+      status: 'saved',
+      savedStatus: 'saved',
+      teacherFeedbackRequestStatus: 'none',
+      teacherFeedbackSubmittedAt: '',
+      teacherFeedbackCloudSync: true,
+      teacherFeedbackStatus: '',
+      teacherFeedback: null,
       filePath: res.tempFilePath || '',
       fileSize: res.fileSize || 0
     }
+    const submission = buildSavedSubmission(draft)
 
-    const drafts = wx.getStorageSync('extraTrainingDrafts') || []
-    drafts.unshift(draft)
-    wx.setStorageSync('extraTrainingDrafts', drafts)
+    saveWorkWithSubmission('extra', draft, submission)
     this.loadDrafts()
+    this.syncSubmissionToCloud(submission)
   },
 
   createVideoDraft(data) {
@@ -306,18 +650,26 @@ Page({
       type: 'video',
       duration: `${seconds}秒`,
       createdAt: formatDate(new Date()),
-      submitted: false,
+      submitted: true,
+      isSubmitted: true,
+      status: 'saved',
+      savedStatus: 'saved',
+      teacherFeedbackRequestStatus: 'none',
+      teacherFeedbackSubmittedAt: '',
+      teacherFeedbackCloudSync: true,
+      teacherFeedbackStatus: '',
+      teacherFeedback: null,
       filePath: data.filePath || '',
       thumbPath: data.thumbPath || '',
       promptText: data.promptText || '',
       recordTitle: data.recordTitle || '',
       recordSubtitle: data.recordSubtitle || ''
     }
-    const drafts = wx.getStorageSync('extraTrainingDrafts') || []
+    const submission = buildSavedSubmission(draft)
 
-    drafts.unshift(draft)
-    wx.setStorageSync('extraTrainingDrafts', drafts)
+    saveWorkWithSubmission('extra', draft, submission)
     this.loadDrafts()
+    this.syncSubmissionToCloud(submission)
 
     wx.showToast({
       title: '录像已保存',
@@ -339,65 +691,64 @@ Page({
     }
 
     if (target.type === 'audio') {
-      if (!target.filePath) {
+      const audioPath = getAudioPath(target)
+
+      console.log('[work-play] audio path:', audioPath)
+
+      if (!audioPath) {
         wx.showToast({
-          title: '录音文件不存在',
+          title: '录音文件暂时无法播放',
           icon: 'none'
         })
         return
       }
 
-      this.stopAudioContext()
-      this.audioContext = wx.createInnerAudioContext()
-      this.audioContext.src = target.filePath
-      this.audioContext.onEnded(() => {
-        console.log('额外训练录音播放结束')
-      })
-      this.audioContext.onError(error => {
-        console.error('额外训练录音播放失败', error)
-        wx.showToast({
-          title: '播放失败',
-          icon: 'none'
-        })
-      })
-      wx.showToast({
-        title: '开始播放',
-        icon: 'none'
-      })
-      this.audioContext.play()
-      return
-    }
-
-    if (!target.filePath) {
-      wx.showToast({
-        title: '录像文件不存在',
-        icon: 'none'
-      })
-      return
-    }
-
-    wx.previewMedia({
-      sources: [
-        {
-          url: target.filePath,
-          type: 'video',
-          poster: target.thumbPath || ''
-        }
-      ],
-      fail: error => {
-        console.error('额外训练录像预览失败', error)
-        wx.showToast({
-          title: '预览失败',
-          icon: 'none'
-        })
+      if (!this.audioPlayer) {
+        this.audioPlayer = createAudioPlayer(this)
       }
-    })
+      this.audioPlayer.play(target, `extra-${target.id}`)
+      return
+    }
+
+    const videoPath = getVideoPath(target)
+
+    console.log('[work-play] video path:', videoPath)
+
+    if (!videoPath) {
+      wx.showToast({
+        title: '视频文件暂时无法查看',
+        icon: 'none'
+      })
+      return
+    }
+
+    previewVideoByPath(videoPath, target.content || target.extraTitle || '额外训练录像')
   },
 
-  submitDraft(e) {
-    const id = Number(e.currentTarget.dataset.id)
+  findMergedDraft(id) {
+    ensureSavedWorks('extra')
     const drafts = wx.getStorageSync('extraTrainingDrafts') || []
-    const target = drafts.find(item => Number(item.id) === id)
+    const submissions = wx.getStorageSync('extraTrainingSubmissions') || []
+    const draft = drafts.find(item => String(item.id) === String(id))
+    const submission = submissions.find(item => String(item.id) === String(id))
+
+    return draft || submission ? mergeDraftWithSubmission(draft || submission, submission) : null
+  },
+
+  handleAiFeedbackAction(e) {
+    const id = e.currentTarget.dataset.id
+    console.log('[extra-training][ai-feedback] click:', { workId: id })
+
+    if (this.data.aiGeneratingWorkId && String(this.data.aiGeneratingWorkId) === String(id)) {
+      return
+    }
+
+    if (!requirePhoneBound('生成 AI 点评', {
+      page: this,
+      onSuccess: () => this.handleAiFeedbackAction(e)
+    })) return
+
+    const target = this.findMergedDraft(id)
 
     if (!target) {
       wx.showToast({
@@ -407,86 +758,351 @@ Page({
       return
     }
 
-    if (target.submitted) {
+    const action = getFeedbackActionState(target)
+
+    if (action.status === 'pending') {
       wx.showToast({
-        title: '作品已提交',
+        title: 'AI点评正在生成中，请稍候。',
+        icon: 'none'
+      })
+      return
+    }
+
+    if (action.blocked) {
+      this.showDurationBlockedToast()
+      return
+    }
+
+    if (action.canView && target.aiFeedback) {
+      this.showAiFeedback(target)
+      return
+    }
+
+    this.generateAiFeedback(target)
+  },
+
+  async generateAiFeedback(target) {
+    const workId = String(target.id || '')
+    let feedbackTarget = null
+
+    this.setData({
+      aiGeneratingWorkId: workId
+    }, () => {
+      console.log('[extra-training][ai-feedback] entering generating:', { workId })
+      this.loadDrafts()
+    })
+
+    wx.showLoading({
+      title: 'AI点评生成中...',
+      mask: true
+    })
+
+    try {
+      const res = await generateFeedbackForSubmission(target, {
+        storageKey: 'extraTrainingSubmissions'
+      })
+      console.log('[extra-training][ai-feedback] result:', {
+        workId,
+        success: res.status === 'done',
+        feedbackMode: res.feedbackMode || '',
+        asrStatus: res.asrStatus || ''
+      })
+      this.loadDrafts()
+
+      if (res.status === 'blocked') {
+        this.showDurationBlockedToast()
+        return
+      }
+
+      if (res.status === 'empty_transcript') {
+        this.showEmptyTranscriptModal(res)
+        return
+      }
+
+      if (res.status === 'done') {
+        feedbackTarget = this.findMergedDraft(target.id) || {
+          ...target,
+          aiFeedbackStatus: 'done',
+          aiFeedback: res.feedback,
+          aiFeedbackSource: res.source || '',
+          aiFeedbackModel: res.model || '',
+          aiFeedbackVersion: res.feedbackVersion || '',
+          aiFeedbackMode: res.feedbackMode || ''
+        }
+        return
+      }
+
+      wx.showToast({
+        title: res.message || 'AI生成失败，请稍后重试',
+        icon: 'none'
+      })
+    } catch (error) {
+      console.log('extra training feedback failed', error)
+      this.loadDrafts()
+      wx.showToast({
+        title: 'AI生成失败，请稍后重试',
+        icon: 'none'
+      })
+    } finally {
+      wx.hideLoading()
+      this.setData({
+        aiGeneratingWorkId: ''
+      }, () => {
+        this.loadDrafts()
+        if (feedbackTarget) {
+          console.log('[extra-training][ai-feedback] panel opened:', { workId })
+          this.showAiFeedback(feedbackTarget)
+        }
+      })
+    }
+  },
+
+  showAiFeedback(target) {
+    console.log('[extra-training][ai-feedback] panel opened:', { workId: target.id || '' })
+    this.setData({
+      showAiFeedbackPanel: false,
+      currentAiFeedback: normalizeAiFeedback(target.aiFeedback, target),
+      aiFeedbackScrollTop: 1
+    }, () => {
+      this.setData({
+        showAiFeedbackPanel: true,
+        aiFeedbackScrollTop: 0
+      })
+    })
+  },
+
+  closeAiFeedbackPanel() {
+    this.setData({
+      showAiFeedbackPanel: false,
+      currentAiFeedback: null,
+      aiFeedbackScrollTop: 0
+    })
+  },
+
+  noop() {},
+
+  showDurationBlockedToast() {
+    wx.showToast({
+      title: '录音或录像需满 30 秒后再生成 AI 点评。',
+      icon: 'none'
+    })
+  },
+
+  showEmptyTranscriptModal(res = {}) {
+    const canRetry = res.canRetry === true
+    wx.showModal({
+      title: '未识别到有效语音',
+      content: '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
+      confirmText: canRetry ? '重新识别' : '我知道了',
+      cancelText: canRetry ? '我知道了' : '',
+      showCancel: canRetry,
+      success: modalRes => {
+        if (modalRes.confirm && canRetry) {
+          const currentTarget = this.findMergedDraft(this.data.aiGeneratingWorkId)
+          if (currentTarget) {
+            this.generateAiFeedback(currentTarget)
+          }
+        }
+      }
+    })
+  },
+
+  handleTeacherFeedbackAction(e) {
+    const id = e.currentTarget.dataset.id
+    const target = this.findMergedDraft(id)
+
+    if (!target) {
+      wx.showToast({
+        title: '作品不存在',
+        icon: 'none'
+      })
+      return
+    }
+
+    const teacherState = getTeacherFeedbackState(target)
+
+    if (teacherState === 'done') {
+      const feedback = target.teacherFeedback || {}
+
+      wx.showModal({
+        title: '老师点评',
+        content: [
+          `老师：${feedback.teacherName || '杨勤老师'}`,
+          `评分：${feedback.score || '暂无'}`,
+          `标签：${Array.isArray(feedback.tags) ? feedback.tags.join('、') : '暂无'}`,
+          `点评内容：${feedback.content || '暂无'}`,
+          `点评时间：${feedback.createdAt || '暂无'}`
+        ].join('\n\n'),
+        showCancel: false,
+        confirmText: '知道了'
+      })
+      return
+    }
+
+    if (teacherState === 'pending') {
+      wx.showToast({
+        title: '已提交给老师，老师点评完成后会显示在这里。',
         icon: 'none'
       })
       return
     }
 
     wx.showModal({
-      title: '确认提交',
-      content: '提交后，该作品将计入你的额外训练记录。是否确认提交？',
+      title: '提交老师点评',
+      content: '提交后，老师可以看到你的作品并进行真人点评。是否提交？',
+      confirmText: '提交',
       cancelText: '取消',
-      confirmText: '确认提交',
       confirmColor: '#07c160',
       success: res => {
-        if (res.confirm) {
-          this.confirmSubmitDraft(id)
+        if (!res.confirm) return
+
+        const patch = {
+          teacherFeedbackRequestStatus: 'submitted',
+          teacherFeedbackSubmittedAt: formatDate(new Date()),
+          teacherFeedbackCloudSync: target.cloudId ? false : true,
+          teacherFeedbackStatus: 'pending',
+          teacherReviewSubmitted: true
         }
+
+        // TODO: 后续新增 cloudApi action 同步 teacherFeedbackRequestStatus 到 submissions。
+        patchWorkInStorages('extra', target.id, patch, target.cloudId || '')
+        this.loadDrafts()
+        wx.showToast({
+          title: target.cloudId ? '已本地保存，云端同步稍后重试' : '已提交老师点评',
+          icon: 'none'
+        })
       }
     })
   },
 
-  confirmSubmitDraft(id) {
-    const drafts = wx.getStorageSync('extraTrainingDrafts') || []
-    const target = drafts.find(item => Number(item.id) === id)
+  onAudioSliderChange(e) {
+    if (!this.audioPlayer) return
+    this.audioPlayer.seek(e.detail.value)
+  },
 
-    if (!target || target.submitted) {
-      this.loadDrafts()
-      return
-    }
+  async syncSubmissionToCloud(submission) {
+    const localFilePath = submission.tempFilePath || submission.filePath || ''
+    let fileID = ''
 
-    const updatedDrafts = drafts.map(item => (
-      Number(item.id) === id ? { ...item, submitted: true } : item
-    ))
-    const submissions = wx.getStorageSync('extraTrainingSubmissions') || []
-    const submission = {
-      id: target.id,
-      sourceType: 'extra',
-      ...buildClassSubmissionPatch(),
-      extraType: target.extraType,
-      extraTitle: target.extraTitle,
-      taskTitle: target.extraTitle,
-      content: target.content,
-      promptText: target.promptText || target.content || '',
-      type: target.type,
-      duration: target.duration,
-      targetSeconds: 0,
-      createdAt: formatDate(new Date()),
-      filePath: target.filePath || '',
-      thumbPath: target.thumbPath || '',
-      fileSize: target.fileSize || 0,
-      aiFeedbackStatus: '',
-      aiFeedbackSource: '',
-      aiFeedbackModel: ''
-    }
-
-    wx.setStorageSync('extraTrainingDrafts', updatedDrafts)
-    wx.setStorageSync('extraTrainingSubmissions', [submission].concat(submissions))
-    this.loadDrafts()
-
-    wx.showToast({
-      title: '提交成功',
-      icon: 'success'
-    })
-
-    requestTrainingFeedback({
-      storageKey: 'extraTrainingSubmissions',
-      submission
-    }).then(res => {
-      if (res.status === 'done') {
-        wx.showToast({
-          title: 'AI点评已生成',
-          icon: 'success'
-        })
-        return
+    try {
+      if (localFilePath) {
+        const uploadRes = await uploadWorkFile(localFilePath, submission.workType || submission.type || 'audio')
+        fileID = uploadRes.fileID || ''
       }
 
-      if (res.status === 'error' && res.message) {
+      const cloudRes = await submitWorkRecord({
+        ...submission,
+        fileID,
+        filePath: '',
+        localFilePath
+      })
+      const patch = {
+        cloudId: cloudRes.submission && cloudRes.submission._id,
+        cloudFileID: fileID,
+        fileID,
+        cloudUploaded: true,
+        cloudError: ''
+      }
+
+      patchStoredWork('extraTrainingSubmissions', submission.id, patch)
+      patchStoredWork('extraTrainingDrafts', submission.id, patch)
+      this.loadDrafts()
+      console.log('[extra-training] 云端作品同步成功:', patch)
+    } catch (err) {
+      const patch = {
+        cloudFileID: fileID,
+        fileID,
+        cloudUploaded: false,
+        cloudError: err.message || '云端同步失败'
+      }
+
+      console.warn('[extra-training] 云端作品同步失败，本地已保存:', err)
+      patchStoredWork('extraTrainingSubmissions', submission.id, patch)
+      patchStoredWork('extraTrainingDrafts', submission.id, patch)
+      this.loadDrafts()
+      wx.showToast({
+        title: '已保存本地，云端同步失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  updateDraftPublicStatus(id, patch) {
+    const drafts = wx.getStorageSync('extraTrainingDrafts') || []
+    const updatedDrafts = drafts.map(item => (
+      String(item.id) === String(id)
+        ? {
+          ...item,
+          ...patch
+        }
+        : item
+    ))
+
+    wx.setStorageSync('extraTrainingDrafts', updatedDrafts)
+    this.loadDrafts()
+  },
+
+  publishDraftToSquare(e) {
+    const id = e.currentTarget.dataset.id
+
+    if (!requirePhoneBound('发布广场', {
+      page: this,
+      onSuccess: () => this.publishDraftToSquare(e)
+    })) return
+
+    wx.showModal({
+      title: '确认发布到广场？',
+      content: '发布后，所有用户都可以看到你的作品内容。请确认作品中没有个人隐私、不适合公开的信息。',
+      confirmText: '确认发布',
+      cancelText: '取消',
+      confirmColor: '#16c784',
+      success: async res => {
+        if (!res.confirm) return
+
+        const result = await publishWorkToSquare(id, 'extra')
+
+        if (!result.success) {
+          wx.showToast({
+            title: result.message || '发布失败',
+            icon: 'none'
+          })
+          return
+        }
+
+        this.updateDraftPublicStatus(id, result.patch)
         wx.showToast({
-          title: res.message,
+          title: '已发布到广场',
+          icon: 'success'
+        })
+      }
+    })
+  },
+
+  unpublishDraftFromSquare(e) {
+    const id = e.currentTarget.dataset.id
+
+    wx.showModal({
+      title: '确认取消公开？',
+      content: '取消公开后，该作品将不再出现在表达广场。',
+      confirmText: '取消公开',
+      cancelText: '再想想',
+      confirmColor: '#d84d4d',
+      success: async res => {
+        if (!res.confirm) return
+
+        const result = await unpublishWorkFromSquare(id, 'extra')
+
+        if (!result.success) {
+          wx.showToast({
+            title: result.message || '取消失败',
+            icon: 'none'
+          })
+          return
+        }
+
+        this.updateDraftPublicStatus(id, result.patch)
+        wx.showToast({
+          title: '已取消公开',
           icon: 'none'
         })
       }
@@ -521,16 +1137,10 @@ Page({
   },
 
   confirmDeleteDraft(id) {
-    const drafts = wx.getStorageSync('extraTrainingDrafts') || []
-    const target = drafts.find(item => Number(item.id) === id)
-    const updatedDrafts = drafts.filter(item => Number(item.id) !== id)
+    const updatedDrafts = (wx.getStorageSync('extraTrainingDrafts') || []).filter(item => Number(item.id) !== id)
 
     wx.setStorageSync('extraTrainingDrafts', updatedDrafts)
-
-    if (target && target.submitted) {
-      const submissions = wx.getStorageSync('extraTrainingSubmissions') || []
-      wx.setStorageSync('extraTrainingSubmissions', submissions.filter(item => Number(item.id) !== id))
-    }
+    wx.setStorageSync('extraTrainingSubmissions', (wx.getStorageSync('extraTrainingSubmissions') || []).filter(item => Number(item.id) !== id))
 
     this.loadDrafts()
 
@@ -576,11 +1186,28 @@ Page({
   },
 
   stopAudioContext() {
-    if (this.audioContext) {
-      this.audioContext.stop()
-      this.audioContext.destroy()
-      this.audioContext = null
+    if (this.audioPlayer) {
+      this.audioPlayer.destroy()
     }
+  },
+
+  onShareAppMessage() {
+    const type = this.data.type || 'dailyQuote'
+    return getDefaultShareMessage({
+      title: `${this.data.title || '每日加餐训练'}｜来一起练表达`,
+      path: `/pages/extra-training/extra-training?type=${encodeURIComponent(type)}`,
+      pageType: 'training'
+    })
+  },
+
+  onShareTimeline() {
+    const type = this.data.type || 'dailyQuote'
+    return getDefaultShareTimeline({
+      title: `${this.data.title || '每日加餐训练'}｜来一起练表达`,
+      targetPage: 'extra-training',
+      params: { type },
+      pageType: 'training'
+    })
   },
 
   onUnload() {
@@ -589,5 +1216,11 @@ Page({
     }
     this.clearTimer()
     this.stopAudioContext()
+  },
+
+  onHide() {
+    if (this.audioPlayer) {
+      this.audioPlayer.pause()
+    }
   }
 })

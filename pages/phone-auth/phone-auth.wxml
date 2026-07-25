@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">绑定手机号</text>
+    <text class="hero-desc">绑定后可保存训练记录、生成 AI 点评，并自动匹配会员权益。</text>
+  </view>
+
+  <view class="auth-card">
+    <text class="section-title">手机号授权</text>
+    <text class="phone-status {{phoneBound ? 'bound-status' : ''}}">{{phoneStatusText}}</text>
+    <text class="section-desc">手机号仅用于识别学员身份和会员权益，不会在广场公开展示。</text>
+    <button
+      class="phone-auth-btn"
+      open-type="getPhoneNumber"
+      bindgetphonenumber="onGetPhoneNumber"
+      loading="{{binding}}"
+      disabled="{{binding}}"
+    >
+      {{phoneBound ? '重新绑定手机号' : '微信手机号一键绑定'}}
+    </button>
+    <button class="skip-btn" disabled="{{binding}}" bindtap="skip">暂不绑定</button>
+  </view>
+
+  <view class="contact-card">
+    <view class="contact-title">暂时无法授权？</view>
+    <view class="contact-desc">如当前小程序暂无法获取手机号，请联系周老师人工核对并绑定。</view>
+    <image
+      wx:if="{{!qrLoadError}}"
+      class="contact-qr"
+      src="{{qrImage}}"
+      mode="aspectFit"
+      show-menu-by-longpress="true"
+      binderror="onQrImageError"
+    />
+    <view wx:else class="contact-qr contact-qr-placeholder">周老师二维码待上传</view>
+    <button class="contact-page-btn" bindtap="goContact">联系周老师</button>
+  </view>
+</view>

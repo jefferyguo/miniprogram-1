@@ -1,0 +1,130 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="state-card">
+    <text class="state-title">作品加载中...</text>
+  </view>
+
+  <view wx:elif="{{unavailable || !work}}" class="state-card unavailable-card">
+    <text class="state-icon">⌁</text>
+    <text class="state-title">{{errorText || '该作品暂不可查看'}}</text>
+    <text class="state-desc">作品可能已取消公开或被作者删除。</text>
+    <button class="back-square-btn" bindtap="goSquare">返回表达广场</button>
+  </view>
+
+  <block wx:else>
+    <view class="work-card">
+      <view class="author-row">
+        <view class="avatar">{{work.publicAvatarText || '同'}}</view>
+        <view class="author-copy">
+          <text class="author-name">{{work.authorName}}</text>
+          <text class="publish-time">{{work.createdAtText}}</text>
+        </view>
+        <view class="header-tags">
+          <text class="media-tag">{{work.mediaTypeText}}</text>
+          <text class="training-tag">{{work.trainingTypeText}}</text>
+        </view>
+      </view>
+
+      <view class="work-title-block">
+        <text class="work-title">{{work.titleText}}</text>
+        <view class="meta-row">
+          <text wx:if="{{work.dayText}}">{{work.dayText}}</text>
+          <text>{{work.taskText}}</text>
+          <text>时长 {{work.durationText}}</text>
+        </view>
+      </view>
+
+      <view class="media-card">
+        <view class="media-card-head">
+          <text class="media-card-title">{{work.mediaType === 'video' ? '口才训练视频' : '口才训练音频'}}</text>
+          <text class="media-card-duration">{{work.durationText}}</text>
+        </view>
+        <video
+          wx:if="{{work.mediaType === 'video' && playableSrc}}"
+          class="work-video"
+          src="{{playableSrc}}"
+          controls
+          object-fit="contain"
+        ></video>
+        <view wx:elif="{{work.mediaType === 'audio'}}" class="audio-box">
+          <view class="audio-symbol"></view>
+          <view class="audio-copy">
+            <text class="audio-title">听一听这次训练作品</text>
+            <text class="audio-duration">点击播放后可拖动进度条回听</text>
+          </view>
+          <button class="play-audio-btn" bindtap="playAudio">
+            {{audioPlayer.activeKey === work._id && audioPlayer.isPlaying ? '暂停' : '播放'}}
+          </button>
+        </view>
+        <view wx:else class="media-error">作品文件暂时无法播放，请稍后再试。</view>
+
+        <view class="audio-progress" wx:if="{{work.mediaType === 'audio' && audioPlayer.activeKey === work._id}}">
+          <view class="audio-time-row">
+            <text>{{audioPlayer.currentText}}</text>
+            <text>{{audioPlayer.durationText}}</text>
+          </view>
+          <slider
+            min="0"
+            max="100"
+            step="1"
+            value="{{audioPlayer.progress}}"
+            activeColor="#3478f6"
+            backgroundColor="#dfe6f2"
+            block-size="14"
+            bindchange="onAudioSliderChange"
+          />
+        </view>
+      </view>
+
+      <view class="social-action-row">
+        <button class="interaction-btn {{work.likedByMe ? 'liked' : ''}}" bindtap="onToggleLike" disabled="{{likeSubmitting}}">
+          {{work.likedByMe ? '♥ 已赞' : '♡ 赞'}} {{work.likeCount}}
+        </button>
+        <text class="comment-count">评论 {{work.commentCount}}</text>
+      </view>
+
+      <view class="share-action-row">
+        <button class="original-btn {{work.canViewOriginal ? '' : 'disabled'}}" bindtap="goOriginalTask">查看原文</button>
+        <button class="share-btn" open-type="share">分享作品</button>
+      </view>
+      <text class="timeline-tip">分享到朋友圈：请点击右上角 ··· 选择分享到朋友圈。若朋友圈预览无法播放或查看原文，请点击底部“前往小程序”查看完整作品。</text>
+    </view>
+
+    <view class="comment-card">
+      <text class="section-title">作品评论</text>
+      <view class="comment-compose">
+        <textarea
+          class="comment-input"
+          value="{{commentText}}"
+          maxlength="200"
+          placeholder="写下鼓励或交流建议"
+          bindinput="onCommentInput"
+        ></textarea>
+        <button class="comment-submit" bindtap="onSubmitComment" disabled="{{commentSubmitting}}">
+          {{commentSubmitting ? '发布中' : '发布'}}
+        </button>
+      </view>
+
+      <text wx:if="{{commentsLoading}}" class="comment-state">评论加载中...</text>
+      <view wx:elif="{{comments.length}}" class="comment-list">
+        <view class="comment-item" wx:for="{{comments}}" wx:key="_id">
+          <view class="comment-avatar">{{item.avatarText || '同'}}</view>
+          <view class="comment-copy">
+            <view class="comment-top">
+              <text class="comment-name">{{item.nickname || '同学'}}</text>
+              <button wx:if="{{item.isMine}}" class="comment-delete" data-id="{{item._id || item.id}}" bindtap="onDeleteComment">删除</button>
+            </view>
+            <text class="comment-content">{{item.content}}</text>
+            <text class="comment-time">{{item.createdAt}}</text>
+          </view>
+        </view>
+      </view>
+      <text wx:else class="comment-state">还没有评论，来留下第一条鼓励吧。</text>
+    </view>
+  </block>
+</view>
+
+<canvas
+  type="2d"
+  id="workShareCanvas"
+  class="share-canvas"
+></canvas>

@@ -1,7 +1,9 @@
+<page-meta page-style="{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
+
 <view class="page">
   <view class="hero-card">
     <text class="hero-title">我的作品</text>
-    <text class="hero-desc">查看你的录音、录像和提交状态</text>
+    <text class="hero-desc">查看你的录音、录像和 AI 点评状态</text>
   </view>
 
   <view class="stats-row">
@@ -10,12 +12,12 @@
       <text class="stat-label">全部作品</text>
     </view>
     <view class="stat-card">
-      <text class="stat-value green-value">{{submittedCount}}</text>
-      <text class="stat-label">已提交</text>
+      <text class="stat-value green-value">{{savedCount}}</text>
+      <text class="stat-label">已保存</text>
     </view>
     <view class="stat-card">
-      <text class="stat-value gray-value">{{draftCount}}</text>
-      <text class="stat-label">未提交</text>
+      <text class="stat-value">{{aiReadyCount}}</text>
+      <text class="stat-label">AI已生成</text>
     </view>
   </view>
 
@@ -30,6 +32,7 @@
         </view>
 
         <text class="work-source">来源：{{item.sourceText}}</text>
+        <text wx:if="{{item.publicStatusText}}" class="public-status">{{item.publicStatusText}}</text>
         <text class="work-title">{{item.titleText}}</text>
         <text class="work-subtitle">{{item.subtitleText}}</text>
 
@@ -38,24 +41,73 @@
           <text>时间：{{item.createdAtText}}</text>
         </view>
 
+        <view class="status-row">
+          <text class="state-pill {{item.aiStatusClass}}">{{item.aiStatusText}}</text>
+        </view>
+
         <text wx:if="{{item.aiTip}}" class="ai-tip">{{item.aiTip}}</text>
 
-        <view class="work-actions">
-          <button class="play-btn" data-key="{{item.key}}" bindtap="playWork">{{item.actionText}}</button>
+        <view class="work-actions primary-actions">
+          <button class="play-btn" data-key="{{item.key}}" bindtap="playWork">
+            <block wx:if="{{item.workType === 'audio' && audioPlayer.activeKey === item.audioKey && audioPlayer.isPlaying}}">暂停</block>
+            <block wx:elif="{{item.workType === 'audio' && audioPlayer.activeKey === item.audioKey && audioPlayer.isPaused}}">继续</block>
+            <block wx:else>{{item.actionText}}</block>
+          </button>
           <button
-            wx:if="{{item.submitted}}"
             class="feedback-btn {{item.feedbackActionClass}}"
             data-key="{{item.key}}"
             disabled="{{item.feedbackActionDisabled}}"
             bindtap="handleFeedbackAction"
           >{{item.feedbackActionText}}</button>
+        </view>
+
+        <view class="audio-player" wx:if="{{item.workType === 'audio' && audioPlayer.activeKey === item.audioKey}}">
+          <view class="audio-time-row">
+            <text>{{audioPlayer.currentText}}</text>
+            <text>{{audioPlayer.durationText}}</text>
+          </view>
+          <slider
+            class="audio-slider"
+            min="0"
+            max="100"
+            step="1"
+            value="{{audioPlayer.progress}}"
+            activeColor="#3478f6"
+            backgroundColor="#dfe6f2"
+            block-size="14"
+            bindchange="onAudioSliderChange"
+          />
+        </view>
+
+        <view class="work-actions secondary-actions">
           <button
-            wx:if="{{item.hasTeacherFeedback}}"
-            class="teacher-feedback-btn"
+            wx:if="{{item.isPublic}}"
+            class="share-btn"
+            open-type="share"
+            data-work-id="{{item.squareWorkId || item.cloudId || item._id}}"
+            data-square-work-id="{{item.squareWorkId || item.cloudId || item._id}}"
+            data-work-index="{{index}}"
+            data-title="{{item.title || item.taskTitle || item.subtitleText}}"
+            data-thumb="{{item.thumbTempFilePath || item.coverUrl || item.poster || ''}}"
+          >分享</button>
+          <button
+            wx:else
+            class="share-btn"
+            bindtap="showPrivateShareTip"
+          >分享</button>
+          <button
+            wx:if="{{!item.isPublic}}"
+            class="public-btn"
             data-key="{{item.key}}"
-            bindtap="showTeacherFeedback"
-          >查看老师点评</button>
-          <button wx:if="{{!item.submitted}}" class="status-btn" data-key="{{item.key}}" bindtap="showWorkStatus">查看状态</button>
+            bindtap="publishWork"
+          >发布广场</button>
+          <button
+            wx:if="{{item.isPublic}}"
+            class="unpublic-btn"
+            data-key="{{item.key}}"
+            bindtap="unpublishWork"
+          >取消公开</button>
+          <button class="delete-btn" data-key="{{item.key}}" bindtap="deleteWork">删除</button>
         </view>
       </view>
     </view>
@@ -64,5 +116,74 @@
       <text class="empty-title">暂无作品，先完成一次训练吧。</text>
       <button class="empty-btn" bindtap="switchToTraining">去训练</button>
     </view>
+  </view>
+</view>
+<member-benefit-modal id="memberBenefitModal" />
+
+<view class="ai-feedback-mask" wx:if="{{showAiFeedbackPanel}}" bindtap="closeAiFeedbackPanel">
+  <view class="ai-feedback-panel" catchtap="noop">
+    <view class="ai-feedback-header">
+      <text class="ai-feedback-title">{{currentAiFeedback.title || 'AI点评'}}</text>
+      <text class="ai-feedback-close" bindtap="closeAiFeedbackPanel">×</text>
+    </view>
+
+    <scroll-view
+      class="ai-feedback-scroll"
+      scroll-y="{{true}}"
+      enhanced="{{true}}"
+      show-scrollbar="{{false}}"
+      scroll-top="{{aiFeedbackScrollTop}}"
+    >
+      <view class="ai-feedback-content">
+      <view class="ai-generated-notice">AI生成内容，仅供表达训练参考</view>
+      <view class="ai-mode-notice {{currentAiFeedback.noticeClass}}" wx:if="{{currentAiFeedback.noticeText}}">
+        {{currentAiFeedback.noticeText}}
+      </view>
+
+      <view class="ai-section" wx:if="{{currentAiFeedback.summary}}">
+        <view class="ai-section-title">综合评价</view>
+        <view class="ai-section-text">{{currentAiFeedback.summary}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.basis}}">
+        <view class="ai-section-title">点评依据</view>
+        <view class="ai-section-text">{{currentAiFeedback.basis}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.dimensionScores.length}}">
+        <view class="ai-section-title">维度评分</view>
+        <view class="ai-dimension-item" wx:for="{{currentAiFeedback.dimensionScores}}" wx:key="name">
+          <view class="ai-dimension-row">
+            <text class="ai-dimension-name">{{item.name}}</text>
+            <text class="ai-dimension-score">{{item.score}}分</text>
+          </view>
+          <view class="ai-section-text">{{item.comment}}</view>
+        </view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.contentReview}}">
+        <view class="ai-section-title">内容表现</view>
+        <view class="ai-section-text">{{currentAiFeedback.contentReview}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.voiceStateReview}}">
+        <view class="ai-section-title">声音状态</view>
+        <view class="ai-section-text">{{currentAiFeedback.voiceStateReview}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.strengths.length}}">
+        <view class="ai-section-title">可以保留的做法</view>
+        <view wx:for="{{currentAiFeedback.strengths}}" wx:key="*this" class="ai-list-item">{{index + 1}}. {{item}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.improvements.length}}">
+        <view class="ai-section-title">下次提升重点</view>
+        <view wx:for="{{currentAiFeedback.improvements}}" wx:key="*this" class="ai-list-item">{{index + 1}}. {{item}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.nextPractice.length}}">
+        <view class="ai-section-title">下一次训练动作</view>
+        <view wx:for="{{currentAiFeedback.nextPractice}}" wx:key="*this" class="ai-list-item">{{index + 1}}. {{item}}</view>
+      </view>
+      <view class="ai-section" wx:if="{{currentAiFeedback.teacherToneTip}}">
+        <view class="ai-section-title">鼓励</view>
+        <view class="ai-tone-tip">{{currentAiFeedback.teacherToneTip}}</view>
+      </view>
+      <view class="ai-caution" wx:if="{{currentAiFeedback.caution}}">{{currentAiFeedback.caution}}</view>
+      </view>
+    </scroll-view>
   </view>
 </view>

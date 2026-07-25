@@ -1,4 +1,12 @@
 const RESULT_STORAGE_KEY = 'expressionTestResults'
+const { canUseAi, recordAiUsage, showAiLimitModal } = require('../../utils/ai-usage')
+const { requirePhoneBound } = require('../../utils/phone-auth')
+const {
+  enableShareMenu,
+  getDefaultShareMessage,
+  getDefaultShareTimeline,
+  getShareImage
+} = require('../../utils/share-config')
 
 const DIMENSIONS = [
   {
@@ -9,7 +17,7 @@ const DIMENSIONS = [
     profileDesc: '你具备主动开口和持续表达的潜力，适合通过更多真实场景练习建立稳定的表达状态。',
     strengthText: '你在开口意愿和表达主动性上有基础，遇到表达任务时更容易进入状态。',
     suggestionText: '可以从短时话题表达开始，每天完成一次 60 秒表达，逐步降低紧张感。',
-    recommendedTraining: '21天话题训练'
+    recommendedTraining: '话题训练'
   },
   {
     key: 'structure',
@@ -19,7 +27,7 @@ const DIMENSIONS = [
     profileDesc: '你更重视表达的条理和重点，适合继续强化观点、原因、例子和总结的组织能力。',
     strengthText: '你比较容易抓住表达重点，也更愿意用结构帮助别人理解。',
     suggestionText: '建议练习复述和总结，把复杂内容压缩成清楚的三点表达。',
-    recommendedTraining: '21天复述训练'
+    recommendedTraining: '复述训练'
   },
   {
     key: 'fluency',
@@ -29,7 +37,7 @@ const DIMENSIONS = [
     profileDesc: '你在表达时比较看重自然度和连续性，适合通过朗读和复述提升稳定输出能力。',
     strengthText: '你具备较好的连续表达意识，日常沟通中更容易自然展开。',
     suggestionText: '可以用朗读和 30 秒复述训练降低卡顿，让嘴和思路更同步。',
-    recommendedTraining: '21天朗读训练'
+    recommendedTraining: '朗读训练'
   },
   {
     key: 'voice',
@@ -39,7 +47,7 @@ const DIMENSIONS = [
     profileDesc: '你对声音清晰度、气息和感染力比较敏感，适合继续训练朗读、停顿和普通话发音。',
     strengthText: '你已经开始关注声音是否清楚、有力量，这会直接影响表达的说服力。',
     suggestionText: '建议练习慢速朗读、停顿和气息控制，让声音更稳、更清楚。',
-    recommendedTraining: '21天朗读训练 / 21天普通话训练'
+    recommendedTraining: '朗读训练 / 普通话训练'
   },
   {
     key: 'empathy',
@@ -49,7 +57,7 @@ const DIMENSIONS = [
     profileDesc: '你比较关注听众感受和沟通氛围，适合在观点表达中加入更清楚的结构和行动建议。',
     strengthText: '你能注意到对方的感受，表达更容易让人愿意听下去。',
     suggestionText: '建议练习先回应对方，再表达观点，让共情和清晰表达同时出现。',
-    recommendedTraining: '随机话题 / 21天话题训练'
+    recommendedTraining: '随机话题 / 话题训练'
   },
   {
     key: 'adaptability',
@@ -59,7 +67,7 @@ const DIMENSIONS = [
     profileDesc: '你具备根据场景调整表达的意识，适合继续训练即兴表达和临场回应能力。',
     strengthText: '你会观察对象和场景，并尝试调整表达方式，现场适应力有潜力。',
     suggestionText: '可以多练随机话题和临场提问，训练快速组织观点的能力。',
-    recommendedTraining: '随机话题 / 21天话题训练'
+    recommendedTraining: '随机话题 / 话题训练'
   }
 ]
 
@@ -224,7 +232,7 @@ function hydrateResult(item) {
     aiReport: item.aiReport || null,
     aiReportGenerated: !!item.aiReportGenerated,
     aiReportError: !!item.aiReportError,
-    aiReportSource: item.aiReportSource || (item.aiReportError ? 'fallback' : ''),
+    aiReportSource: item.aiReportSource || (item.aiReportError ? 'none' : ''),
     aiReportModel: item.aiReportModel || (item.aiReportError ? 'none' : '')
   }
 }
@@ -238,10 +246,6 @@ function getSortedDimensions(scores) {
   })).sort((a, b) => b.score - a.score)
 }
 
-function getShortModuleName(value) {
-  return String(value || '21天话题训练').split('/')[0].trim().slice(0, 15)
-}
-
 function buildAnswersSummary(resultData) {
   const sorted = getSortedDimensions(resultData.scores)
   const top = sorted[0]
@@ -250,37 +254,19 @@ function buildAnswersSummary(resultData) {
   return `最高维度：${top.label}${top.score}分；最低维度：${low.label}${low.score}分；综合分：${resultData.averageScore}分。`
 }
 
-function buildFallbackReport(resultData) {
-  const sorted = getSortedDimensions(resultData.scores)
-  const topTwo = sorted.slice(0, 2)
-  const lowTwo = sorted.slice(-2).reverse()
-  const lowest = lowTwo[0]
-  const finishedRecording = resultData.recordingAnswer && !resultData.recordingAnswer.skipped
+function normalizeAiReport(report) {
+  if (!report || typeof report !== 'object') return null
+
+  const summary = String(report.summary || '').trim()
+  if (!summary) return null
 
   return {
-    summary: `你的表达画像偏向“${resultData.profileType}”。整体看，你已经具备一定表达基础，优势维度较清晰；接下来可以围绕${lowest.label}做短时高频练习，让表达更稳定、更自然。${finishedRecording ? '录音题也能帮助你观察真实表达状态。' : '后续可补充录音题，让结果更贴近真实表达。'}`,
-    strengths: topTwo.map(item => `${item.label}表现较好，说明你在相关场景中已有可继续放大的表达基础。`),
-    weaknesses: lowTwo.map(item => `${item.label}还有提升空间，建议先从小任务开始，降低练习压力。`),
-    trainingAdvice: [
-      `每天用 1 分钟完成一次${lowest.label}相关练习，先保持连续性。`,
-      '表达前先写 3 个关键词，帮助自己抓住重点和顺序。',
-      '练完后听回放，标记一次做得好的地方和一个改进点。'
-    ],
-    recommendedModule: getShortModuleName(lowest.recommendedTraining),
-    encouragement: '完成测评就是第一步。'
-  }
-}
-
-function normalizeAiReport(report, fallbackReport) {
-  if (!report || typeof report !== 'object') return fallbackReport
-
-  return {
-    summary: report.summary || fallbackReport.summary,
-    strengths: Array.isArray(report.strengths) && report.strengths.length > 0 ? report.strengths.slice(0, 2) : fallbackReport.strengths,
-    weaknesses: Array.isArray(report.weaknesses) && report.weaknesses.length > 0 ? report.weaknesses.slice(0, 2) : fallbackReport.weaknesses,
-    trainingAdvice: Array.isArray(report.trainingAdvice) && report.trainingAdvice.length > 0 ? report.trainingAdvice.slice(0, 3) : fallbackReport.trainingAdvice,
-    recommendedModule: report.recommendedModule || fallbackReport.recommendedModule,
-    encouragement: report.encouragement || fallbackReport.encouragement
+    summary,
+    strengths: Array.isArray(report.strengths) ? report.strengths.slice(0, 2) : [],
+    weaknesses: Array.isArray(report.weaknesses) ? report.weaknesses.slice(0, 2) : [],
+    trainingAdvice: Array.isArray(report.trainingAdvice) ? report.trainingAdvice.slice(0, 3) : [],
+    recommendedModule: report.recommendedModule || '',
+    encouragement: report.encouragement || ''
   }
 }
 
@@ -319,6 +305,7 @@ Page({
   },
 
   onShow() {
+    enableShareMenu()
     this.loadResultRecords()
   },
 
@@ -536,6 +523,11 @@ Page({
   },
 
   async generateResult(recordingAnswer) {
+    if (!requirePhoneBound('表达力测评', {
+      page: this,
+      onSuccess: () => this.generateResult(recordingAnswer)
+    })) return
+
     const dimensionStats = createDimensionStats()
 
     this.data.answers.forEach(answer => {
@@ -594,8 +586,6 @@ Page({
     }
 
     result.answersSummary = buildAnswersSummary(result)
-    const fallbackReport = buildFallbackReport(result)
-
     this.setData({
       step: 'result',
       isRecording: false,
@@ -612,26 +602,59 @@ Page({
       })
     })
 
-    let aiReport = fallbackReport
+    let aiReport = null
     let aiReportGenerated = false
     let aiReportError = false
-    let aiReportSource = 'fallback'
+    let aiReportSource = ''
     let aiReportModel = 'none'
 
-    try {
-      const res = await this.generateAiReport(result)
-      aiReport = normalizeAiReport(res && res.result && res.result.report, fallbackReport)
-      aiReportGenerated = !!(res && res.result && res.result.success)
-      aiReportError = !aiReportGenerated
-      aiReportSource = res && res.result && res.result.source ? res.result.source : (aiReportGenerated ? 'cloudbase-ai' : 'fallback')
-      aiReportModel = res && res.result && res.result.model ? res.result.model : (aiReportGenerated ? '' : 'none')
-    } catch (error) {
-      console.log('generateAiReport failed', error)
-      aiReport = fallbackReport
+    console.log('[ai-report] start', {
+      resultId: result.id,
+      profileType: result.profileType,
+      averageScore: result.averageScore
+    })
+    const aiUsage = await canUseAi('expression_report')
+    console.log('[ai-report] usage check', aiUsage)
+
+    if (!aiUsage.allowed) {
+      showAiLimitModal(aiUsage)
+      aiReport = null
       aiReportGenerated = false
       aiReportError = true
-      aiReportSource = 'fallback'
+      aiReportSource = 'daily_limit'
       aiReportModel = 'none'
+    } else {
+      try {
+        console.log('[ai-report] call generateExpressionReport')
+        const res = await this.generateAiReport(result)
+        console.log('[ai-report] result', res && res.result)
+        aiReport = normalizeAiReport(res && res.result && res.result.report)
+        aiReportGenerated = !!(res && res.result && res.result.success)
+        aiReportError = !aiReportGenerated || !aiReport
+        aiReportSource = res && res.result && res.result.source ? res.result.source : (aiReportGenerated ? 'cloudbase-ai' : 'none')
+        aiReportModel = res && res.result && res.result.model ? res.result.model : 'none'
+
+        if (aiReportGenerated && aiReport) {
+          const reportMeta = res && res.result ? res.result : {}
+          await recordAiUsage('expression_report', {
+            reportId: result.id,
+            feedbackType: 'deep',
+            model: aiReportModel,
+            source: aiReportSource,
+            tokenUsage: reportMeta.tokenUsage || reportMeta.usage || null,
+            estimatedInputTokens: Number(reportMeta.estimatedInputTokens || 0),
+            estimatedOutputTokens: Number(reportMeta.estimatedOutputTokens || 0),
+            asrDurationSeconds: Number((result.recordingAnswer && result.recordingAnswer.durationSeconds) || 0)
+          })
+        }
+      } catch (error) {
+        console.log('[ai-report] fail', error)
+        aiReport = null
+        aiReportGenerated = false
+        aiReportError = true
+        aiReportSource = 'none'
+        aiReportModel = 'none'
+      }
     }
 
     const finalResult = hydrateResult({
@@ -733,5 +756,22 @@ Page({
       clearInterval(this.recordTimer)
       this.recordTimer = null
     }
+  },
+
+  onShareAppMessage() {
+    // 测评结果包含个人信息，分享统一落到公开测评入口。
+    return getDefaultShareMessage({
+      title: '表达力测评｜测一测你的表达状态',
+      path: '/pages/ai-evaluation/ai-evaluation?source=share',
+      imageUrl: getShareImage('assessment')
+    })
+  },
+
+  onShareTimeline() {
+    return getDefaultShareTimeline({
+      title: '表达力测评｜测一测你的表达状态',
+      targetPage: 'ai-evaluation',
+      imageUrl: getShareImage('assessment')
+    })
   }
 })

@@ -16,7 +16,7 @@
 
   <view class="content-card">
     <text class="section-title">品牌介绍</text>
-    <text class="paragraph">杨勤口才训练KEEP 是一个面向成年人、大学生和职场人群的表达训练工具。通过朗读、复述、话题表达、普通话训练和每日额外训练，帮助用户建立开口习惯，提升声音状态、逻辑表达和表达自信。</text>
+    <text class="paragraph">杨勤口才训练KEEP 是一个面向成年人、大学生和职场人群的表达训练工具。通过朗读、复述、话题表达、普通话训练和每日加餐训练，帮助用户建立开口习惯，提升声音状态、逻辑表达和表达自信。</text>
   </view>
 
   <view class="content-card">
@@ -27,5 +27,5 @@
     </view>
   </view>
 
-  <view class="version-card">杨勤口才训练KEEP v1.0.0</view>
+  <view class="version-card">杨勤口才训练KEEP v1.0.2</view>
 </view>

@@ -1,7 +1,7 @@
 <view class="page">
   <view class="header">
-    <text class="title">训练</text>
-    <text class="subtitle">选择一个 21 天模块，今天先完成一次</text>
+    <text class="title">{{homeCopy.welcomeText}}</text>
+    <text class="subtitle">{{homeCopy.trainingGuide}}</text>
   </view>
 
   <view class="evaluation-card">
@@ -13,11 +13,11 @@
       <view class="evaluation-mark">测</view>
     </view>
 
-    <text class="evaluation-desc">通过 40 道结构化选择题，生成你的表达画像和训练建议。</text>
+    <text class="evaluation-desc">{{homeCopy.coursePreview}}</text>
 
     <view class="evaluation-tags">
-      <text class="evaluation-tag">5–7 分钟</text>
-      <text class="evaluation-tag">40 道题</text>
+      <text class="evaluation-tag">EEC表达力模型</text>
+      <text class="evaluation-tag">40道结构化试题</text>
       <text class="evaluation-tag">可选录音题</text>
     </view>
 
@@ -48,10 +48,20 @@
           <view class="bubble-box"></view>
           <view class="bubble-tail"></view>
         </view>
-        <view wx:else class="line-icon mic-icon">
+        <view wx:elif="{{item.id === 'mandarin'}}" class="line-icon mic-icon">
           <view class="mic-head"></view>
           <view class="mic-stem"></view>
           <view class="mic-base"></view>
+        </view>
+        <view wx:elif="{{item.id === 'speech'}}" class="line-icon podium-icon">
+          <view class="podium-board"></view>
+          <view class="podium-stand"></view>
+          <view class="podium-base"></view>
+        </view>
+        <view wx:else class="line-icon document-icon">
+          <view class="document-page"></view>
+          <view class="document-line document-line-one"></view>
+          <view class="document-line document-line-two"></view>
         </view>
       </view>
       <text class="module-title">{{item.title}}</text>
@@ -60,8 +70,8 @@
   </view>
 
   <view class="extra-card">
-    <text class="section-title">每日额外训练</text>
-    <text class="section-subtitle">不想按课程练时，可以随机加练一次</text>
+    <text class="section-title">每日加餐训练</text>
+    <text class="section-subtitle">不想按课程练时，可以随机加餐练一次</text>
 
     <view class="extra-list">
       <view
@@ -91,23 +101,51 @@
           <text class="extra-title">{{item.title}}</text>
           <text class="extra-desc">{{item.desc}}</text>
         </view>
+        <text class="extra-arrow">›</text>
       </view>
     </view>
   </view>
 
-  <view class="record-card">
+  <view class="record-card recent-card">
     <view class="record-head">
-      <text class="record-heading">最近训练记录</text>
-      <button class="continue-btn" bindtap="continueTraining">继续训练</button>
+      <view>
+        <text class="record-heading">最近训练</text>
+        <text class="record-subtitle">记录会在提交作品后自动更新</text>
+      </view>
+      <button class="continue-btn" bindtap="continueTraining">{{hasRecentRecord ? '继续训练' : '开始训练'}}</button>
     </view>
 
-    <view wx:if="{{hasRecentRecord}}">
-      <text class="record-title">{{recentRecord.moduleTitle}} Day {{recentRecord.day}}</text>
-      <text class="record-desc">{{recentRecord.taskTitle}} · {{recentRecord.displayTime}}</text>
+    <view wx:if="{{hasRecentRecord}}" class="recent-body">
+      <view class="recent-main">
+        <text class="record-title">{{recentRecord.displayModuleTitle}} · Day {{recentRecord.day}}</text>
+        <text class="record-desc">{{recentRecord.taskTitle}}</text>
+        <text class="record-time">{{recentRecord.displayTime}}</text>
+      </view>
+      <text class="record-status">已完成</text>
     </view>
 
-    <view class="empty" wx:else>
-      <text>暂无训练记录，先从朗读训练 Day 1 开始。</text>
+    <view class="recent-empty" wx:else>
+      <text class="empty-title">暂无训练记录</text>
+      <text class="empty">先从朗读训练 Day 1 开始，完成一次录音或录像后会出现在这里。</text>
+    </view>
+  </view>
+
+  <view class="weekly-schedule-group">
+    <view
+      class="weekly-strip weekly-strip-{{item.type}}"
+      wx:for="{{weeklyScheduleEntries}}"
+      wx:key="type"
+      data-type="{{item.type}}"
+      bindtap="goWeeklySchedule"
+    >
+      <view class="weekly-strip-copy">
+        <text class="weekly-strip-left">{{item.label}}</text>
+        <text class="weekly-strip-text {{item.hasSchedule ? '' : 'weekly-strip-empty'}}">{{item.summary}}</text>
+      </view>
+      <view class="weekly-strip-action">
+        <text>查看</text>
+        <text class="weekly-strip-arrow">›</text>
+      </view>
     </view>
   </view>
 </view>

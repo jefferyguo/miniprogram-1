@@ -510,7 +510,8 @@ button::after {
   font-weight: 800;
 }
 
-.report-loading {
+.report-loading,
+.report-error {
   border-radius: 24rpx;
   padding: 28rpx;
   background: #f4f6ff;

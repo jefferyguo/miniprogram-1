@@ -27,14 +27,6 @@
       <text class="feature-arrow">›</text>
     </view>
 
-    <view class="feature-card blue-card" bindtap="openTeacherComment">
-      <view>
-        <text class="feature-title">老师点评</text>
-        <text class="feature-desc">{{teacherComment}}</text>
-      </view>
-      <text class="feature-arrow">›</text>
-    </view>
-
     <view class="feature-card white-card" bindtap="openGrowthReport">
       <view>
         <text class="feature-title dark-title">成长报告</text>

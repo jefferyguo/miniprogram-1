@@ -4,7 +4,80 @@
   "cloudfunctionRoot": "cloudfunctions/",
   "miniprogramRoot": "./",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "StS2LocalAIAdvisor"
+      },
+      {
+        "type": "folder",
+        "value": "resources/training-source"
+      },
+      {
+        "type": "folder",
+        "value": "scripts"
+      },
+      {
+        "type": "folder",
+        "value": "data/import"
+      },
+      {
+        "type": "folder",
+        "value": "data/backup"
+      },
+      {
+        "type": "folder",
+        "value": "node_modules"
+      },
+      {
+        "type": "folder",
+        "value": ".agents"
+      },
+      {
+        "type": "file",
+        "value": ".DS_Store"
+      },
+      {
+        "type": "file",
+        "value": "AUDIT_CHECKLIST.md"
+      },
+      {
+        "type": "file",
+        "value": "SHARING_SETUP.md"
+      },
+      {
+        "type": "file",
+        "value": "SQUARE_INTERACTION_SETUP.md"
+      },
+      {
+        "type": "file",
+        "value": "VIRTUAL_PAYMENT_SETUP.md"
+      },
+      {
+        "type": "file",
+        "value": "skills-lock.json"
+      },
+      {
+        "type": "file",
+        "value": "朗诵训练0720.docx"
+      },
+      {
+        "type": "file",
+        "value": "每日复述练嘴.docx"
+      },
+      {
+        "type": "file",
+        "value": "演讲0720.docx"
+      },
+      {
+        "type": "file",
+        "value": "data/import/yangqin_training_replacement_reading_retelling_full.json"
+      },
+      {
+        "type": "file",
+        "value": "data/import/yangqin_training_replacement_reading_retelling_first60.json"
+      }
+    ],
     "include": []
   },
   "setting": {

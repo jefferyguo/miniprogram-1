@@ -23,10 +23,15 @@ page {
   gap: 24rpx;
 }
 
-.user-avatar-text {
+.user-avatar-text,
+.user-avatar-image {
   width: 96rpx;
   height: 96rpx;
   border-radius: 26rpx;
+  flex-shrink: 0;
+}
+
+.user-avatar-text {
   background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
   font-size: 42rpx;
@@ -34,7 +39,11 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+}
+
+.user-avatar-image {
+  display: block;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .profile-info {
@@ -44,12 +53,59 @@ page {
   flex-direction: column;
 }
 
+.nickname-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
 .nickname {
   color: #ffffff;
   font-size: 42rpx;
   font-weight: 800;
   line-height: 1.2;
-  margin-bottom: 12rpx;
+}
+
+.member-badge {
+  height: 38rpx;
+  line-height: 38rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.member-vip,
+.member-advanced,
+.member-whitelist,
+.member-monthly,
+.member-yearly {
+  color: #8a5a16;
+  background: #fff4dc;
+}
+
+.member-admin {
+  color: #24315f;
+  background: #eef1ff;
+}
+
+.member-student {
+  color: #14735c;
+  background: #e6f8f1;
+}
+
+.member-verified_lead {
+  color: #8a6d1f;
+  background: #fff7dc;
+}
+
+.member-free,
+.member-visitor,
+.member-wechat_user {
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .role-row {
@@ -76,20 +132,65 @@ page {
   line-height: 1.45;
 }
 
-.edit-profile-btn {
+.member-tip {
+  display: block;
+  margin-top: 6rpx;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.membership-expire {
+  display: block;
+  margin-top: 6rpx;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+.phone-status-text {
+  display: block;
+  margin-top: 12rpx;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+.phone-bound-text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.profile-actions {
   margin-top: 28rpx;
-  width: 100%;
+  display: flex;
+  gap: 16rpx;
+}
+
+.edit-profile-btn,
+.member-center-btn {
+  flex: 1;
+  min-width: 0;
   height: 72rpx;
   line-height: 72rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.94);
-  color: #253246;
   font-size: 28rpx;
   font-weight: 700;
+  margin: 0;
   padding: 0;
 }
 
-.edit-profile-btn::after {
+.edit-profile-btn {
+  background: rgba(255, 255, 255, 0.94);
+  color: #253246;
+}
+
+.member-center-btn {
+  color: #8a5a16;
+  background: #fff4dc;
+}
+
+.edit-profile-btn::after,
+.member-center-btn::after {
   border: none;
 }
 
@@ -248,15 +349,30 @@ page {
 
 .share-list-item {
   width: 100%;
+  min-height: 104rpx;
   margin: 0;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
   background: transparent;
+  border: none;
+  border-bottom: 1rpx solid #f0f2f6;
   border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: normal;
   text-align: left;
 }
 
 .share-list-item::after {
   border: none;
+}
+
+.list-copy {
+  flex: 1;
+  min-width: 0;
 }
 
 .list-title {
@@ -266,18 +382,366 @@ page {
   font-weight: 800;
 }
 
+.list-desc {
+  display: block;
+  margin-top: 8rpx;
+  color: #8a8f99;
+  font-size: 24rpx;
+  line-height: 1.35;
+}
+
 .arrow {
   color: #a0a6b1;
   font-size: 48rpx;
   line-height: 1;
 }
 
+.logout-list-item {
+  justify-content: flex-start;
+}
+
+.logout-title {
+  color: #d85b5b;
+}
+
 .footer {
-  margin-top: 44rpx;
+  margin: 42rpx 0 18rpx;
   text-align: center;
-  color: #a0a6b1;
-  font-size: 24rpx;
-  line-height: 1.8;
+  color: #b0b5bf;
+  font-size: 22rpx;
+  line-height: 1.75;
   display: flex;
   flex-direction: column;
+}
+
+.mine-modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  background: rgba(20, 28, 40, 0.52);
+  box-sizing: border-box;
+}
+
+.brand-modal,
+.contact-modal {
+  width: 100%;
+  max-width: 620rpx;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 36rpx 34rpx 32rpx;
+  border-radius: 36rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 28rpx 80rpx rgba(20, 31, 51, 0.2);
+}
+
+.brand-modal-header,
+.contact-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.brand-modal-heading,
+.contact-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand-modal-title,
+.brand-modal-subtitle,
+.brand-account-name,
+.brand-account-id,
+.contact-title,
+.contact-subtitle,
+.contact-name,
+.contact-note,
+.contact-info-label,
+.contact-info-value {
+  display: block;
+}
+
+.brand-modal-title,
+.contact-title {
+  color: #172033;
+  font-size: 34rpx;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.brand-modal-subtitle,
+.contact-subtitle {
+  margin-top: 8rpx;
+  color: #7b8494;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.brand-modal-close,
+.contact-modal-close {
+  width: 64rpx;
+  height: 64rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa3b2;
+  background: #f3f5f8;
+  font-size: 38rpx;
+  line-height: 1;
+}
+
+.brand-qr-stage {
+  width: 380rpx;
+  margin: 28rpx auto 24rpx;
+  padding: 22rpx;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.brand-qr-stage-douyin {
+  background: linear-gradient(180deg, #f6fbf7 0%, #eef7ef 100%);
+}
+
+.brand-qr-stage-xiaohongshu {
+  background: #ffffff;
+  border: 1rpx solid #edf1f5;
+  box-shadow: 0 12rpx 32rpx rgba(20, 31, 51, 0.06);
+}
+
+.brand-qr-image,
+.brand-qr-placeholder {
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 22rpx;
+}
+
+.brand-qr-image {
+  display: block;
+}
+
+.brand-qr-image-douyin {
+  border-radius: 24rpx;
+}
+
+.brand-qr-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa3b2;
+  background: #f7f9fb;
+  font-size: 24rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.brand-account {
+  text-align: center;
+}
+
+.brand-account-name {
+  color: #172033;
+  font-size: 30rpx;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.brand-account-id {
+  margin-top: 8rpx;
+  color: #8b95a5;
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+
+.brand-actions {
+  width: 460rpx;
+  max-width: 100%;
+  margin: 28rpx auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.brand-primary-btn,
+.brand-secondary-btn,
+.contact-primary-btn,
+.contact-secondary-btn {
+  height: 76rpx;
+  line-height: 76rpx;
+  margin: 0;
+  padding: 0;
+  border-radius: 38rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+
+.brand-primary-btn {
+  width: 240rpx;
+  color: #ffffff;
+  background: #16c76f;
+}
+
+.brand-secondary-btn {
+  width: 200rpx;
+  color: #7d8796;
+  background: #f1f3f6;
+}
+
+.brand-primary-btn::after,
+.brand-secondary-btn::after,
+.brand-link-btn::after,
+.contact-primary-btn::after,
+.contact-secondary-btn::after,
+.contact-link-btn::after {
+  border: none;
+}
+
+.brand-link-btn {
+  width: auto;
+  height: 52rpx;
+  line-height: 52rpx;
+  margin: 14rpx auto -6rpx;
+  padding: 0 12rpx;
+  color: #4f7df3;
+  background: transparent;
+  font-size: 25rpx;
+  font-weight: 500;
+}
+
+.contact-qr-card {
+  width: 342rpx;
+  margin: 26rpx auto 0;
+  padding: 24rpx 24rpx 22rpx;
+  border: 1rpx solid #edf1f5;
+  border-radius: 30rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 12rpx 34rpx rgba(20, 31, 51, 0.06);
+}
+
+.contact-qr-image,
+.contact-qr-placeholder {
+  width: 292rpx;
+  height: 292rpx;
+  border-radius: 16rpx;
+}
+
+.contact-qr-image {
+  display: block;
+}
+
+.contact-qr-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa3b2;
+  background: #f7f9fb;
+  font-size: 23rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.contact-name {
+  margin-top: 18rpx;
+  color: #172033;
+  font-size: 29rpx;
+  line-height: 1.35;
+  font-weight: 700;
+  text-align: center;
+}
+
+.contact-note {
+  margin-top: 6rpx;
+  color: #8b95a5;
+  font-size: 24rpx;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.contact-info-card {
+  margin-top: 22rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 24rpx;
+  background: #f7f9fb;
+  box-sizing: border-box;
+}
+
+.contact-info-row {
+  padding: 10rpx 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.contact-info-label {
+  width: 72rpx;
+  flex-shrink: 0;
+  color: #9aa3b2;
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+.contact-info-value {
+  flex: 1;
+  min-width: 0;
+  color: #24324a;
+  font-size: 25rpx;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.contact-info-phone {
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+.contact-actions {
+  margin-top: 24rpx;
+  display: flex;
+  gap: 20rpx;
+}
+
+.contact-primary-btn,
+.contact-secondary-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-primary-btn {
+  color: #ffffff;
+  background: #16c76f;
+}
+
+.contact-secondary-btn {
+  color: #2f75ff;
+  background: #eef5ff;
+}
+
+.contact-link-btn {
+  width: auto;
+  height: 52rpx;
+  line-height: 52rpx;
+  margin: 14rpx auto -6rpx;
+  padding: 0 12rpx;
+  color: #4f7df3;
+  background: transparent;
+  font-size: 25rpx;
+  font-weight: 500;
 }

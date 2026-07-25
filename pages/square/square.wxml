@@ -1,0 +1,186 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">表达广场</text>
+    <text class="hero-desc">看看大家的训练作品，也勇敢发布自己的声音</text>
+
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-value">{{publicCount}}</text>
+        <text class="stat-label">公开作品</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{todayCount}}</text>
+        <text class="stat-label">今日新增</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{myPublicCount}}</text>
+        <text class="stat-label">我的公开</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="notice-card">
+    <text class="notice-title">公开提醒</text>
+    <text class="notice-desc">广场内容所有用户可见，请不要发布包含隐私、联系方式或不适合公开的信息。</text>
+  </view>
+
+  <scroll-view class="filter-scroll" scroll-x="true" show-scrollbar="false">
+    <view class="filter-list">
+      <view
+        class="filter-pill {{activeFilter === item.id ? 'active' : ''}}"
+        wx:for="{{filters}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="changeFilter"
+      >{{item.title}}</view>
+    </view>
+  </scroll-view>
+
+  <view class="work-list" wx:if="{{hasWorks}}">
+    <view class="work-card" wx:for="{{works}}" wx:key="key">
+      <view class="work-main">
+        <view class="avatar-text">{{item.publicAvatarText}}</view>
+        <view class="work-copy">
+          <view class="user-line">
+            <text class="nickname">{{item.publicNickname}}</text>
+            <text class="category-text">{{item.categoryText}} · {{item.moduleText}}</text>
+          </view>
+          <text class="work-title">{{item.titleText}}</text>
+          <view class="work-meta">
+            <text>{{item.mediaTypeText}}</text>
+            <text>{{item.durationText}}</text>
+            <text>{{item.publicTimeText}}</text>
+          </view>
+        </view>
+        <view class="work-side">
+          <text class="type-tag {{item.workType === 'video' ? 'video-tag' : ''}}">{{item.mediaTypeText}}</text>
+          <button
+            wx:if="{{item.workType === 'audio'}}"
+            class="play-btn"
+            data-key="{{item.key}}"
+            bindtap="playAudioWork"
+          >{{audioPlayer.activeKey === item.audioKey ? (audioPlayer.isPlaying ? '暂停' : (audioPlayer.isPaused ? '继续' : '播放')) : '播放'}}</button>
+          <button
+            wx:else
+            class="play-btn video-play-btn"
+            data-key="{{item.key}}"
+            bindtap="previewVideoWork"
+          >查看</button>
+        </view>
+      </view>
+
+      <view class="audio-player" wx:if="{{item.workType === 'audio' && audioPlayer.activeKey === item.audioKey}}">
+        <view class="audio-time-row">
+          <text>{{audioPlayer.currentText}}</text>
+          <text>{{audioPlayer.durationText}}</text>
+        </view>
+        <slider
+          class="audio-slider"
+          min="0"
+          max="100"
+          step="1"
+          value="{{audioPlayer.progress}}"
+          activeColor="#3478f6"
+          backgroundColor="#dfe6f2"
+          block-size="14"
+          bindchange="onAudioSliderChange"
+        />
+      </view>
+
+      <view class="work-actions">
+        <button
+          class="action-btn like-action {{item.likedByMe ? 'active' : ''}}"
+          data-id="{{item.interactionId}}"
+          bindtap="onToggleLike"
+        >
+          <text class="action-icon">{{item.likedByMe ? '♥' : '♡'}}</text>
+          <text>{{item.likedByMe ? '已赞' : '赞'}}</text>
+          <text class="action-count">{{item.likeCount || 0}}</text>
+        </button>
+        <button
+          class="action-btn comment-action"
+          data-id="{{item.interactionId}}"
+          bindtap="onOpenComments"
+        >
+          <text>评论</text>
+          <text class="action-count">{{item.commentCount || 0}}</text>
+        </button>
+        <button
+          class="action-btn share-action"
+          open-type="share"
+          bindtap="showTimelineShareHint"
+          data-work-id="{{item.interactionId || item._id}}"
+          data-square-work-id="{{item.interactionId || item._id}}"
+          data-work-index="{{index}}"
+          data-title="{{item.title || item.taskTitle || item.titleText}}"
+          data-thumb="{{item.thumbTempFilePath || item.coverUrl || item.poster || ''}}"
+        >分享</button>
+        <button
+          wx:if="{{item.isMine && item.interactionId}}"
+          class="action-btn delete-work-action"
+          data-id="{{item.interactionId}}"
+          bindtap="onDeleteSquareWork"
+        >删除</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-card" wx:else>
+    <text class="empty-title">暂无公开作品</text>
+    <text class="empty-desc">提交训练作品时，可以选择发布到广场。公开后，其他学员也能看到你的练习成果。</text>
+    <button class="empty-btn" bindtap="goTraining">去训练</button>
+  </view>
+</view>
+
+<view class="comment-mask" wx:if="{{commentsVisible}}" bindtap="closeComments">
+  <view class="comment-panel" catchtap="noop">
+    <view class="comment-header">
+      <view class="comment-heading">
+        <text class="comment-title">作品评论</text>
+        <text class="comment-work-title">{{currentWork.titleText || '训练作品'}}</text>
+      </view>
+      <button class="comment-close" bindtap="closeComments">×</button>
+    </view>
+
+    <scroll-view class="comment-list" scroll-y="true" show-scrollbar="false">
+      <view class="comment-loading" wx:if="{{commentsLoading}}">正在加载评论…</view>
+      <view class="comment-empty" wx:elif="{{comments.length === 0}}">还没有评论，来发表第一条吧</view>
+      <block wx:else>
+        <view class="comment-item" wx:for="{{comments}}" wx:key="_id">
+          <view class="comment-avatar">{{item.avatarText}}</view>
+          <view class="comment-body">
+            <view class="comment-meta">
+              <text class="comment-nickname">{{item.nickname}}</text>
+              <text class="comment-time">{{item.createdAt}}</text>
+            </view>
+            <text class="comment-content">{{item.content}}</text>
+            <button
+              class="comment-delete"
+              wx:if="{{item.isMine}}"
+              data-id="{{item._id || item.id}}"
+              bindtap="onDeleteComment"
+            >删除</button>
+          </view>
+        </view>
+      </block>
+    </scroll-view>
+
+    <view class="comment-composer">
+      <textarea
+        class="comment-input"
+        value="{{commentText}}"
+        maxlength="200"
+        placeholder="友善评论，分享你的鼓励"
+        placeholder-class="comment-placeholder"
+        bindinput="onCommentInput"
+        fixed="true"
+      />
+      <button
+        class="comment-submit"
+        loading="{{commentSubmitting}}"
+        disabled="{{commentSubmitting}}"
+        bindtap="onSubmitComment"
+      >发送</button>
+    </view>
+  </view>
+</view>

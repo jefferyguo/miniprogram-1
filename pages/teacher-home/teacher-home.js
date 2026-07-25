@@ -1,6 +1,5 @@
 const {
   getAllSubmittedWorks,
-  getClasses,
   getFavoriteWorks,
   hasTeacherFeedback
 } = require('../../utils/local-data')
@@ -20,14 +19,12 @@ Page({
   data: {
     teacherName: '杨勤老师',
     stats: [
-      { label: '班级数', value: 0 },
       { label: '今日待点评', value: 0 },
       { label: '已点评', value: 0 },
       { label: '收藏作品', value: 0 }
     ],
     quickActions: [
-      { title: '创建班级', desc: '生成班级码，邀请学员加入', action: 'openClassManage' },
-      { title: '查看待点评', desc: '按班级处理学生提交作品', action: 'openPendingWorks' },
+      { title: '查看待点评', desc: '处理学生提交作品', action: 'openPendingWorks' },
       { title: '点评模板', desc: '管理常用点评话术', action: 'openCommentTemplates' },
       { title: '收藏夹', desc: '管理重点作品和案例素材', action: 'openFavorites' }
     ],
@@ -55,7 +52,6 @@ Page({
   },
 
   loadDashboard() {
-    const classes = getClasses()
     const works = getAllSubmittedWorks()
     const favoriteWorks = getFavoriteWorks()
     const pendingWorks = works.filter(item => !hasTeacherFeedback(item))
@@ -64,7 +60,6 @@ Page({
 
     this.setData({
       stats: [
-        { label: '班级数', value: classes.length },
         { label: '今日待点评', value: todayPending },
         { label: '已点评', value: reviewedWorks.length },
         { label: '收藏作品', value: favoriteWorks.length }

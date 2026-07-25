@@ -23,11 +23,18 @@
     "miniprogram": {
       "list": [
         {
+          "name": "管理端",
+          "pathName": "pages/admin-access/admin-access",
+          "query": "",
+          "scene": null,
+          "launchMode": "default"
+        },
+        {
           "name": "老师端",
           "pathName": "pages/teacher-login/teacher-login",
           "query": "from=teacher_qr",
-          "scene": null,
-          "launchMode": "default"
+          "launchMode": "default",
+          "scene": null
         }
       ]
     }

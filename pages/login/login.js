@@ -1,156 +1,85 @@
 const auth = require('../../utils/auth')
+const { bindPhoneWithCode } = require('../../utils/phone-auth')
 
 const TAB_PAGES = [
   '/pages/training/training',
   '/pages/review/review',
-  '/pages/growth/growth',
+  '/pages/square/square',
   '/pages/mine/mine'
 ]
-
-function buildMockUser() {
-  return {
-    id: Date.now(),
-    nickname: '同学',
-    role: 'student',
-    isLoggedIn: true,
-    loginType: 'mock',
-    loginAt: Date.now()
-  }
-}
 
 Page({
   data: {
     redirect: '',
-    isLoggingIn: false
+    bindingLogin: false
   },
 
   onLoad(options) {
-    this.setData({
-      redirect: options.redirect || ''
-    })
+    this.setData({ redirect: options.redirect || '' })
   },
 
-  handleLogin() {
-    if (this.data.isLoggingIn) return
-
-    this.setData({
-      isLoggingIn: true
-    })
-
-    wx.login({
-      success: res => {
-        if (!res.code) {
-          this.setData({
-            isLoggingIn: false
-          })
-          wx.showToast({
-            title: '登录失败，请重试',
-            icon: 'none'
-          })
-          return
-        }
-
-        this.loginWithCloud(res.code)
-      },
-      fail: () => {
-        this.setData({
-          isLoggingIn: false
-        })
-        wx.showToast({
-          title: '微信登录失败',
-          icon: 'none'
-        })
-      }
-    })
-  },
-
-  loginWithCloud(code) {
-    if (!wx.cloud || !wx.cloud.callFunction) {
-      this.finishLogin(buildMockUser())
+  async onGetPhoneNumberLogin(e) {
+    if (this.data.bindingLogin) return
+    const code = e.detail && e.detail.code
+    if (!code) {
+      wx.showToast({
+        title: '需要绑定手机号后才能保存训练记录和使用 AI 点评',
+        icon: 'none'
+      })
       return
     }
 
-    wx.cloud.callFunction({
-      name: 'login',
-      data: {
-        code
-      },
-      success: cloudRes => {
-        const user = cloudRes.result && cloudRes.result.user
-        this.finishLogin(user || buildMockUser())
-      },
-      fail: err => {
-        console.warn('cloud login failed, use mock login', err)
-        this.finishLogin(buildMockUser())
-      }
-    })
-  },
-
-  finishLogin(userInfo) {
-    auth.setUserInfo({
-      ...userInfo,
-      nickname: userInfo.nickname || userInfo.nickName || '同学',
-      role: userInfo.role || 'student',
-      isLoggedIn: true
-    })
-
-    this.setData({
-      isLoggingIn: false
-    })
+    this.setData({ bindingLogin: true })
+    wx.showLoading({ title: '正在登录', mask: true })
+    let loginSucceeded = false
+    let errorMessage = ''
+    try {
+      await bindPhoneWithCode(code)
+      loginSucceeded = true
+    } catch (error) {
+      errorMessage = error.message || '当前暂无法获取手机号，请联系周老师绑定手机号'
+    } finally {
+      wx.hideLoading()
+      this.setData({ bindingLogin: false })
+    }
 
     wx.showToast({
-      title: '登录成功',
-      icon: 'success'
+      title: loginSucceeded ? '登录成功' : errorMessage,
+      icon: loginSucceeded ? 'success' : 'none'
     })
+    if (loginSucceeded) setTimeout(() => this.goBackOrContinue(), 300)
+  },
 
-    setTimeout(() => {
-      this.goBackOrContinue()
-    }, 350)
+  skipLogin() {
+    this.navigateBackSafely()
   },
 
   goBackOrContinue() {
     const pendingResult = auth.consumePendingAction()
-
     if (pendingResult !== null) {
-      if (pendingResult === false || pendingResult === undefined) {
-        this.navigateBackSafely()
-      }
+      if (pendingResult === false || pendingResult === undefined) this.navigateBackSafely()
       return
     }
 
     const redirect = this.data.redirect ? decodeURIComponent(this.data.redirect) : ''
-
     if (redirect) {
       this.navigateAfterLogin(redirect)
       return
     }
-
     this.navigateBackSafely()
   },
 
   navigateAfterLogin(url) {
     if (TAB_PAGES.includes(url)) {
-      wx.switchTab({
-        url
-      })
+      wx.switchTab({ url })
       return
     }
-
-    wx.redirectTo({
-      url,
-      fail: () => {
-        this.navigateBackSafely()
-      }
-    })
+    wx.redirectTo({ url, fail: () => this.navigateBackSafely() })
   },
 
   navigateBackSafely() {
     wx.navigateBack({
-      fail: () => {
-        wx.switchTab({
-          url: '/pages/mine/mine'
-        })
-      }
+      fail: () => wx.switchTab({ url: '/pages/training/training' })
     })
   }
 })

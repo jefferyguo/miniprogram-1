@@ -1,0 +1,67 @@
+<view class="page">
+  <view class="hero-card">
+    <view class="hero-head">
+      <text class="hero-title">{{pageTitle}}</text>
+      <text wx:if="{{hasSchedule}}" class="schedule-status-tag">{{scheduleDisplayType === 'upcoming' ? '下周安排' : '本周安排'}}</text>
+    </view>
+    <text class="hero-desc">{{loadState === 'loading' ? '正在加载课表' : (loadState === 'success' ? (schedule.weekLabel || '课程安排已更新') : (loadState === 'empty' ? emptyDesc : (loadState === 'singlePageGuide' ? '点击底部“前往小程序”查看最新安排' : errorDesc)))}}</text>
+  </view>
+
+  <block wx:if="{{loadState === 'loading'}}">
+    <view class="state-card loading-card">
+      <view class="loading-line loading-line-title"></view>
+      <view class="loading-line"></view>
+      <text class="state-desc">正在加载课表...</text>
+    </view>
+  </block>
+
+  <block wx:elif="{{loadState === 'success'}}">
+    <view class="schedule-content">
+      <view class="summary-card">
+        <text class="summary-title">{{scheduleDisplayType === 'upcoming' ? '下周安排' : '本周安排'}}</text>
+        <text class="summary-text {{isSnapshot ? 'snapshot-summary-text' : ''}}">{{isSnapshot ? snapshotTip : summaryText}}</text>
+      </view>
+
+      <view class="course-list">
+        <view class="course-card {{isSnapshot ? 'snapshot-course-card' : ''}}" wx:for="{{courses}}" wx:key="index">
+          <view class="course-top">
+            <view class="course-date-block">
+              <text class="course-date">{{item.date}} {{item.weekday}}</text>
+              <text class="course-time">{{item.time}}</text>
+            </view>
+            <text class="course-tag">{{item.targetAudience || (scheduleType === 'college' ? '大学生' : '成人')}}</text>
+          </view>
+          <text class="course-title">{{item.courseName}}</text>
+          <view wx:if="{{item.content}}" class="course-content">
+            <text class="course-content-label">课程目标</text>
+            <text class="course-content-text">{{item.content}}</text>
+          </view>
+          <view wx:if="{{item.remark}}" class="course-note">备注：{{item.remark}}</view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:elif="{{loadState === 'empty'}}">
+    <view class="empty-card">
+      <text class="empty-title">{{emptyTitle}}</text>
+      <text class="empty-desc">{{emptyDesc}}</text>
+      <button wx:if="{{!isSinglePageMode}}" class="empty-btn" bindtap="goTraining">去训练</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{loadState === 'singlePageGuide'}}">
+    <view class="state-card single-page-guide-card">
+      <text class="state-title">查看最新课表</text>
+      <text class="state-desc">{{singlePageGuideDesc}}</text>
+    </view>
+  </block>
+
+  <block wx:elif="{{loadState === 'error'}}">
+    <view class="state-card error-card">
+      <text class="state-title">{{errorTitle}}</text>
+      <text class="state-desc">{{errorDesc}}</text>
+      <button wx:if="{{!isSinglePageMode}}" class="retry-btn" bindtap="retryLoad">重新加载</button>
+    </view>
+  </block>
+</view>

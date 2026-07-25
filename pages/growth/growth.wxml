@@ -1,7 +1,7 @@
 <view class="page">
   <view class="header">
     <text class="title">成长</text>
-    <text class="subtitle">训练完成情况会自动记录在本地</text>
+    <text class="subtitle">查看训练进度、完成记录和表达习惯变化</text>
   </view>
 
   <view class="stats-row">
@@ -32,7 +32,7 @@
     <text class="section-title">最近训练记录</text>
     <view wx:if="{{hasRecord}}">
       <view class="record-item" wx:for="{{recentRecords}}" wx:key="id">
-        <text class="record-title">{{item.moduleTitle}} Day {{item.day}}</text>
+        <text class="record-title">{{item.displayModuleTitle}} Day {{item.day}}</text>
         <text class="record-desc">{{item.taskTitle}} · {{item.displayDate}}</text>
       </view>
     </view>
@@ -42,7 +42,7 @@
   </view>
 
   <view class="section-card">
-    <text class="section-title">每日额外训练</text>
+    <text class="section-title">每日加餐训练</text>
 
     <view class="extra-summary">
       <text class="extra-total">{{extraTotalSubmissions}}</text>
@@ -61,7 +61,7 @@
     </view>
 
     <view class="empty extra-empty" wx:else>
-      <text>暂无额外训练记录，可以从首页的每日额外训练开始。</text>
+      <text>暂无加餐训练记录，可以从首页的每日加餐训练开始。</text>
     </view>
   </view>
 </view>

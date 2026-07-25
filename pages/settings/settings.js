@@ -1,6 +1,6 @@
 Page({
   data: {
-    versionText: '杨勤口才训练KEEP v1.0.0'
+    versionText: '杨勤口才训练KEEP v1.0.2'
   },
 
   clearLocalCache() {

@@ -16,28 +16,23 @@
       flash="off"
       resolution="medium"
       frame-size="medium"
+      bindstop="onCameraRecordStop"
       binderror="onCameraError"
     ></camera>
 
     <cover-view class="camera-toolbar" wx:if="{{!hasVideo}}">
       <cover-view class="camera-status">{{cameraLabel}}</cover-view>
       <cover-view
-        class="switch-camera-btn {{isRecording || isSwitchingCamera ? 'disabled' : ''}}"
+        class="switch-camera-btn {{isRecording || isStopping || isSwitchingCamera ? 'disabled' : ''}}"
         bindtap="switchCamera"
       >翻转摄像头</cover-view>
     </cover-view>
 
-    <view class="prompt-overlay" wx:if="{{!hasVideo && showPrompt && promptText}}">
-      <view class="prompt-header">
-        <view class="prompt-heading">
-          <text class="prompt-title">{{recordTitle}}</text>
+    <view class="prompt-panel" wx:if="{{!hasVideo && showPrompt && promptText}}">
+      <view class="prompt-top">
+        <view class="prompt-title-wrap">
+          <text class="prompt-title">{{recordTitle || taskTitle}}</text>
           <text wx:if="{{recordSubtitle}}" class="prompt-subtitle">{{recordSubtitle}}</text>
-        </view>
-
-        <view class="prompt-tools">
-          <button class="prompt-tool-btn" bindtap="togglePrompt">隐藏文字</button>
-          <button class="prompt-tool-btn" bindtap="decreasePromptFont">A-</button>
-          <button class="prompt-tool-btn" bindtap="increasePromptFont">A+</button>
         </view>
       </view>
 
@@ -47,12 +42,17 @@
         enhanced="true"
         show-scrollbar="false"
       >
-        <text class="prompt-content" style="font-size: {{promptFontSize}}rpx;">{{promptText}}</text>
-        <text wx:if="{{requirement}}" class="prompt-requirement">训练要求：{{requirement}}</text>
+        <view class="prompt-text" style="font-size: {{promptFontSize}}rpx;">{{promptText}}</view>
       </scroll-view>
+
+      <view class="prompt-actions">
+        <button class="prompt-action-btn" bindtap="togglePrompt">隐藏文字</button>
+        <button class="prompt-action-btn small" bindtap="decreaseFontSize">A-</button>
+        <button class="prompt-action-btn small" bindtap="increaseFontSize">A+</button>
+      </view>
     </view>
 
-    <view class="show-prompt-btn" wx:if="{{!hasVideo && !showPrompt && promptText}}" bindtap="togglePrompt">显示文字</view>
+    <view class="prompt-show-btn" wx:if="{{!hasVideo && !showPrompt && promptText}}" bindtap="togglePrompt">显示文字</view>
 
     <cover-view wx:if="{{isSwitchingCamera}}" class="camera-switch-mask">
       <cover-view class="camera-switch-text">切换摄像头中...</cover-view>
@@ -68,15 +68,18 @@
   </view>
 
   <view class="status-card">
-    <text class="status-title">{{hasVideo ? '已录制' : (isRecording ? '正在录像 ' + recordingTimeText : '准备录像')}}</text>
-    <text class="status-desc">{{hasVideo ? '可以先预览视频，再选择重新录制或使用该视频' : '保持画面稳定，完成一段清晰表达'}}</text>
+    <text class="status-title">{{hasVideo ? '已录制' : (isStopping ? '正在保存视频' : (isRecording ? '正在录像 ' + recordingTimeText : '准备录像'))}}</text>
+    <text class="status-desc" wx:if="{{hasVideo}}">可以先预览视频，再选择重新录制或使用该视频</text>
+    <text class="status-desc warning" wx:elif="{{nearingMaxDuration}}">即将达到最长录制时长</text>
+    <text class="status-desc" wx:else>保持画面稳定，完成一段清晰表达 · 最长可录制 {{maxDurationText}}</text>
   </view>
 
   <view class="actions" wx:if="{{!hasVideo}}">
     <button
-      class="record-btn {{isRecording ? 'stop-btn' : ''}}"
+      class="record-btn {{isRecording || isStopping ? 'stop-btn' : ''}}"
+      disabled="{{isStopping}}"
       bindtap="toggleRecord"
-    >{{isRecording ? '停止录像' : '开始录像'}}</button>
+    >{{isStopping ? '正在保存...' : (isRecording ? '停止录像' : '开始录像')}}</button>
   </view>
 
   <view class="actions two-actions" wx:else>

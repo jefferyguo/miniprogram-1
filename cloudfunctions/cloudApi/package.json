@@ -1,0 +1,9 @@
+{
+  "name": "cloudApi",
+  "version": "1.0.0",
+  "description": "Yangqin Kou Cai CloudBase API",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

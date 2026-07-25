@@ -1,0 +1,54 @@
+<view class="page">
+  <view class="hero-card">
+    <view class="hero-head">
+      <text class="hero-title">{{pageTitle}}</text>
+      <text wx:if="{{loadState === 'success'}}" class="schedule-status-tag">本周安排</text>
+    </view>
+    <text class="hero-desc">{{loadState === 'loading' ? '正在加载课表预览' : (loadState === 'success' ? (schedule.weekLabel || '课程安排已更新') : errorDesc)}}</text>
+  </view>
+
+  <block wx:if="{{loadState === 'loading'}}">
+    <view class="state-card loading-card">
+      <view class="loading-line loading-line-title"></view>
+      <view class="loading-line"></view>
+      <text class="state-desc">正在加载课表...</text>
+    </view>
+  </block>
+
+  <block wx:elif="{{loadState === 'success'}}">
+    <view class="schedule-content">
+      <view class="summary-card">
+        <text class="summary-title">本周安排</text>
+        <text class="summary-text">{{summaryText}}</text>
+      </view>
+
+      <view class="course-list">
+        <view class="course-card" wx:for="{{courses}}" wx:key="index">
+          <view class="course-top">
+            <view class="course-date-block">
+              <text class="course-date">{{item.date}} {{item.weekday}}</text>
+              <text class="course-time">{{item.time}}</text>
+            </view>
+            <text class="course-tag">{{item.targetAudience || (scheduleType === 'college' ? '大学生' : '成人')}}</text>
+          </view>
+          <text class="course-title">{{item.courseName}}</text>
+          <view wx:if="{{item.content}}" class="course-content">
+            <text class="course-content-label">课程目标</text>
+            <text class="course-content-text">{{item.content}}</text>
+          </view>
+          <view wx:if="{{item.remark}}" class="course-note">备注：{{item.remark}}</view>
+        </view>
+      </view>
+
+      <view class="bottom-tip">{{bottomTip}}</view>
+    </view>
+  </block>
+
+  <block wx:elif="{{loadState === 'error'}}">
+    <view class="state-card error-card">
+      <text class="state-title">{{errorTitle}}</text>
+      <text class="state-desc">{{errorDesc}}</text>
+      <button class="retry-btn" bindtap="retryLoad">重新加载</button>
+    </view>
+  </block>
+</view>

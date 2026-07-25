@@ -1,0 +1,288 @@
+page {
+  background: #f5f7fb;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 30rpx 28rpx 56rpx;
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+.hero-card,
+.summary-card,
+.course-card,
+.state-card,
+.empty-card {
+  border: 1rpx solid #edf1f6;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.05);
+}
+
+.state-card {
+  margin-top: 24rpx;
+  padding: 38rpx 30rpx;
+  text-align: center;
+}
+
+.state-title,
+.state-desc {
+  display: block;
+}
+
+.state-title {
+  color: #303948;
+  font-size: 30rpx;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.state-desc {
+  margin-top: 12rpx;
+  color: #8a92a3;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.loading-line {
+  width: 82%;
+  height: 22rpx;
+  margin: 16rpx auto 0;
+  border-radius: 999rpx;
+  background: #edf1f5;
+}
+
+.loading-line-title {
+  width: 42%;
+  height: 28rpx;
+  margin-top: 0;
+  background: #e5eaf0;
+}
+
+.retry-btn {
+  width: 220rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  margin: 24rpx auto 0;
+  padding: 0;
+  border-radius: 34rpx;
+  color: #3478f6;
+  background: #eef4ff;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.hero-card {
+  padding: 34rpx 32rpx;
+  background: linear-gradient(135deg, #eef9f5 0%, #eef6ff 100%);
+}
+
+.hero-head,
+.course-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.hero-title,
+.hero-desc,
+.summary-title,
+.summary-text,
+.course-date,
+.course-time,
+.course-title,
+.course-desc,
+.course-note,
+.empty-title,
+.empty-desc {
+  display: block;
+}
+
+.hero-title {
+  color: #17352d;
+  font-size: 42rpx;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.hero-desc {
+  margin-top: 12rpx;
+  color: #657281;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.schedule-status-tag {
+  padding: 7rpx 15rpx;
+  border-radius: 999rpx;
+  color: #3478f6;
+  background: rgba(255, 255, 255, 0.82);
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.summary-card {
+  margin-top: 24rpx;
+  padding: 28rpx;
+}
+
+.summary-title {
+  color: #17202e;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.summary-text {
+  margin-top: 10rpx;
+  color: #687280;
+  font-size: 25rpx;
+  line-height: 1.58;
+}
+
+.snapshot-summary-text {
+  padding: 16rpx 18rpx;
+  border-radius: 16rpx;
+  background: #f3f7ff;
+  color: #60708a;
+  font-size: 23rpx;
+}
+
+.course-list {
+  margin-top: 24rpx;
+}
+
+.course-card {
+  padding: 32rpx 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.snapshot-course-card {
+  padding-top: 26rpx;
+  padding-bottom: 26rpx;
+}
+
+.snapshot-course-card .course-top {
+  margin-bottom: 16rpx;
+}
+
+.course-top {
+  margin-bottom: 22rpx;
+}
+
+.course-date {
+  color: #17352d;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.course-time {
+  margin-top: 9rpx;
+  color: #3478f6;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.course-tag {
+  max-width: 220rpx;
+  padding: 7rpx 15rpx;
+  border-radius: 999rpx;
+  color: #087b4d;
+  background: #e7f7ef;
+  font-size: 21rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.course-title {
+  color: #17202e;
+  font-size: 32rpx;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.course-note {
+  margin-top: 16rpx;
+  color: #687280;
+  font-size: 25rpx;
+  line-height: 1.6;
+}
+
+.course-content {
+  margin-top: 18rpx;
+  padding: 20rpx;
+  border-radius: 18rpx;
+  background: #f7f9fc;
+}
+
+.course-content-label,
+.course-content-text {
+  display: block;
+}
+
+.course-content-label {
+  color: #7b8493;
+  font-size: 22rpx;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.course-content-text {
+  margin-top: 8rpx;
+  color: #596373;
+  font-size: 25rpx;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.course-note {
+  padding: 14rpx 16rpx;
+  border-radius: 16rpx;
+  background: #fff8e8;
+  color: #8c681d;
+}
+
+.empty-card {
+  margin-top: 22rpx;
+  padding: 44rpx 30rpx;
+  text-align: center;
+}
+
+.empty-title {
+  color: #303948;
+  font-size: 31rpx;
+  font-weight: 800;
+}
+
+.empty-desc {
+  margin-top: 10rpx;
+  color: #7a8192;
+  font-size: 25rpx;
+}
+
+.empty-btn {
+  width: 220rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  margin: 24rpx auto 0;
+  padding: 0;
+  border-radius: 34rpx;
+  color: #ffffff;
+  background: #07c160;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.single-page-guide-card {
+  padding-top: 48rpx;
+  padding-bottom: 48rpx;
+}

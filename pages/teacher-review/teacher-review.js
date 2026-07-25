@@ -7,6 +7,7 @@ const {
   hasTeacherFeedback,
   updateSubmissionById
 } = require('../../utils/local-data')
+const { getVideoPath, previewVideoByPath } = require('../../utils/work-media')
 
 const QUICK_TAGS = [
   '声音清楚',
@@ -169,7 +170,9 @@ Page({
   },
 
   previewVideo(item) {
-    if (!item.filePath) {
+    const videoPath = getVideoPath(item)
+
+    if (!videoPath) {
       wx.showToast({
         title: '录像文件不存在',
         icon: 'none'
@@ -177,22 +180,7 @@ Page({
       return
     }
 
-    wx.previewMedia({
-      sources: [
-        {
-          url: item.filePath,
-          type: 'video',
-          poster: item.thumbPath || ''
-        }
-      ],
-      fail: error => {
-        console.error('teacher video preview error', error)
-        wx.showToast({
-          title: '查看失败',
-          icon: 'none'
-        })
-      }
-    })
+    previewVideoByPath(videoPath, item.displaySubtitle || item.displayTitle || '训练录像')
   },
 
   writeFeedback(e) {

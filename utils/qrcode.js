@@ -135,7 +135,37 @@ function generateClassJoinQr(classCode) {
   })
 }
 
+function generateWeeklyScheduleQr() {
+  return new Promise((resolve, reject) => {
+    if (!wx.cloud) {
+      reject(new Error('当前基础库不支持 wx.cloud'))
+      return
+    }
+
+    callCloudBaseModule({
+      featureName: 'weekly-schedule-qrcode',
+      moduleName: 'wx_qrcode_get_unlimited_qrcode',
+      timeoutMs: 20000,
+      data: {
+        scene: 'weekly_schedule',
+        page: 'pages/weekly-schedule/weekly-schedule',
+        check_path: false,
+        env_version: 'trial',
+        width: 430,
+        auto_color: false,
+        line_color: { r: 23, g: 53, b: 45 },
+        is_hyaline: false
+      }
+    }).then(res => {
+      const qrUrl = extractQrUrl(res)
+      if (qrUrl) resolve(qrUrl)
+      else reject(new Error('小程序码结果为空'))
+    }).catch(reject)
+  })
+}
+
 module.exports = {
   generateTeacherLoginQr,
-  generateClassJoinQr
+  generateClassJoinQr,
+  generateWeeklyScheduleQr
 }

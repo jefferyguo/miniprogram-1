@@ -1,9 +1,11 @@
 const {
   SUBMISSIONS_KEY,
   EXTRA_SUBMISSIONS_KEY,
+  cleanReadingDisplayTitle,
   getTrainingModules,
   getExtraTraining
 } = require('../../utils/training-data')
+const { requirePhoneBound } = require('../../utils/phone-auth')
 
 function getRecords() {
   return wx.getStorageSync(SUBMISSIONS_KEY) || []
@@ -50,6 +52,18 @@ function getRecentWeekCount(records) {
   return Array.from(new Set(dates)).length
 }
 
+function normalizeModuleTitle(title) {
+  return String(title || '训练').replace(/^21天/, '')
+}
+
+function normalizeRecordTitle(record) {
+  if (record.moduleId === 'reading' || String(record.moduleTitle || '').indexOf('朗读') > -1) {
+    return cleanReadingDisplayTitle(record.taskTitle || record.contentTitle || '')
+  }
+
+  return record.taskTitle || record.contentTitle || ''
+}
+
 Page({
   data: {
     // mock data：成长页根据本地 storage 里的打卡记录计算
@@ -66,6 +80,23 @@ Page({
   },
 
   onShow() {
+    if (!requirePhoneBound('查看成长记录', {
+      page: this
+    })) {
+      this.setData({
+        totalSubmissions: 0,
+        weekDone: 0,
+        moduleProgress: [],
+        recentRecords: [],
+        hasRecord: false,
+        extraTotalSubmissions: 0,
+        extraStats: [],
+        recentExtraRecord: null,
+        hasExtraRecord: false
+      })
+      return
+    }
+
     const records = getRecords()
     const extraRecords = getExtraRecords()
     const modules = getTrainingModules()
@@ -79,10 +110,10 @@ Page({
 
       return {
         id: module.id,
-        title: module.title.replace('21天', ''),
+        title: module.title,
         done,
-        total: 21,
-        percent: Math.round((done / 21) * 100)
+        total: module.days.length,
+        percent: module.days.length ? Math.round((done / module.days.length) * 100) : 0
       }
     })
     const extraStats = extraTrainings.map(item => ({
@@ -103,6 +134,8 @@ Page({
       moduleProgress,
       recentRecords: records.slice(0, 5).map(record => ({
         ...record,
+        taskTitle: normalizeRecordTitle(record),
+        displayModuleTitle: normalizeModuleTitle(record.moduleTitle),
         displayDate: getRecordDate(record)
       })),
       hasRecord: records.length > 0,

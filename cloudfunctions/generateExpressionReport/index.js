@@ -1,62 +1,40 @@
 const cloud = require('wx-server-sdk')
-const MODEL = process.env.CLOUDBASE_AI_MODEL || 'qwen3.5-flash'
+const MODEL = process.env.CLOUDBASE_AI_MODEL || 'hy3-preview'
 
+// CloudBase 控制台中建议将 generateExpressionReport 执行超时设置为 60 秒。
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
+  env: cloud.DYNAMIC_CURRENT_ENV,
+  timeout: 60000
 })
 
-const DIMENSIONS = [
-  { key: 'confidence', label: '表达自信', recommendedModule: '21天话题训练' },
-  { key: 'structure', label: '逻辑结构', recommendedModule: '21天复述训练' },
-  { key: 'fluency', label: '表达流畅', recommendedModule: '21天朗读训练' },
-  { key: 'voice', label: '声音状态', recommendedModule: '21天朗读训练' },
-  { key: 'empathy', label: '共情沟通', recommendedModule: '随机话题训练' },
-  { key: 'adaptability', label: '场景适应', recommendedModule: '随机话题训练' }
-]
+const db = cloud.database()
 
-function getSortedDimensions(scores) {
-  const source = scores || {}
-
-  return DIMENSIONS.map(item => ({
-    ...item,
-    score: Number(source[item.key] || 0)
-  })).sort((a, b) => b.score - a.score)
-}
-
-function getShortModuleName(value) {
-  return String(value || '21天话题训练').slice(0, 15)
-}
-
-function buildFallbackReport(data) {
-  const sorted = getSortedDimensions(data.scores)
-  const topTwo = sorted.slice(0, 2)
-  const lowTwo = sorted.slice(-2).reverse()
-  const lowest = lowTwo[0]
-
-  return {
-    summary: `你的表达画像偏向“${data.profileType || '表达成长型'}”。目前已有一定表达基础，优势维度可以继续放大；接下来建议重点练习${lowest.label}，用短时、多次、可复盘的方式，让表达更稳定。`,
-    strengths: topTwo.map(item => `${item.label}表现较好，说明你已经有可继续巩固的表达基础。`),
-    weaknesses: lowTwo.map(item => `${item.label}还有提升空间，可以先从简单场景开始练习。`),
-    trainingAdvice: [
-      `每天用 1 分钟练一次${lowest.label}相关任务。`,
-      '表达前先写 3 个关键词，帮助自己抓住重点。',
-      '练完后听一次回放，只改一个最明显的问题。'
-    ],
-    recommendedModule: getShortModuleName(lowest.recommendedModule),
-    encouragement: '完成测评就是第一步。'
+async function hasBoundPhone() {
+  try {
+    const openid = cloud.getWXContext().OPENID || ''
+    if (!openid) return false
+    const res = await db.collection('users').where({ openid, phoneBound: true }).limit(1).get()
+    const user = res.data && res.data[0]
+    return Boolean(user && /^1\d{10}$/.test(String(user.phone || '')))
+  } catch (error) {
+    console.warn('[generateExpressionReport] phone binding check failed:', error.message)
+    return false
   }
 }
 
-function normalizeReport(report, fallbackReport) {
-  if (!report || typeof report !== 'object') return fallbackReport
+function normalizeReport(report) {
+  if (!report || typeof report !== 'object') return null
+
+  const summary = String(report.summary || '').trim()
+  if (!summary) return null
 
   return {
-    summary: report.summary || fallbackReport.summary,
-    strengths: Array.isArray(report.strengths) && report.strengths.length > 0 ? report.strengths.slice(0, 2) : fallbackReport.strengths,
-    weaknesses: Array.isArray(report.weaknesses) && report.weaknesses.length > 0 ? report.weaknesses.slice(0, 2) : fallbackReport.weaknesses,
-    trainingAdvice: Array.isArray(report.trainingAdvice) && report.trainingAdvice.length > 0 ? report.trainingAdvice.slice(0, 3) : fallbackReport.trainingAdvice,
-    recommendedModule: report.recommendedModule ? String(report.recommendedModule).slice(0, 15) : fallbackReport.recommendedModule,
-    encouragement: report.encouragement ? String(report.encouragement).slice(0, 20) : fallbackReport.encouragement
+    summary,
+    strengths: Array.isArray(report.strengths) ? report.strengths.slice(0, 2) : [],
+    weaknesses: Array.isArray(report.weaknesses) ? report.weaknesses.slice(0, 2) : [],
+    trainingAdvice: Array.isArray(report.trainingAdvice) ? report.trainingAdvice.slice(0, 3) : [],
+    recommendedModule: report.recommendedModule ? String(report.recommendedModule).slice(0, 15) : '',
+    encouragement: report.encouragement ? String(report.encouragement).slice(0, 20) : ''
   }
 }
 
@@ -107,31 +85,20 @@ function buildPrompt(data) {
 }`
 }
 
-function getCloudBaseAIModel() {
-  // 兼容 wx-server-sdk 不同版本的云开发 AI 扩展入口。
-  if (typeof cloud.ai === 'function') {
-    const ai = cloud.ai()
-    if (ai && typeof ai.createModel === 'function') {
-      return ai.createModel('cloudbase')
-    }
-  }
-
-  if (cloud.ai && typeof cloud.ai.createModel === 'function') {
-    return cloud.ai.createModel('cloudbase')
-  }
-
-  if (cloud.extend && cloud.extend.AI && typeof cloud.extend.AI.createModel === 'function') {
-    return cloud.extend.AI.createModel('cloudbase')
-  }
-
-  throw new Error('CloudBase AI SDK is unavailable')
-}
-
 function getAIResponseText(response) {
   if (!response) return ''
   if (typeof response === 'string') return response
   if (response.text) return response.text
+  if (response.content) return response.content
   if (response.output_text) return response.output_text
+  if (response.data && typeof response.data === 'string') return response.data
+  if (response.data && response.data.text) return response.data.text
+  if (response.data && response.data.content) return response.data.content
+  if (response.data && response.data.output_text) return response.data.output_text
+  if (response.result && typeof response.result === 'string') return response.result
+  if (response.result && response.result.text) return response.result.text
+  if (response.result && response.result.content) return response.result.content
+  if (response.result && response.result.output_text) return response.result.output_text
 
   const candidates = [
     response.choices,
@@ -156,7 +123,8 @@ function getAIResponseText(response) {
 }
 
 async function callCloudBaseAI(prompt) {
-  const model = getCloudBaseAIModel()
+  const ai = cloud.ai()
+  const model = ai.createModel('cloudbase')
   const messages = [
     {
       role: 'user',
@@ -164,25 +132,22 @@ async function callCloudBaseAI(prompt) {
     }
   ]
 
-  try {
-    const response = await model.generateText({
-      model: MODEL,
-      messages
-    })
-    const text = getAIResponseText(response)
-    if (text) return text
-  } catch (error) {
-    console.log('cloudbase ai direct generateText failed, retry with data wrapper', error)
-  }
-
-  const response = await model.generateText({
-    data: {
-      model: MODEL,
-      messages
-    }
+  const result = await model.generateText({
+    model: MODEL,
+    messages
   })
 
-  return getAIResponseText(response)
+  console.log('[generateExpressionReport] ai result raw:', result)
+  console.log('[generateExpressionReport] cloudbase ai result:', {
+    type: typeof result,
+    hasText: Boolean(getAIResponseText(result)),
+    hasUsage: Boolean(result && result.usage)
+  })
+
+  return {
+    text: getAIResponseText(result),
+    usage: result && result.usage ? result.usage : null
+  }
 }
 
 function parseJsonOutput(outputText) {
@@ -209,6 +174,20 @@ function parseJsonOutput(outputText) {
 }
 
 exports.main = async event => {
+  if (!(await hasBoundPhone())) {
+    return {
+      success: false,
+      error: true,
+      source: 'none',
+      model: 'none',
+      message: '生成表达力测评报告需要先绑定手机号。',
+      debugCode: 'phone_required'
+    }
+  }
+
+  console.log('[generateExpressionReport] start')
+  console.log('[generateExpressionReport] model:', MODEL)
+
   const data = {
     scores: event.scores || {},
     profileType: event.profileType || '',
@@ -216,28 +195,39 @@ exports.main = async event => {
     answersSummary: event.answersSummary || '',
     recordingAnswer: event.recordingAnswer || null
   }
-  const fallbackReport = buildFallbackReport(data)
+  const payloadSummary = {
+    profileType: data.profileType,
+    hasScores: Boolean(data.scores),
+    hasAnswersSummary: Boolean(data.answersSummary),
+    hasRecordingAnswer: Boolean(data.recordingAnswer)
+  }
+  console.log('[generateExpressionReport] payload summary:', payloadSummary)
 
   try {
-    const outputText = await callCloudBaseAI(buildPrompt(data))
-    const report = normalizeReport(parseJsonOutput(outputText), fallbackReport)
+    const aiResult = await callCloudBaseAI(buildPrompt(data))
+    const report = normalizeReport(parseJsonOutput(aiResult.text))
+
+    if (!report) {
+      throw new Error('invalid report payload')
+    }
 
     return {
       success: true,
       report,
       model: MODEL,
-      source: 'cloudbase-ai'
+      source: 'cloudbase-ai',
+      usage: aiResult.usage
     }
   } catch (error) {
-    console.log('generateExpressionReport cloudbase ai failed', error)
+    console.error('[generateExpressionReport] error:', error)
 
     return {
       success: false,
-      fallback: true,
-      report: fallbackReport,
+      error: true,
       model: 'none',
-      source: 'fallback',
-      message: 'AI报告暂不可用，已生成基础报告'
+      source: 'none',
+      message: error.message || 'AI报告生成失败',
+      debugCode: error.code || error.errCode || error.name || 'generate_expression_report_failed'
     }
   }
 }

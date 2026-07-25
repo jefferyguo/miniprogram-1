@@ -5,7 +5,18 @@
     "pages/task-detail/task-detail",
     "pages/extra-training/extra-training",
     "pages/video-record/video-record",
+    "pages/video-preview/video-preview",
+    "pages/work-detail/work-detail",
     "pages/ai-evaluation/ai-evaluation",
+    "pages/weekly-schedule/weekly-schedule",
+    "pages/schedule-share/schedule-share",
+    "pages/admin-weekly-schedule/admin-weekly-schedule",
+    "pages/admin-mini-config/admin-mini-config",
+    "pages/phone-auth/phone-auth",
+    "pages/member-center/member-center",
+    "pages/admin-members/admin-members",
+    "pages/student-users/student-users",
+    "pages/admin-access/admin-access",
     "pages/login/login",
     "pages/evaluation-records/evaluation-records",
     "pages/my-works/my-works",
@@ -22,6 +33,7 @@
     "pages/teacher-review/teacher-review",
     "pages/teacher-favorites/teacher-favorites",
     "pages/review/review",
+    "pages/square/square",
     "pages/growth/growth",
     "pages/mine/mine",
     "pages/index/index"
@@ -30,6 +42,10 @@
     "navigationBarTitleText": "杨勤口才训练KEEP",
     "navigationBarBackgroundColor": "#f5f7fb",
     "navigationBarTextStyle": "black"
+  },
+  "usingComponents": {
+    "member-benefit-modal": "/components/member-benefit-modal/member-benefit-modal",
+    "profile-login-modal": "/components/profile-login-modal/profile-login-modal"
   },
   "tabBar": {
     "color": "#8a8f99",
@@ -45,8 +61,8 @@
         "text": "点评"
       },
       {
-        "pagePath": "pages/growth/growth",
-        "text": "成长"
+        "pagePath": "pages/square/square",
+        "text": "广场"
       },
       {
         "pagePath": "pages/mine/mine",

@@ -1,0 +1,35 @@
+<view wx:if="{{visible}}" class="profile-mask" bindtap="dismiss">
+  <view class="profile-panel" catchtap="noop">
+    <view class="profile-head">
+      <view>
+        <text class="profile-title">{{mode === 'edit' ? '编辑资料' : '登录并完善资料'}}</text>
+        <text class="profile-desc">昵称和头像仅用于训练记录展示，可跳过；绑定手机号后才能保存训练记录和使用 AI 点评。</text>
+      </view>
+      <view class="profile-close" bindtap="dismiss">×</view>
+    </view>
+
+    <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <image wx:if="{{avatarUrl}}" class="avatar-image" src="{{avatarUrl}}" mode="aspectFill" />
+      <text wx:else class="avatar-text">{{avatarText}}</text>
+      <text class="avatar-hint">选择头像</text>
+    </button>
+
+    <view class="nickname-field">
+      <text class="field-label">昵称</text>
+      <input
+        class="nickname-input"
+        type="nickname"
+        value="{{nickname}}"
+        placeholder="请输入微信昵称"
+        bindinput="onNicknameInput"
+        bindblur="onNicknameBlur"
+      />
+    </view>
+
+    <text class="privacy-tip">头像和昵称只用于你的训练记录展示，不会自动公开。</text>
+    <button class="profile-submit" loading="{{submitting}}" disabled="{{submitting}}" bindtap="submitProfile">
+      保存资料
+    </button>
+    <button wx:if="{{allowSkip}}" class="profile-skip" bindtap="skip">暂时跳过</button>
+  </view>
+</view>

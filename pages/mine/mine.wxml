@@ -1,18 +1,33 @@
 <view class="page">
   <view class="profile-card">
     <view class="profile-main">
-      <view class="user-avatar-text">{{avatarText}}</view>
+      <image wx:if="{{avatarUrl}}" class="user-avatar-image" src="{{avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="user-avatar-text">{{avatarText}}</view>
 
       <view class="profile-info">
-        <text class="nickname">{{displayName}}</text>
-        <view class="role-row">
-          <text class="role-badge">{{roleText}}</text>
+        <view class="nickname-row">
+          <text class="nickname">{{displayName}}</text>
+          <text class="member-badge {{memberBadgeClass}}">{{memberLabel}}</text>
         </view>
-        <text class="profile-tip">{{profileTip}}</text>
+        <text wx:if="{{profileTip}}" class="profile-tip">{{profileTip}}</text>
+        <text class="member-tip">{{memberTip}}</text>
+        <text wx:if="{{membershipExpireText}}" class="membership-expire">{{membershipExpireText}}</text>
+        <text wx:if="{{phoneBound}}" class="phone-status-text phone-bound-text">{{phoneStatusText}}</text>
       </view>
     </view>
 
-    <button class="edit-profile-btn" bindtap="handleProfileAction">{{isLoggedIn ? '编辑资料' : '登录'}}</button>
+    <view class="profile-actions">
+      <button
+        wx:if="{{!phoneBound}}"
+        class="edit-profile-btn"
+        open-type="getPhoneNumber"
+        bindgetphonenumber="onGetPhoneNumberLogin"
+        loading="{{bindingLogin}}"
+        disabled="{{bindingLogin}}"
+      >登录</button>
+      <button wx:else class="edit-profile-btn" bindtap="editProfile">编辑资料</button>
+      <button class="member-center-btn" bindtap="openMemberCenter">{{memberButtonText}}</button>
+    </view>
   </view>
 
   <view class="quick-card">
@@ -31,7 +46,7 @@
     </view>
   </view>
 
-  <view class="section">
+  <view class="section" wx:if="{{showClassSection}}">
     <text class="section-title">我的班级</text>
     <view class="class-card">
       <view wx:if="{{hasClass}}">
@@ -62,7 +77,10 @@
         data-index="{{index}}"
         bindtap="handleListTap"
       >
-        <text class="list-title">{{item.title}}</text>
+        <view class="list-copy">
+          <text class="list-title">{{item.title}}</text>
+          <text wx:if="{{item.desc}}" class="list-desc">{{item.desc}}</text>
+        </view>
         <text class="arrow">›</text>
       </view>
     </view>
@@ -72,31 +90,167 @@
     <text class="section-title">关于</text>
     <view class="list-card">
       <block wx:for="{{aboutItems}}" wx:key="title">
-        <button
-          wx:if="{{item.type === 'share'}}"
-          class="list-item share-list-item"
-          open-type="share"
-          bindtap="handleShareTap"
-        >
-          <text class="list-title">{{item.title}}</text>
-          <text class="arrow">›</text>
-        </button>
-        <view
-          wx:else
-          class="list-item"
-          data-group="about"
-          data-index="{{index}}"
-          bindtap="handleListTap"
-        >
-          <text class="list-title">{{item.title}}</text>
-          <text class="arrow">›</text>
-        </view>
+        <block wx:if="{{item.visible !== false}}">
+          <button
+            wx:if="{{item.type === 'share' && featureFlags.showShareRecommendEntry}}"
+            class="list-item share-list-item"
+            open-type="share"
+            hover-class="none"
+            bindtap="handleShareTap"
+          >
+            <text class="list-title">{{item.title}}</text>
+            <text class="arrow">›</text>
+          </button>
+          <view
+            wx:elif="{{item.type !== 'share'}}"
+            class="list-item"
+            data-group="about"
+            data-index="{{index}}"
+            bindtap="handleListTap"
+          >
+            <text class="list-title">{{item.title}}</text>
+            <text class="arrow">›</text>
+          </view>
+        </block>
       </block>
+
+      <view
+        wx:if="{{featureFlags.cloudDebugEnabled}}"
+        class="list-item"
+        bindtap="testCloudHealth"
+      >
+        <text class="list-title">{{cloudDebugItem.title}}</text>
+        <text class="arrow">›</text>
+      </view>
+
+      <view wx:if="{{isLoggedIn}}" class="list-item logout-list-item" bindtap="logout">
+        <text class="list-title logout-title">退出登录</text>
+      </view>
     </view>
   </view>
 
   <view class="footer">
-    <text>杨勤口才训练KEEP v1.0.0</text>
+    <text>杨勤口才训练KEEP v1.0.2</text>
     <text>每天 3 分钟，练成好口才</text>
+  </view>
+
+</view>
+<member-benefit-modal id="memberBenefitModal" bindmembershipchanged="onMembershipChanged" />
+<profile-login-modal id="profileLoginModal" bindsuccess="onProfileSaved" bindskip="onProfileSkipped" />
+
+<view
+  wx:if="{{socialModalVisible && socialModalType === 'douyin'}}"
+  class="mine-modal-mask"
+  bindtap="closeSocialModal"
+>
+  <view class="brand-modal brand-modal-douyin" catchtap="noop">
+    <view class="brand-modal-header">
+      <view class="brand-modal-heading">
+        <text class="brand-modal-title">关注抖音</text>
+        <text class="brand-modal-subtitle">保存二维码到相册，打开抖音扫一扫</text>
+      </view>
+      <view class="brand-modal-close" bindtap="closeSocialModal">×</view>
+    </view>
+
+    <view class="brand-qr-stage brand-qr-stage-douyin">
+      <image
+        wx:if="{{!socialModalQrLoadError}}"
+        class="brand-qr-image brand-qr-image-douyin"
+        src="{{socialModalQr}}"
+        mode="aspectFit"
+        binderror="onSocialQrError"
+      />
+      <view wx:else class="brand-qr-placeholder">抖音二维码待上传</view>
+    </view>
+
+    <view class="brand-account">
+      <text class="brand-account-name">@ 杨勤</text>
+      <text class="brand-account-id">抖音号：27736005658</text>
+    </view>
+
+    <view class="brand-actions">
+      <button class="brand-primary-btn" data-qr-type="douyin" bindtap="saveCurrentQr">保存二维码</button>
+      <button class="brand-secondary-btn" bindtap="closeSocialModal">关闭</button>
+    </view>
+  </view>
+</view>
+
+<view
+  wx:if="{{socialModalVisible && socialModalType === 'xiaohongshu'}}"
+  class="mine-modal-mask"
+  bindtap="closeSocialModal"
+>
+  <view class="brand-modal brand-modal-xiaohongshu" catchtap="noop">
+    <view class="brand-modal-header">
+      <view class="brand-modal-heading">
+        <text class="brand-modal-title">关注小红书</text>
+        <text class="brand-modal-subtitle">保存二维码到相册，打开小红书扫一扫</text>
+      </view>
+      <view class="brand-modal-close" bindtap="closeSocialModal">×</view>
+    </view>
+
+    <view class="brand-qr-stage brand-qr-stage-xiaohongshu">
+      <image
+        wx:if="{{!socialModalQrLoadError}}"
+        class="brand-qr-image"
+        src="{{socialModalQr}}"
+        mode="aspectFit"
+        binderror="onSocialQrError"
+      />
+      <view wx:else class="brand-qr-placeholder">小红书二维码待上传</view>
+    </view>
+
+    <view class="brand-account">
+      <text class="brand-account-name">杨勤口才</text>
+      <text class="brand-account-id">小红书：杨勤口才</text>
+    </view>
+
+    <view class="brand-actions">
+      <button class="brand-primary-btn" data-qr-type="xiaohongshu" bindtap="saveCurrentQr">保存二维码</button>
+      <button class="brand-secondary-btn" bindtap="closeSocialModal">关闭</button>
+    </view>
+    <button class="brand-link-btn" bindtap="copySocialLink">复制小红书链接</button>
+  </view>
+</view>
+
+<view wx:if="{{contactModalVisible}}" class="mine-modal-mask" bindtap="closeContactModal">
+  <view class="contact-modal" catchtap="noop">
+    <view class="contact-header">
+      <view class="contact-heading">
+        <text class="contact-title">联系我们</text>
+        <text class="contact-subtitle">添加周老师微信，咨询线下课程安排、门店服务和小程序使用问题</text>
+      </view>
+      <view class="contact-modal-close" bindtap="closeContactModal">×</view>
+    </view>
+
+    <view class="contact-qr-card">
+      <image
+        wx:if="{{!teacherQrLoadError}}"
+        class="contact-qr-image"
+        src="{{teacherWechatQr}}"
+        mode="aspectFit"
+        binderror="onTeacherQrError"
+      />
+      <view wx:else class="contact-qr-placeholder">周老师二维码待上传</view>
+      <text class="contact-name">周老师微信</text>
+      <text class="contact-note">添加时请备注：口才训练</text>
+    </view>
+
+    <view class="contact-info-card">
+      <view class="contact-info-row">
+        <text class="contact-info-label">地址</text>
+        <text class="contact-info-value">武汉市武昌区中南路中建广场B座12楼</text>
+      </view>
+      <view class="contact-info-row">
+        <text class="contact-info-label">电话</text>
+        <text class="contact-info-value contact-info-phone">17786012145</text>
+      </view>
+    </view>
+
+    <view class="contact-actions">
+      <button class="contact-primary-btn" data-qr-type="contact" bindtap="saveCurrentQr">保存二维码</button>
+      <button class="contact-secondary-btn" bindtap="callContactPhone">拨打电话</button>
+    </view>
+    <button class="contact-link-btn" bindtap="copyStoreAddress">复制地址</button>
   </view>
 </view>

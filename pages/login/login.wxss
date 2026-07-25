@@ -43,6 +43,61 @@ button::after {
   box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
 }
 
+.profile-form-card {
+  margin-top: 26rpx;
+  padding: 30rpx;
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+}
+
+.avatar-picker {
+  width: 180rpx;
+  margin: 0 auto 24rpx;
+  padding: 0;
+  line-height: normal;
+  background: transparent;
+}
+
+.avatar-image,
+.avatar-text {
+  width: 104rpx;
+  height: 104rpx;
+  margin: 0 auto;
+  border-radius: 30rpx;
+}
+
+.avatar-image {
+  display: block;
+}
+
+.avatar-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: linear-gradient(135deg, #27364a, #3a4a63);
+  font-size: 42rpx;
+  font-weight: 900;
+}
+
+.avatar-hint {
+  display: block;
+  margin-top: 12rpx;
+  color: #5568d9;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.nickname-input {
+  height: 78rpx;
+  padding: 0 22rpx;
+  border-radius: 20rpx;
+  color: #182233;
+  background: #f5f7fb;
+  font-size: 27rpx;
+}
+
 .section-title {
   display: block;
   color: #111111;
@@ -97,4 +152,14 @@ button::after {
   color: #8a8f99;
   font-size: 24rpx;
   line-height: 1.5;
+}
+
+.skip-btn {
+  height: 64rpx;
+  line-height: 64rpx;
+  margin: 10rpx 0 0;
+  padding: 0;
+  color: #8a8f99;
+  background: transparent;
+  font-size: 25rpx;
 }

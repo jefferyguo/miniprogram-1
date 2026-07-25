@@ -1,0 +1,84 @@
+<view wx:if="{{visible}}" class="member-mask" bindtap="close">
+  <view class="member-panel" catchtap="noop">
+    <view class="member-header">
+      <view class="member-heading">
+        <text class="member-title">开通会员</text>
+        <text class="member-subtitle">解锁更多训练内容和 AI 点评次数</text>
+      </view>
+      <view class="member-close" bindtap="close">×</view>
+    </view>
+
+    <view wx:if="{{viewMode === 'limit'}}" class="member-content limit-content">
+      <text class="usage-pill">{{usageText}}</text>
+      <text class="limit-desc">普通用户每天可免费生成 1 次 AI 点评。开通会员后，每天可生成 5 次 AI 点评，并解锁更多训练内容。</text>
+      <button class="member-primary" bindtap="showBenefits">查看会员方案</button>
+    </view>
+
+    <view wx:else class="member-content purchase-content">
+      <view class="benefit-compare">
+        <view class="benefit-column normal-column">
+          <text class="benefit-column-title">普通用户</text>
+          <view class="benefit-row">
+            <text class="benefit-dot">·</text>
+            <text class="benefit-label">前 21 天训练</text>
+          </view>
+          <view class="benefit-row">
+            <text class="benefit-dot">·</text>
+            <text class="benefit-label">每天 1 次 AI 点评</text>
+          </view>
+          <view class="benefit-row">
+            <text class="benefit-dot">·</text>
+            <text class="benefit-label">保存训练记录</text>
+          </view>
+        </view>
+        <view class="benefit-column member-column">
+          <text class="benefit-column-title member-column-title">会员用户</text>
+          <view class="benefit-row">
+            <text class="benefit-dot member-dot">✓</text>
+            <text class="benefit-label">更多训练内容</text>
+          </view>
+          <view class="benefit-row">
+            <text class="benefit-dot member-dot">✓</text>
+            <text class="benefit-label">每天 5 次 AI 点评</text>
+          </view>
+          <view class="benefit-row">
+            <text class="benefit-dot member-dot">✓</text>
+            <text class="benefit-label">成长记录分析</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="purchase-list">
+        <view class="purchase-card monthly-card">
+          <text class="purchase-title">季度会员</text>
+          <view class="purchase-action">
+            <view class="purchase-price-wrap"><text class="purchase-price">{{quarterlyProduct.priceText}}</text><text class="purchase-unit">{{quarterlyProduct.unitText}}</text></view>
+            <button
+              class="member-pay-btn monthly"
+              bindtap="buyQuarterlyMembership"
+              disabled="{{!!paymentBusyProductId}}"
+              loading="{{paymentBusyProductId === 'quarterly_membership'}}"
+            >{{paymentBusyProductId === 'quarterly_membership' ? '支付处理中…' : '购买季卡'}}</button>
+          </view>
+        </view>
+
+        <view class="purchase-card yearly-card">
+          <text class="recommend-badge">推荐</text>
+          <text class="purchase-title">年度会员</text>
+          <view class="purchase-action">
+            <view class="purchase-price-wrap"><text class="purchase-price">{{yearlyProduct.priceText}}</text><text class="purchase-unit">{{yearlyProduct.unitText}}</text></view>
+            <button
+              class="member-pay-btn yearly"
+              bindtap="buyYearlyMembership"
+              disabled="{{!!paymentBusyProductId}}"
+              loading="{{paymentBusyProductId === 'yearly_membership'}}"
+            >{{paymentBusyProductId === 'yearly_membership' ? '支付处理中…' : '购买年卡'}}</button>
+          </view>
+        </view>
+      </view>
+
+      <text wx:if="{{paymentStatusText}}" class="payment-status">{{paymentStatusText}}</text>
+      <text class="payment-tip">会员购买将通过小程序虚拟支付完成。支付确认成功后，系统会自动开通会员权益。</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,416 @@
+page {
+  background: #f5f7fb;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 30rpx 28rpx 60rpx;
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+.page-head,
+.search-card,
+.member-card,
+.state-card {
+  border: 1rpx solid #e9edf3;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 12rpx 32rpx rgba(31, 41, 55, 0.05);
+}
+
+.page-head {
+  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.page-title,
+.page-desc,
+.member-name,
+.member-phone,
+.meta-label,
+.meta-value,
+.state-title,
+.state-desc,
+.form-label,
+.form-tip {
+  display: block;
+}
+
+.page-title {
+  color: #17202e;
+  font-size: 40rpx;
+  line-height: 1.3;
+  font-weight: 800;
+}
+
+.page-desc {
+  margin-top: 8rpx;
+  color: #7a8291;
+  font-size: 24rpx;
+}
+
+.add-btn,
+.search-btn,
+.clear-btn,
+.manage-btn,
+.cancel-btn,
+.save-btn {
+  margin: 0;
+  padding: 0;
+}
+
+.add-btn {
+  width: 164rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  flex-shrink: 0;
+  border-radius: 34rpx;
+  color: #ffffff;
+  background: #07c160;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.search-card {
+  margin-top: 22rpx;
+  padding: 22rpx;
+}
+
+.search-row {
+  display: flex;
+  gap: 14rpx;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 72rpx;
+  padding: 0 22rpx;
+  border-radius: 20rpx;
+  color: #17202e;
+  background: #f4f6f9;
+  font-size: 25rpx;
+  box-sizing: border-box;
+}
+
+.search-btn {
+  width: 120rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 20rpx;
+  color: #087b4d;
+  background: #e7f7ef;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.clear-btn {
+  width: auto;
+  height: 48rpx;
+  line-height: 48rpx;
+  margin-top: 8rpx;
+  color: #7a8291;
+  background: transparent;
+  font-size: 22rpx;
+}
+
+.member-list {
+  margin-top: 22rpx;
+}
+
+.member-card {
+  margin-bottom: 18rpx;
+  padding: 26rpx;
+}
+
+.member-head,
+.member-name-wrap,
+.card-enter,
+.editor-head,
+.editor-actions,
+.manage-actions {
+  display: flex;
+  align-items: center;
+}
+
+.member-head,
+.card-enter,
+.editor-head {
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.member-name-wrap {
+  min-width: 0;
+  gap: 10rpx;
+}
+
+.member-name {
+  color: #17202e;
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.member-phone {
+  margin-top: 6rpx;
+  color: #7a8291;
+  font-size: 24rpx;
+}
+
+.legacy-tag,
+.status-tag {
+  padding: 7rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.legacy-tag {
+  color: #876515;
+  background: #fff4d3;
+}
+
+.status-active {
+  color: #087b4d;
+  background: #e7f7ef;
+}
+
+.status-muted {
+  color: #8a92a3;
+  background: #eef1f5;
+}
+
+.member-meta {
+  margin-top: 20rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12rpx;
+}
+
+.meta-item {
+  min-width: 0;
+  padding: 15rpx 17rpx;
+  border-radius: 18rpx;
+  background: #f7f9fb;
+}
+
+.meta-wide {
+  grid-column: 1 / -1;
+}
+
+.meta-label {
+  color: #9aa1ad;
+  font-size: 21rpx;
+}
+
+.meta-value {
+  margin-top: 5rpx;
+  color: #303948;
+  font-size: 24rpx;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.card-enter {
+  margin-top: 18rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #eef1f5;
+  color: #627083;
+  font-size: 23rpx;
+}
+
+.arrow {
+  color: #a0a6b1;
+  font-size: 38rpx;
+}
+
+.state-card {
+  padding: 44rpx 28rpx;
+  text-align: center;
+  color: #8a92a3;
+  font-size: 25rpx;
+}
+
+.no-admin-card {
+  margin-top: 22rpx;
+}
+
+.state-title {
+  color: #3b4656;
+  font-size: 29rpx;
+  font-weight: 800;
+}
+
+.state-desc {
+  margin-top: 10rpx;
+  color: #8a92a3;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.editor-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(18, 26, 36, 0.5);
+}
+
+.editor-panel {
+  width: 100%;
+  max-height: 90vh;
+  padding: 30rpx 28rpx calc(28rpx + env(safe-area-inset-bottom));
+  border-radius: 32rpx 32rpx 0 0;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.editor-title {
+  color: #17202e;
+  font-size: 36rpx;
+  font-weight: 800;
+}
+
+.editor-close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #87909f;
+  background: #f1f3f6;
+  font-size: 36rpx;
+}
+
+.editor-scroll {
+  max-height: 64vh;
+  margin-top: 22rpx;
+}
+
+.form-field {
+  margin-bottom: 20rpx;
+}
+
+.form-label {
+  margin-bottom: 10rpx;
+  color: #303948;
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.form-input,
+.form-textarea,
+.picker-box {
+  width: 100%;
+  border-radius: 20rpx;
+  color: #17202e;
+  background: #f4f6f9;
+  font-size: 26rpx;
+  box-sizing: border-box;
+}
+
+.form-input,
+.picker-box {
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 22rpx;
+}
+
+.form-textarea {
+  min-height: 132rpx;
+  padding: 20rpx 22rpx;
+}
+
+.form-input-disabled {
+  color: #8a92a3;
+  background: #eceff3;
+}
+
+.picker-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #3478f6;
+  font-weight: 700;
+}
+
+.picker-arrow {
+  color: #9aa1ad;
+  font-size: 40rpx;
+}
+
+.form-tip {
+  margin-top: 8rpx;
+  color: #7a8291;
+  font-size: 23rpx;
+}
+
+.validity-hint {
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  color: #657080;
+  background: #f5f7fa;
+  font-size: 24rpx;
+}
+
+.manage-actions {
+  gap: 14rpx;
+  margin: 24rpx 0 4rpx;
+}
+
+.manage-btn {
+  flex: 1;
+  height: 66rpx;
+  line-height: 66rpx;
+  border-radius: 18rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.toggle-btn {
+  color: #7a5a17;
+  background: #fff5db;
+}
+
+.delete-btn {
+  color: #c85151;
+  background: #fff0f0;
+}
+
+.editor-actions {
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.cancel-btn,
+.save-btn {
+  flex: 1;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: 38rpx;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.cancel-btn {
+  color: #667080;
+  background: #eef1f5;
+}
+
+.save-btn {
+  color: #ffffff;
+  background: #07c160;
+}

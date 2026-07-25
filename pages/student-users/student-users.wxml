@@ -1,0 +1,35 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">学员登录名单</text>
+    <text class="hero-desc">本地开发原型数据，共 {{totalCount}} 位学员</text>
+  </view>
+
+  <view wx:if="{{hasUsers}}" class="user-list">
+    <view class="user-card" wx:for="{{users}}" wx:key="openid">
+      <view class="user-head">
+        <view class="avatar-text">{{item.avatarText}}</view>
+        <view class="user-main">
+          <text class="nickname">{{item.nickname}}</text>
+          <text class="openid-text">openId：{{item.maskedOpenid}}</text>
+        </view>
+        <text class="member-tag {{item.memberClass}}">{{item.memberText}}</text>
+      </view>
+
+      <view class="info-grid">
+        <text>memberType：{{item.memberType}}</text>
+        <text>到期：{{item.memberExpireText}}</text>
+        <text>首次登录：{{item.firstLoginAt}}</text>
+        <text>最近登录：{{item.lastLoginAt}}</text>
+        <text>登录次数：{{item.loginCount}}</text>
+        <text>当前班级：{{item.classText}}</text>
+      </view>
+    </view>
+
+    <button class="clear-btn" bindtap="clearUsers">清空本地学员名单</button>
+  </view>
+
+  <view wx:else class="empty-card">
+    <text class="empty-title">暂无学员登录记录</text>
+    <text class="empty-desc">用户点击微信登录并成功获取 openId 后，会写入这里。</text>
+  </view>
+</view>

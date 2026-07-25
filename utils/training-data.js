@@ -3,6 +3,19 @@ const SUBMISSIONS_KEY = 'trainingSubmissions'
 const STORAGE_KEY = SUBMISSIONS_KEY
 const EXTRA_DRAFTS_KEY = 'extraTrainingDrafts'
 const EXTRA_SUBMISSIONS_KEY = 'extraTrainingSubmissions'
+// 当前训练材料仍在前端数据文件中，适合开发阶段。
+// 正式上线如果要保护付费内容，应迁移到 CloudBase 数据库。
+// 前端只保留标题和摘要，用户通过云函数校验权限后再返回 material。
+const { generatedTrainingDays } = require('./generated-training-data')
+const {
+  DAILY_QUOTES,
+  DAILY_TOPICS,
+  TONGUE_TWISTERS
+} = require('./daily-training-data')
+const {
+  speechTrainingItems,
+  leaderSpeechTrainingItems
+} = require('./extended-training-data')
 
 const MODULE_THEME = {
   reading: {
@@ -24,6 +37,16 @@ const MODULE_THEME = {
     gradient: 'linear-gradient(135deg, #5C9FD6 0%, #78A7E3 100%)',
     className: 'module-mandarin',
     iconType: 'mic'
+  },
+  speech: {
+    gradient: 'linear-gradient(135deg, #8B6DD8 0%, #A184EF 100%)',
+    className: 'module-speech',
+    iconType: 'podium'
+  },
+  leaderSpeech: {
+    gradient: 'linear-gradient(135deg, #C58B4C 0%, #D9A763 100%)',
+    className: 'module-leader',
+    iconType: 'document'
   }
 }
 
@@ -311,36 +334,74 @@ function createMandarinDays() {
   })
 }
 
+function getImportedTargetSeconds(content) {
+  const chars = estimateChars(content)
+  if (chars >= 900) return 180
+  if (chars >= 520) return 120
+  return 90
+}
+
+function createImportedTrainingDays(items, moduleId) {
+  return items.map(item => {
+    const content = String(item.content || '').trim()
+    const targetSeconds = getImportedTargetSeconds(content)
+    return {
+      day: Number(item.day || 0),
+      contentId: item.contentId,
+      title: item.title,
+      contentTitle: item.title,
+      author: item.author || '',
+      articleCategory: item.articleCategory || '其它',
+      goal: moduleId === 'leaderSpeech'
+        ? '练正式发言的立意、结构、政策表达和现场稳重感'
+        : '练演讲稿的开场气场、情绪递进、重音停顿和感染力',
+      requirement: moduleId === 'leaderSpeech'
+        ? '请先读懂讲话对象和场景，再用稳重、清晰、有条理的状态完成一次发言训练。'
+        : '请带着演讲感完成朗读，注意开场稳定、关键词重音、段落停顿和结尾收束。',
+      material: content,
+      tips: moduleId === 'leaderSpeech'
+        ? ['先标出讲话对象、核心观点和三处关键词。', '正式发言要稳，不要赶；每个层次之间留出停顿。', '录完后回听开头是否稳、层次是否清楚、结尾是否有收束。']
+        : ['先通读全文，找出情绪递进和重点句。', '正式录制时注意开场、停顿、重音和句尾力量。', '录完后回听感染力是否自然，不要只追求大声。'],
+      duration: `${targetSeconds}秒`,
+      targetSeconds,
+      estimatedChars: estimateChars(content),
+      membershipLevel: Number(item.day || 0) <= 21 ? 'free' : 'member'
+    }
+  })
+}
+
 const trainingModules = [
   {
     id: 'reading',
-    title: '21天朗读训练',
+    title: '朗读训练',
     shortTitle: '朗读训练',
-    desc: '训练语感，积累好词好句，让表达更流畅、更自信',
+    desc: '练语感，积累好词好句，让表达更流畅、更自信',
     icon: 'book',
     color: MODULE_THEME.reading.gradient,
     gradient: MODULE_THEME.reading.gradient,
     themeColor: MODULE_THEME.reading.gradient,
     className: MODULE_THEME.reading.className,
     iconType: MODULE_THEME.reading.iconType,
-    days: createReadingDays()
+    totalDays: generatedTrainingDays.reading.length,
+    days: generatedTrainingDays.reading
   },
   {
     id: 'retell',
-    title: '21天复述训练',
+    title: '复述训练',
     shortTitle: '复述训练',
-    desc: '练概括能力、重点提炼和语言组织力',
+    desc: '练信息提炼、结构复述和表达完整度',
     icon: 'loop',
     color: MODULE_THEME.retell.gradient,
     gradient: MODULE_THEME.retell.gradient,
     themeColor: MODULE_THEME.retell.gradient,
     className: MODULE_THEME.retell.className,
     iconType: MODULE_THEME.retell.iconType,
-    days: createRetellDays()
+    totalDays: generatedTrainingDays.retell.length,
+    days: generatedTrainingDays.retell
   },
   {
     id: 'topic',
-    title: '21天话题训练',
+    title: '话题训练',
     shortTitle: '话题训练',
     desc: '练即兴表达、观点表达和逻辑结构',
     icon: 'bubble',
@@ -349,11 +410,12 @@ const trainingModules = [
     themeColor: MODULE_THEME.topic.gradient,
     className: MODULE_THEME.topic.className,
     iconType: MODULE_THEME.topic.iconType,
-    days: createTopicDays()
+    totalDays: generatedTrainingDays.topic.length,
+    days: generatedTrainingDays.topic
   },
   {
     id: 'mandarin',
-    title: '21天普通话训练',
+    title: '普通话训练',
     shortTitle: '普通话训练',
     desc: '练发音、声调、平翘舌和前后鼻音',
     icon: 'mic',
@@ -362,9 +424,401 @@ const trainingModules = [
     themeColor: MODULE_THEME.mandarin.gradient,
     className: MODULE_THEME.mandarin.className,
     iconType: MODULE_THEME.mandarin.iconType,
-    days: createMandarinDays()
+    totalDays: generatedTrainingDays.mandarin.length,
+    days: generatedTrainingDays.mandarin
+  },
+  {
+    id: 'speech',
+    title: '演讲训练',
+    shortTitle: '演讲训练',
+    desc: '练名人演讲、励志演讲、即兴演讲',
+    icon: 'podium',
+    color: MODULE_THEME.speech.gradient,
+    gradient: MODULE_THEME.speech.gradient,
+    themeColor: MODULE_THEME.speech.gradient,
+    className: MODULE_THEME.speech.className,
+    iconType: MODULE_THEME.speech.iconType,
+    totalDays: speechTrainingItems.length,
+    days: createImportedTrainingDays(speechTrainingItems, 'speech')
+  },
+  {
+    id: 'leaderSpeech',
+    title: '领导发言',
+    shortTitle: '领导发言',
+    desc: '练讲话稿、致辞、报告和署名文章',
+    icon: 'document',
+    color: MODULE_THEME.leaderSpeech.gradient,
+    gradient: MODULE_THEME.leaderSpeech.gradient,
+    themeColor: MODULE_THEME.leaderSpeech.gradient,
+    className: MODULE_THEME.leaderSpeech.className,
+    iconType: MODULE_THEME.leaderSpeech.iconType,
+    totalDays: leaderSpeechTrainingItems.length,
+    days: createImportedTrainingDays(leaderSpeechTrainingItems, 'leaderSpeech')
   }
 ]
+
+const TRAINING_TYPE_MODULE_MAP = {
+  reading: 'reading',
+  retelling: 'retell',
+  speaking: 'topic',
+  impromptu: 'topic',
+  hosting: 'topic',
+  mandarin: 'mandarin',
+  speech: 'speech',
+  leaderSpeech: 'leaderSpeech'
+}
+
+const TRAINING_CONFIG_CATEGORY_MODULE_MAP = {
+  reading: 'reading',
+  retelling: 'retell',
+  topic: 'topic',
+  mandarin: 'mandarin',
+  speech: 'speech',
+  leaderSpeech: 'leaderSpeech'
+}
+
+const EXTRA_CONFIG_CATEGORY_ID_MAP = {
+  dailyQuote: 'dailyQuote',
+  dailyTopic: 'randomTopic',
+  tongueTwister: 'tongueTwister'
+}
+
+let cloudTrainingContents = []
+
+function getTrainingConfigCategoryByModuleId(moduleId) {
+  return Object.keys(TRAINING_CONFIG_CATEGORY_MODULE_MAP)
+    .find(category => TRAINING_CONFIG_CATEGORY_MODULE_MAP[category] === moduleId) || ''
+}
+
+function hasOwn(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj || {}, key)
+}
+
+function trimText(value) {
+  return String(value || '').trim()
+}
+
+const TRAINING_CONTENT_PLACEHOLDERS = [
+  '内容正在加载，请稍后重试。',
+  '正在加载完整训练内容……',
+  '正在重新加载完整训练内容……',
+  '正在加载完整训练内容...',
+  '正在重新加载完整训练内容...'
+]
+
+function isTrainingContentComplete(item) {
+  if (!item || item.isPlaceholder === true || item.incomplete === true) return false
+  const material = trimText(item.material || item.content || item.promptText)
+  if (!material) return false
+  return !TRAINING_CONTENT_PLACEHOLDERS.includes(material)
+}
+
+function looksLikeAuthor(text) {
+  const value = trimText(text)
+  if (!value || value.length > 24) return false
+  if (/[，。！？；、,.!?;：:]/.test(value)) return false
+  return true
+}
+
+function splitTitleAndAuthor(rawTitle) {
+  const text = trimText(rawTitle)
+  if (!text) return { title: '', author: '' }
+
+  const separators = ['：', ':', '——', '—']
+  for (let i = 0; i < separators.length; i += 1) {
+    const sep = separators[i]
+    const index = text.indexOf(sep)
+    if (index <= 0) continue
+    const title = trimText(text.slice(0, index))
+    const author = trimText(text.slice(index + sep.length))
+    if (title && looksLikeAuthor(author)) return { title, author }
+  }
+
+  const hyphenMatch = text.match(/^(.+?)\s+-\s+(.+)$/)
+  if (hyphenMatch) {
+    const title = trimText(hyphenMatch[1])
+    const author = trimText(hyphenMatch[2])
+    if (title && looksLikeAuthor(author)) return { title, author }
+  }
+
+  return { title: text, author: '' }
+}
+
+function normalizeTitleAuthor(rawTitle, rawAuthor) {
+  const parsed = splitTitleAndAuthor(rawTitle)
+  const hasExplicitAuthor = rawAuthor !== undefined && rawAuthor !== null
+  const explicitAuthor = hasExplicitAuthor ? trimText(rawAuthor) : ''
+  const author = explicitAuthor || parsed.author
+  return {
+    title: parsed.title || trimText(rawTitle),
+    author
+  }
+}
+
+function formatContentTitle(item = {}) {
+  const parts = normalizeTitleAuthor(item.contentTitle || item.title || item.displayTitle || '', item.author)
+  return parts.author ? `${parts.title}：${parts.author}` : parts.title
+}
+
+function normalizeContentMembershipLevel(value, fallback = 'free') {
+  const level = trimText(value)
+  if (level === 'member') return 'member'
+  if (['monthly', 'yearly', 'admin'].includes(level)) return 'member'
+  if (level === 'free') return 'free'
+  return fallback
+}
+
+function normalizeContentStyle(value = {}) {
+  const source = value && typeof value === 'object' && !Array.isArray(value)
+    ? value
+    : {}
+  const fontSize = ['small', 'normal', 'large', 'xlarge'].includes(source.fontSize) ? source.fontSize : 'normal'
+  const color = ['default', 'green', 'red', 'blue', 'gold'].includes(source.color) ? source.color : 'default'
+
+  return {
+    fontSize,
+    color,
+    bold: source.bold === true
+  }
+}
+
+function normalizeContentRichStyle(value = {}, contentLength) {
+  const source = value && typeof value === 'object' && !Array.isArray(value)
+    ? value
+    : {}
+  const maxLength = Number.isFinite(contentLength) ? Math.max(contentLength, 0) : Infinity
+  const ranges = Array.isArray(source.ranges) ? source.ranges : []
+
+  return {
+    ranges: ranges
+      .map(item => {
+        const start = Math.max(Number(item && item.start || 0), 0)
+        const end = Math.max(Number(item && item.end || 0), 0)
+        const clampedStart = Number.isFinite(maxLength) ? Math.min(start, maxLength) : start
+        const clampedEnd = Number.isFinite(maxLength) ? Math.min(end, maxLength) : end
+        return {
+          start: clampedStart,
+          end: clampedEnd,
+          ...normalizeContentStyle(item)
+        }
+      })
+      .filter(item => Number.isFinite(item.start) && Number.isFinite(item.end) && item.end > item.start)
+      .sort((a, b) => a.start - b.start || a.end - b.end)
+  }
+}
+
+function getCloudContentId(category, day) {
+  const number = Number(day || 0)
+  if (!category || !number) return ''
+  return `${category}-day-${number}`
+}
+
+function getExtraContentId(category, index) {
+  const number = Number(index || 0)
+  if (!category || !number) return ''
+  return `${category}-${number}`
+}
+
+function normalizeCloudTrainingTask(item = {}) {
+  const day = Number(item.dayNumber || item.day || 0)
+  const requirements = Array.isArray(item.requirements) ? item.requirements : []
+  const aiReviewFocus = Array.isArray(item.aiReviewFocus) ? item.aiReviewFocus : []
+  const tips = [item.guideText].concat(requirements, aiReviewFocus).map(text => String(text || '').trim()).filter(Boolean)
+  const material = [item.promptText, item.exampleText].map(text => String(text || '').trim()).filter(Boolean).join('\n\n')
+  const parts = normalizeTitleAuthor(item.title || `Day ${day} 训练`, item.author)
+  return {
+    ...item,
+    day,
+    moduleId: TRAINING_CONFIG_CATEGORY_MODULE_MAP[item.category] || TRAINING_TYPE_MODULE_MAP[item.trainingType],
+    title: parts.title || `Day ${day} 训练`,
+    contentTitle: parts.title || `Day ${day} 训练`,
+    author: parts.author,
+    goal: item.guideText || '',
+    requirement: requirements.join('；'),
+    material: material || item.guideText || item.title || '',
+    tips: tips.length ? tips : ['按题目完成一次完整表达，录制后回听并记录一个改进点。'],
+    duration: '60秒',
+    targetSeconds: 60,
+    estimatedChars: estimateChars(material),
+    membershipLevel: normalizeContentMembershipLevel(item.membershipLevel),
+    contentStyle: normalizeContentStyle(item.contentStyle),
+    contentRichStyle: normalizeContentRichStyle(item.contentRichStyle, material.length),
+    source: 'cloudbase'
+  }
+}
+
+function normalizeSimpleCloudTrainingTask(item = {}) {
+  const category = trimText(item.category)
+  const day = Number(item.day || item.dayNumber || 0)
+  const parts = normalizeTitleAuthor(item.title || `Day ${day} 训练`, hasOwn(item, 'author') ? item.author : undefined)
+  const material = trimText(item.content || item.material || item.promptText || '')
+  return {
+    ...item,
+    contentId: trimText(item.contentId || getCloudContentId(category, day)),
+    day,
+    moduleId: TRAINING_CONFIG_CATEGORY_MODULE_MAP[category],
+    title: parts.title || `Day ${day} 训练`,
+    contentTitle: parts.title || `Day ${day} 训练`,
+    author: parts.author,
+    material,
+    tips: Array.isArray(item.tips) && item.tips.length
+      ? item.tips
+      : ['先完整读题和材料，再完成一次录音或录像训练。', '录制后回听一遍，记录一个优点和一个下次改进点。'],
+    duration: item.duration || '60秒',
+    targetSeconds: Number(item.targetSeconds || 60),
+    estimatedChars: estimateChars(material),
+    membershipLevel: normalizeContentMembershipLevel(item.membershipLevel),
+    contentStyle: normalizeContentStyle(item.contentStyle),
+    contentRichStyle: normalizeContentRichStyle(item.contentRichStyle, material.length),
+    source: 'cloudbase'
+  }
+}
+
+function normalizeCloudModuleTask(item = {}) {
+  if (item.contentId || TRAINING_CONFIG_CATEGORY_MODULE_MAP[item.category]) {
+    return normalizeSimpleCloudTrainingTask(item)
+  }
+  return normalizeCloudTrainingTask(item)
+}
+
+function mergeCloudTask(localTask = {}, cloudTask = {}, moduleId = '') {
+  const fallbackTitle = localTask.contentTitle || localTask.title || cloudTask.title
+  const parts = normalizeTitleAuthor(cloudTask.contentTitle || cloudTask.title || fallbackTitle, hasOwn(cloudTask, 'author') ? cloudTask.author : undefined)
+  const title = parts.title || fallbackTitle
+  const author = hasOwn(cloudTask, 'author')
+    ? (trimText(cloudTask.author) || parts.author)
+    : (parts.author || localTask.author || '')
+  const material = trimText(cloudTask.material || cloudTask.content || '') || localTask.material || ''
+
+  return normalizeTaskForDisplay(moduleId, {
+    ...localTask,
+    ...cloudTask,
+    title,
+    contentTitle: title,
+    author,
+    material,
+    tips: cloudTask.tips || localTask.tips || ['先完整读题和材料，再完成一次录音或录像训练。', '录制后回听一遍，记录一个优点和一个下次改进点。'],
+    duration: cloudTask.duration || localTask.duration || '60秒',
+    targetSeconds: Number(cloudTask.targetSeconds || localTask.targetSeconds || 60),
+    estimatedChars: Number(cloudTask.estimatedChars || estimateChars(material)),
+    membershipLevel: normalizeContentMembershipLevel(cloudTask.membershipLevel || localTask.membershipLevel),
+    contentStyle: normalizeContentStyle(cloudTask.contentStyle || localTask.contentStyle),
+    contentRichStyle: normalizeContentRichStyle(cloudTask.contentRichStyle || localTask.contentRichStyle, material.length),
+    source: 'cloudbase'
+  })
+}
+
+function shouldUseCloudConfigItem(item = {}) {
+  const category = trimText(item.category)
+  if (!TRAINING_CONFIG_CATEGORY_MODULE_MAP[category] && !EXTRA_CONFIG_CATEGORY_ID_MAP[category]) {
+    return true
+  }
+  const status = trimText(item.status).toLowerCase()
+  if (status === 'deleted') return true
+  if (item.active === false || item.visible === false) return false
+  return !['archived', 'inactive', 'disabled', 'draft'].includes(status)
+}
+
+function getResolvedTrainingModules() {
+  return trainingModules.map(module => {
+    const category = getTrainingConfigCategoryByModuleId(module.id)
+    const dayMap = new Map(module.days.map(item => {
+      const day = Number(item.day)
+      return [
+        day,
+        {
+          ...item,
+          contentId: item.contentId || getCloudContentId(category, day),
+          membershipLevel: normalizeContentMembershipLevel(item.membershipLevel)
+        }
+      ]
+    }))
+    const contentDayMap = new Map(
+      Array.from(dayMap.values())
+        .filter(item => item.contentId)
+        .map(item => [trimText(item.contentId), Number(item.day)])
+    )
+    const normalizedCloudTasks = cloudTrainingContents
+      .filter(shouldUseCloudConfigItem)
+      .map(normalizeCloudModuleTask)
+      .filter(item => item.moduleId === module.id)
+    const cloudContentIds = new Set(
+      normalizedCloudTasks.map(item => trimText(item.contentId)).filter(Boolean)
+    )
+    normalizedCloudTasks.forEach(item => {
+        const contentDay = contentDayMap.get(trimText(item.contentId))
+        const day = contentDay || item.day
+        if (!day) return
+        const localTask = dayMap.get(day)
+        const localContentId = trimText(localTask && localTask.contentId)
+        const cloudContentId = trimText(item.contentId)
+        const itemStatus = trimText(item.status).toLowerCase()
+        if (itemStatus === 'deleted') {
+          // 旧 ID 的删除标记不能删除当前 v4 索引，只有准确 ID 才能生效。
+          if (contentDay) dayMap.delete(day)
+          return
+        }
+
+        // 迁移期间允许同分类、同 Day 的旧记录提供正文，但不允许它改变 v4 索引身份。
+        if (!contentDay && localContentId && cloudContentId && localContentId !== cloudContentId) {
+          if (
+            !/-v\d+-day-\d+$/i.test(localContentId) ||
+            cloudContentIds.has(localContentId) ||
+            !isTrainingContentComplete(item)
+          ) {
+            return
+          }
+          dayMap.set(day, mergeCloudTask(localTask, {
+            ...item,
+            day,
+            contentId: localContentId,
+            requestedContentId: localContentId,
+            sourceContentId: cloudContentId,
+            legacyFallback: true,
+            title: localTask.title,
+            contentTitle: localTask.contentTitle || localTask.title,
+            author: localTask.author || '',
+            membershipLevel: localTask.membershipLevel
+          }, module.id))
+          return
+        }
+        dayMap.set(day, mergeCloudTask(dayMap.get(day), { ...item, day }, module.id))
+      })
+    const days = Array.from(dayMap.values()).sort((a, b) => Number(a.day) - Number(b.day) || Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
+    return { ...module, totalDays: days.length, days }
+  })
+}
+
+function setCloudTrainingContents(contents, options = {}) {
+  const nextContents = Array.isArray(contents) ? clone(contents) : []
+  const category = trimText(options.category)
+  if (!category) {
+    cloudTrainingContents = nextContents
+    return
+  }
+
+  cloudTrainingContents = cloudTrainingContents
+    .filter(item => trimText(item.category) !== category)
+    .concat(nextContents)
+}
+
+function upsertCloudTrainingContent(content) {
+  const item = content && typeof content === 'object' ? clone(content) : null
+  const contentId = trimText(item && item.contentId)
+  if (!item || !contentId) return false
+
+  cloudTrainingContents = cloudTrainingContents
+    .filter(existing => trimText(existing.contentId) !== contentId)
+    .concat(item)
+  return true
+}
+
+function clearCloudTrainingContents(category = '') {
+  const targetCategory = trimText(category)
+  cloudTrainingContents = targetCategory
+    ? cloudTrainingContents.filter(item => trimText(item.category) !== targetCategory)
+    : []
+}
 
 const extraTraining = [
   {
@@ -375,20 +829,16 @@ const extraTraining = [
     color: 'yellow',
     className: 'extra-dailyQuote',
     iconClass: 'extra-icon-quote',
-    items: [
-      { text: '把话说清楚，是尊重别人，也是整理自己。', category: '表达习惯', source: 'system', usageTip: '重读“清楚”和“整理”。' },
-      { text: '敢开口，不是没有紧张，而是紧张时依然愿意开始。', category: '表达自信', source: 'system', usageTip: '前半句慢一点，后半句读坚定。' },
-      { text: '真正有效的沟通，是让对方听懂，也让自己说准。', category: '沟通表达', source: 'system', usageTip: '“听懂”和“说准”之间停顿。' },
-      { text: '表达不是表演自己，而是把重要的意思准确送达。', category: '表达理念', source: 'system', usageTip: '语气稳，不要读得太飘。' },
-      { text: '每一次回听，都是下一次表达变好的起点。', category: '训练复盘', source: 'system', usageTip: '读出鼓励感。' },
-      { text: '有结构的表达，会让复杂的想法变得容易理解。', category: '逻辑结构', source: 'system', usageTip: '重读“结构”和“理解”。' },
-      { text: '声音稳一点，思路清一点，表达就会更有力量。', category: '声音状态', source: 'system', usageTip: '三个短句之间轻停。' },
-      { text: '好的开场不一定华丽，但一定要清楚、自然、有方向。', category: '开场表达', source: 'system', usageTip: '三个关键词逐个读清楚。' },
-      { text: '复述不是背诵，而是把重点变成自己的语言。', category: '复述训练', source: 'system', usageTip: '“不是”和“而是”形成对比。' },
-      { text: '每天三分钟，也可以为表达建立稳定的肌肉记忆。', category: '训练坚持', source: 'system', usageTip: '句尾收稳，读出坚持感。' },
-      { text: '说得自然，不等于随便；说得有力，也不等于用力。', category: '表达分寸', source: 'system', usageTip: '两组对比要读出层次。' },
-      { text: '当你能总结自己，就更容易向别人说明自己。', category: '总结表达', source: 'system', usageTip: '“总结”和“说明”稍重。' }
-    ],
+    items: DAILY_QUOTES.map(item => ({
+      id: item.id,
+      text: item.content,
+      title: item.title || '',
+      author: item.author || '',
+      category: item.category,
+      source: 'imported',
+      usageTip: '朗读这句金句，注意停顿、重音和情绪。',
+      membershipLevel: 'free'
+    })),
     importedQuotes: []
   },
   {
@@ -399,23 +849,16 @@ const extraTraining = [
     color: 'blue',
     className: 'extra-randomTopic',
     iconClass: 'extra-icon-topic',
-    items: [
-      '你认为大学生最应该培养什么能力？',
-      '如何看待“内向的人也可以有表达力”？',
-      '你最近一次克服紧张是什么时候？',
-      '你觉得会说话的人有什么特点？',
-      '如果让你竞选班委，你会怎么介绍自己？',
-      '你认为朋友之间最重要的是什么？',
-      '如何面对一次失败的上台经历？',
-      '你最想改变自己的一个表达习惯是什么？',
-      '你觉得普通话重要吗？为什么？',
-      '你如何理解“表达是一种能力，也是一种习惯”？',
-      '你更喜欢提前准备发言，还是即兴表达？',
-      '你觉得声音洪亮重要，还是逻辑清楚重要？',
-      '如果你要感谢一个帮助过你的人，你会怎么说？',
-      '你认为年轻人为什么需要练习公众表达？',
-      '你希望 21 天后自己的表达有什么变化？'
-    ]
+    items: DAILY_TOPICS.map(item => ({
+      id: item.id,
+      text: item.title,
+      title: item.title,
+      author: item.author || '',
+      category: item.category,
+      source: 'imported',
+      usageTip: '围绕该话题完成 60 秒以上即兴表达。',
+      membershipLevel: 'free'
+    }))
   },
   {
     id: 'tongueTwister',
@@ -425,49 +868,217 @@ const extraTraining = [
     color: 'orange',
     className: 'extra-tongueTwister',
     iconClass: 'extra-icon-twister',
-    items: [
-      '四是四，十是十，十四是十四，四十是四十。',
-      '吃葡萄不吐葡萄皮，不吃葡萄倒吐葡萄皮。',
-      '八百标兵奔北坡，炮兵并排北边跑。',
-      '黑化肥发灰，灰化肥发黑。',
-      '红鲤鱼与绿鲤鱼与驴。',
-      '牛郎恋刘娘，刘娘念牛郎。',
-      '粉红墙上画凤凰，凤凰画在粉红墙。',
-      '山前有四十四棵死涩柿子树。',
-      '白石塔，白石搭，白石搭白塔，白塔白石搭。',
-      '哥挎瓜筐过宽沟，赶快过沟看怪狗。'
-    ]
+    items: TONGUE_TWISTERS.map(item => ({
+      id: item.id,
+      title: item.title,
+      author: item.author || '',
+      text: item.content,
+      category: item.category,
+      source: 'imported',
+      usageTip: '慢速读清楚，再逐渐加快速度，注意气息、平翘舌和前后鼻音。',
+      membershipLevel: 'free'
+    }))
   }
 ]
+
+function normalizeExtraCloudItem(item = {}, fallbackCategory = '') {
+  const category = trimText(item.category || fallbackCategory)
+  const number = Number(item.day || item.index || 0)
+  const parts = normalizeTitleAuthor(item.title || '', hasOwn(item, 'author') ? item.author : undefined)
+  return {
+    contentId: trimText(item.contentId || getExtraContentId(category, number)),
+    day: number,
+    sortOrder: Number(item.sortOrder || number || 0),
+    isCustom: item.isCustom === true,
+    title: parts.title,
+    author: parts.author,
+    text: trimText(item.content || item.text || item.title || ''),
+    categoryName: trimText(item.categoryName || ''),
+    status: trimText(item.status || 'published'),
+    membershipLevel: normalizeContentMembershipLevel(item.membershipLevel),
+    source: 'cloudbase'
+  }
+}
+
+function getResolvedExtraTraining() {
+  return extraTraining.map(extra => {
+    const cloudCategory = Object.keys(EXTRA_CONFIG_CATEGORY_ID_MAP)
+      .find(category => EXTRA_CONFIG_CATEGORY_ID_MAP[category] === extra.id)
+    if (!cloudCategory) return extra
+
+    const itemMap = new Map((extra.items || []).map((item, index) => [
+      getExtraContentId(cloudCategory, index + 1),
+      {
+        ...item,
+        contentId: getExtraContentId(cloudCategory, index + 1),
+        day: index + 1,
+        sortOrder: index + 1,
+        membershipLevel: normalizeContentMembershipLevel(item.membershipLevel),
+        displayTitle: formatContentTitle(item)
+      }
+    ]))
+
+    cloudTrainingContents
+      .filter(shouldUseCloudConfigItem)
+      .filter(item => trimText(item.category) === cloudCategory)
+      .map(item => normalizeExtraCloudItem(item, cloudCategory))
+      .filter(item => item.contentId)
+      .forEach(item => {
+        if (item.status === 'deleted') {
+          itemMap.delete(item.contentId)
+          return
+        }
+        const localItem = itemMap.get(item.contentId) || {}
+        itemMap.set(item.contentId, {
+          ...localItem,
+          ...item,
+          id: localItem.id || item.contentId,
+          day: item.day || localItem.day || 0,
+          sortOrder: item.sortOrder || localItem.sortOrder || item.day || 0,
+          isCustom: item.isCustom === true,
+          text: item.text || localItem.text || '',
+          title: item.title || localItem.title || '',
+          author: hasOwn(item, 'author') ? item.author : (localItem.author || ''),
+          category: localItem.category || item.categoryName || extra.title,
+          usageTip: localItem.usageTip || '',
+          membershipLevel: normalizeContentMembershipLevel(item.membershipLevel || localItem.membershipLevel),
+          displayTitle: formatContentTitle({
+            title: item.title || localItem.title || item.text || localItem.text || '',
+            author: hasOwn(item, 'author') ? item.author : (localItem.author || '')
+          }),
+          source: 'cloudbase'
+        })
+      })
+
+    return {
+      ...extra,
+      items: Array.from(itemMap.values()).sort((a, b) => {
+        const dayDiff = Number(a.day || 0) - Number(b.day || 0)
+        if (dayDiff) return dayDiff
+        return Number(a.sortOrder || 0) - Number(b.sortOrder || 0)
+      })
+    }
+  })
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
+function cleanReadingDisplayTitle(title) {
+  return String(title || '').replace(/主题朗读$/, '').trim()
+}
+
+// 朗读训练的作者信息来自「朗诵训练60篇.docx」标题行；没有可靠作者的主持/朗诵稿保持原标题。
+const READING_AUTHOR_MAP = {
+  匆匆: '朱自清',
+  白杨礼赞: '茅盾',
+  荷塘月色: '朱自清',
+  春: '朱自清',
+  青春: '塞缪尔·厄尔曼',
+  乡愁: '余光中',
+  与妻书: '林觉民',
+  背影: '朱自清',
+  故都的秋: '郁达夫',
+  '祖国啊，我亲爱的祖国': '舒婷',
+  秋夜: '鲁迅',
+  心田上的百合花: '林清玄',
+  我爱这土地: '艾青',
+  雅舍: '梁实秋',
+  少年中国说: '梁启超',
+  雪: '鲁迅',
+  追随内心: '乔布斯',
+  寒门贵子: '刘媛媛',
+  '不抱怨，靠自己': '崔万志',
+  葛底斯堡演说: '林肯',
+  我有一个梦想: '马丁·路德·金',
+  摆脱恐惧: '俞敏洪',
+  '你养我长大，我陪你变老': '王帆',
+  国强则少年强: '许吉如',
+  唯一恐惧是恐惧本身: '罗斯福',
+  致儿子的一封信: '麦家',
+  '归零，重新出发': '江疏影',
+  温柔的力量: '陈铭',
+  信念铸就前路: '撒切尔夫人',
+  永不放弃自己: '奥巴马',
+  '山河万里，大国风华': '房琪',
+  时间的力量: '张颂文',
+  微小英雄主义: '赵丽颖',
+  独立思考: '柴静',
+  坚持造就奇迹: '孙杨',
+  内心的力量: '杨澜'
+}
+
+function resolveReadingAuthor(task = {}, title = '') {
+  return task.author || task.writer || task.sourceAuthor || READING_AUTHOR_MAP[title] || ''
+}
+
+function normalizeTaskForDisplay(moduleId, task) {
+  if (!task) return task
+  const rawContentTitle = task.contentTitle || task.displayTitle || task.title
+  const rawTitle = task.title || rawContentTitle
+  const parsed = normalizeTitleAuthor(rawContentTitle, hasOwn(task, 'author') ? task.author : undefined)
+  const parsedTitle = moduleId === 'reading' ? cleanReadingDisplayTitle(parsed.title) : parsed.title
+  const cleanTitle = moduleId === 'reading' ? cleanReadingDisplayTitle(rawTitle) : splitTitleAndAuthor(rawTitle).title
+  const displayBaseTitle = parsedTitle || cleanTitle || task.contentTitle || task.title
+  const author = hasOwn(task, 'author')
+    ? (trimText(task.author) || parsed.author)
+    : (parsed.author || (moduleId === 'reading' ? resolveReadingAuthor(task, displayBaseTitle) : ''))
+  const displayTitle = formatContentTitle({ title: displayBaseTitle, author })
+
+  return {
+    ...task,
+    title: cleanTitle || task.title,
+    author,
+    contentTitle: displayBaseTitle,
+    displayTitle,
+    contentStyle: normalizeContentStyle(task.contentStyle),
+    contentRichStyle: normalizeContentRichStyle(task.contentRichStyle, String(task.material || task.content || '').length)
+  }
+}
+
+function normalizeModuleForDisplay(module) {
+  if (!module || !Array.isArray(module.days)) return module
+
+  return {
+    ...module,
+    days: module.days.map(item => normalizeTaskForDisplay(module.id, item))
+  }
+}
+
 function getTrainingModules() {
-  return clone(trainingModules)
+  return clone(getResolvedTrainingModules().map(normalizeModuleForDisplay))
 }
 
 function getExtraTraining() {
-  return clone(extraTraining)
+  return clone(getResolvedExtraTraining())
 }
 
 function getExtraTrainingById(extraType) {
-  const target = extraTraining.find(item => item.id === extraType)
+  const target = getResolvedExtraTraining().find(item => item.id === extraType)
   return target ? clone(target) : null
 }
 
 function getModuleById(moduleId) {
-  const target = trainingModules.find(item => item.id === moduleId)
-  return target ? clone(target) : null
+  const target = getResolvedTrainingModules().find(item => item.id === moduleId)
+  return target ? clone(normalizeModuleForDisplay(target)) : null
 }
 
 function getTaskByModuleAndDay(moduleId, day) {
-  const target = trainingModules.find(item => item.id === moduleId)
+  const target = getResolvedTrainingModules().find(item => item.id === moduleId)
   if (!target) return null
 
   const task = target.days.find(item => item.day === Number(day))
-  return task ? clone(task) : null
+  return task ? clone(normalizeTaskForDisplay(moduleId, task)) : null
+}
+
+function getTaskByModuleAndContentId(moduleId, contentId) {
+  const target = getResolvedTrainingModules().find(item => item.id === moduleId)
+  const id = trimText(contentId)
+  if (!target || !id) return null
+
+  const task = target.days.find(item => trimText(item.contentId) === id)
+  return task ? clone(normalizeTaskForDisplay(moduleId, task)) : null
 }
 
 module.exports = {
@@ -482,5 +1093,13 @@ module.exports = {
   getExtraTraining,
   getExtraTrainingById,
   getModuleById,
-  getTaskByModuleAndDay
+  getTaskByModuleAndDay,
+  getTaskByModuleAndContentId,
+  isTrainingContentComplete,
+  setCloudTrainingContents,
+  upsertCloudTrainingContent,
+  clearCloudTrainingContents,
+  cleanReadingDisplayTitle,
+  splitTitleAndAuthor,
+  formatContentTitle
 }

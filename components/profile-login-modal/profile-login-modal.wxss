@@ -1,0 +1,156 @@
+.profile-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  padding: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: rgba(17, 24, 39, 0.52);
+}
+
+.profile-panel {
+  width: 100%;
+  padding: 32rpx;
+  border-radius: 32rpx;
+  box-sizing: border-box;
+  background: #ffffff;
+  box-shadow: 0 28rpx 70rpx rgba(17, 24, 39, 0.24);
+}
+
+.profile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.profile-title,
+.profile-desc,
+.privacy-tip {
+  display: block;
+}
+
+.profile-title {
+  color: #182233;
+  font-size: 36rpx;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.profile-desc {
+  margin-top: 10rpx;
+  color: #737d8e;
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+.profile-close {
+  width: 54rpx;
+  height: 54rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a92a3;
+  background: #f3f5f8;
+  font-size: 34rpx;
+}
+
+.avatar-picker {
+  width: 180rpx;
+  margin: 30rpx auto 0;
+  padding: 0;
+  background: transparent;
+  line-height: normal;
+}
+
+.avatar-image,
+.avatar-text {
+  width: 112rpx;
+  height: 112rpx;
+  margin: 0 auto;
+  border-radius: 50%;
+}
+
+.avatar-image {
+  display: block;
+}
+
+.avatar-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #24324a;
+  background: #f2f5f8;
+  font-size: 42rpx;
+  font-weight: 900;
+}
+
+.avatar-hint {
+  display: block;
+  margin-top: 12rpx;
+  color: #5568d9;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.nickname-field {
+  margin-top: 28rpx;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 12rpx;
+  color: #2d3748;
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.nickname-input {
+  height: 78rpx;
+  padding: 0 22rpx;
+  border-radius: 20rpx;
+  color: #182233;
+  background: #f5f7fb;
+  font-size: 27rpx;
+}
+
+.privacy-tip {
+  margin-top: 18rpx;
+  color: #9aa1ad;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.profile-submit,
+.profile-skip {
+  width: 100%;
+  margin: 22rpx 0 0;
+  padding: 0;
+  border-radius: 999rpx;
+  font-size: 27rpx;
+  font-weight: 900;
+}
+
+.profile-submit {
+  height: 88rpx;
+  line-height: 88rpx;
+  color: #ffffff;
+  background: #16c76f;
+}
+
+.profile-skip {
+  height: 64rpx;
+  line-height: 64rpx;
+  color: #8a93a3;
+  background: transparent;
+}
+
+.avatar-picker::after,
+.profile-submit::after,
+.profile-skip::after {
+  border: none;
+}

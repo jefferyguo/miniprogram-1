@@ -8,6 +8,7 @@ Page({
       progress: '已完成 2/21 天'
     },
     checkinCount: 2,
+    teacherFeedbackEnabled: false,
     teacherComment: '表达结构清晰，下一次可以放慢语速，增强停顿感。',
     reportScore: 86
   },

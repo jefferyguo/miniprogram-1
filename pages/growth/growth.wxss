@@ -23,7 +23,8 @@ page {
 .subtitle {
   display: block;
   font-size: 28rpx;
-  color: #666666;
+  line-height: 1.5;
+  color: #7f8794;
 }
 
 .stats-row {
@@ -36,6 +37,7 @@ page {
   border-radius: 32rpx;
   background: #ffffff;
   box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+  border: 1rpx solid #edf1f6;
 }
 
 .stats-card {
@@ -79,7 +81,10 @@ page {
 }
 
 .progress-item {
-  margin-bottom: 28rpx;
+  margin-bottom: 18rpx;
+  padding: 22rpx;
+  border-radius: 24rpx;
+  background: #f8fafc;
 }
 
 .progress-item:last-child {
@@ -119,8 +124,11 @@ page {
 }
 
 .record-item {
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #f0f2f6;
+  padding: 22rpx;
+  border-radius: 24rpx;
+  background: #f8fafc;
+  margin-bottom: 18rpx;
+  border-bottom: none;
 }
 
 .record-item:last-child {

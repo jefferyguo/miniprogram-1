@@ -1,0 +1,10 @@
+{
+  "name": "transcribeAudio",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "tencentcloud-sdk-nodejs-asr": "^4.1.247",
+    "ws": "^8.21.0",
+    "wx-server-sdk": "3.0.5-beta.1"
+  }
+}

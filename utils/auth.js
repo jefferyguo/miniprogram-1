@@ -9,8 +9,8 @@ function getCurrentUser() {
 
 function isLoggedIn() {
   const userInfo = getCurrentUser()
-
-  return !!(userInfo && (userInfo.openid || userInfo.isLoggedIn === true))
+  const phone = String((userInfo && userInfo.phone) || '').replace(/\D/g, '')
+  return !!(userInfo && userInfo.phoneBound === true && /^1\d{10}$/.test(phone))
 }
 
 function setUserInfo(userInfo) {

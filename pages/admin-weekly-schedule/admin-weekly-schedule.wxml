@@ -1,0 +1,99 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-kicker">课表管理</text>
+    <text class="hero-title">{{categoryLabel}}</text>
+    <text class="hero-desc">按实际课程内容连续录入，发布后仅更新当前课表类型。</text>
+  </view>
+
+  <view wx:if="{{!isAdmin && !loading}}" class="empty-card">
+    <text class="empty-title">暂无管理员权限</text>
+    <text class="empty-desc">请使用管理员账号进入课表管理</text>
+  </view>
+
+  <block wx:if="{{isAdmin}}">
+    <view class="form-card">
+      <view class="section-head">
+        <text class="section-title">课表周期</text>
+        <text class="status-tag">{{schedule.status === 'published' ? '已发布' : schedule.status === 'archived' ? '已归档' : '草稿'}}</text>
+      </view>
+      <view class="quick-week-row">
+        <button class="quick-week-btn" bindtap="useCurrentWeek">使用本周</button>
+        <button class="quick-week-btn next-week-btn" bindtap="useNextWeek">使用下周</button>
+      </view>
+      <view class="field-grid">
+        <picker mode="date" value="{{schedule.startDate}}" data-field="startDate" bindchange="onScheduleDateChange">
+          <view class="picker-field"><text class="picker-label">开始日期</text><text>{{schedule.startDate || '请选择'}}</text></view>
+        </picker>
+        <picker mode="date" value="{{schedule.endDate}}" data-field="endDate" bindchange="onScheduleDateChange">
+          <view class="picker-field"><text class="picker-label">结束日期</text><text>{{schedule.endDate || '请选择'}}</text></view>
+        </picker>
+      </view>
+      <text class="week-label">{{schedule.weekLabel}}</text>
+      <textarea class="textarea summary-input" placeholder="课表说明（选填）" data-field="summary" value="{{schedule.summary}}" bindinput="onFieldInput"></textarea>
+    </view>
+
+    <view class="course-section">
+      <text class="section-title">课程列表</text>
+
+      <view wx:if="{{schedule.courses.length === 0}}" class="empty-course-card">
+        <text class="empty-title">还没有课程</text>
+        <text class="empty-desc">先添加第一节课程，再依次向下录入</text>
+        <button class="empty-add-btn" bindtap="addCourseAtEnd">添加课程</button>
+      </view>
+
+      <view class="course-editor" wx:for="{{schedule.courses}}" wx:key="index">
+        <view class="course-editor-head">
+          <text class="course-editor-title">第 {{index + 1}} 节</text>
+          <button class="remove-btn" data-index="{{index}}" bindtap="removeCourse">删除</button>
+        </view>
+
+        <picker mode="date" value="{{item.date}}" data-index="{{index}}" bindchange="onCourseDateChange">
+          <view class="picker-field full-picker"><text class="picker-label">上课日期</text><text>{{item.date || '请选择'}} {{item.weekday}}</text></view>
+        </picker>
+
+        <view class="field-grid">
+          <picker mode="time" value="{{item.startTime}}" data-index="{{index}}" data-field="startTime" bindchange="onCourseTimeChange">
+            <view class="picker-field"><text class="picker-label">开始时间</text><text>{{item.startTime}}</text></view>
+          </picker>
+          <picker mode="time" value="{{item.endTime}}" data-index="{{index}}" data-field="endTime" bindchange="onCourseTimeChange">
+            <view class="picker-field"><text class="picker-label">结束时间</text><text>{{item.endTime}}</text></view>
+          </picker>
+        </view>
+
+        <view class="input-field">
+          <text class="input-label">课程名称</text>
+          <input class="input" placeholder="请输入完整课程名称" data-index="{{index}}" data-field="courseName" value="{{item.courseName}}" bindinput="onCourseInput" />
+        </view>
+        <view class="input-field">
+          <text class="input-label">适合对象</text>
+          <input class="input" placeholder="例如：成人学员" data-index="{{index}}" data-field="targetAudience" value="{{item.targetAudience}}" bindinput="onCourseInput" />
+        </view>
+        <view class="input-field">
+          <text class="input-label">课程目标 / 课程内容</text>
+          <textarea class="textarea content-input" placeholder="请输入课程目标、训练方法和课程内容" data-index="{{index}}" data-field="content" value="{{item.content}}" maxlength="-1" bindinput="onCourseInput"></textarea>
+        </view>
+        <view class="input-field">
+          <text class="input-label">备注（选填）</text>
+          <textarea class="textarea remark-input" placeholder="补充说明" data-index="{{index}}" data-field="remark" value="{{item.remark}}" bindinput="onCourseInput"></textarea>
+        </view>
+
+        <button class="add-next-btn" data-index="{{index}}" bindtap="addCourseAfter">添加下一节课程</button>
+      </view>
+
+      <button wx:if="{{schedule.courses.length > 0}}" class="bottom-add-btn" bindtap="addCourseAtEnd">添加课程</button>
+    </view>
+
+    <view wx:if="{{showSchedulePoster}}" class="form-card poster-manage-card">
+      <text class="section-title">分享海报</text>
+      <button class="poster-btn" loading="{{posterGenerating}}" bindtap="generatePoster">生成课表图片</button>
+    </view>
+
+    <view class="action-bar">
+      <button class="draft-btn" loading="{{saving}}" bindtap="saveDraft">保存草稿</button>
+      <button class="publish-btn" loading="{{saving}}" bindtap="publishSchedule">发布课表</button>
+    </view>
+    <button wx:if="{{schedule._id}}" class="archive-btn" bindtap="archiveSchedule">归档当前课表</button>
+  </block>
+
+  <canvas wx:if="{{showSchedulePoster}}" canvas-id="schedulePosterCanvas" class="poster-canvas" style="width: {{posterCanvasWidth}}px; height: {{posterCanvasHeight}}px;"></canvas>
+</view>
