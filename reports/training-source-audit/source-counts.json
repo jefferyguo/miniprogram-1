@@ -1,0 +1,50 @@
+[
+  {
+    "moduleId": "topic",
+    "rawRecordCount": 276,
+    "parsedRecordCount": 276,
+    "canonicalRecordCount": 276,
+    "expectedRecordCount": 276,
+    "countsMatch": true
+  },
+  {
+    "moduleId": "reading",
+    "rawRecordCount": 216,
+    "parsedRecordCount": 216,
+    "canonicalRecordCount": 216,
+    "expectedRecordCount": 216,
+    "countsMatch": true
+  },
+  {
+    "moduleId": "leaderSpeech",
+    "rawRecordCount": 24,
+    "parsedRecordCount": 24,
+    "canonicalRecordCount": 24,
+    "expectedRecordCount": 24,
+    "countsMatch": true
+  },
+  {
+    "moduleId": "retell",
+    "rawRecordCount": 257,
+    "parsedRecordCount": 257,
+    "canonicalRecordCount": 257,
+    "expectedRecordCount": 257,
+    "countsMatch": true
+  },
+  {
+    "moduleId": "speech",
+    "rawRecordCount": 116,
+    "parsedRecordCount": 116,
+    "canonicalRecordCount": 116,
+    "expectedRecordCount": 116,
+    "countsMatch": true
+  },
+  {
+    "moduleId": "mandarin",
+    "rawRecordCount": 77,
+    "parsedRecordCount": 77,
+    "canonicalRecordCount": 77,
+    "expectedRecordCount": 77,
+    "countsMatch": true
+  }
+]

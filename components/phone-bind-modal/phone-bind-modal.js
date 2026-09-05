@@ -1,4 +1,5 @@
 const { bindPhoneWithCode } = require('../../utils/phone-auth')
+const auth = require('../../utils/auth')
 
 Component({
   data: {
@@ -26,6 +27,14 @@ Component({
     },
 
     noop() {},
+
+    openLoginGate() {
+      auth.requirePhoneBound(null, {
+        actionName: '登录',
+        source: 'phone_bind_modal',
+        resumePolicy: 'manual_retry'
+      })
+    },
 
     async onGetPhoneNumberLogin(e) {
       if (this.data.binding) return

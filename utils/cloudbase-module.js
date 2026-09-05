@@ -1,5 +1,12 @@
+const { normalizeError, toError } = require('./error-normalizer')
+
 function callCloudBaseModule({ featureName, moduleName, data = {}, timeoutMs = 15000 }) {
-  return new Promise((resolve, reject) => {
+  const app = typeof getApp === 'function' ? getApp() : null
+  const ready = app && typeof app.ensureCloudReady === 'function'
+    ? app.ensureCloudReady()
+    : Promise.resolve(true)
+
+  return ready.then(() => new Promise((resolve, reject) => {
     if (!wx.cloud) {
       const err = new Error('当前基础库不支持 wx.cloud')
       console.warn(`[cloudbase_module][${moduleName}]`, err.message)
@@ -9,6 +16,7 @@ function callCloudBaseModule({ featureName, moduleName, data = {}, timeoutMs = 1
 
     const startedAt = Date.now()
     let settled = false
+    const dataKeys = data && typeof data === 'object' ? Object.keys(data) : []
 
     const finish = (type, payload) => {
       if (settled) return false
@@ -21,18 +29,28 @@ function callCloudBaseModule({ featureName, moduleName, data = {}, timeoutMs = 1
         moduleName,
         costMs: cost,
         timeoutMs,
-        data
+        dataKeys
       }
 
       if (type === 'success') {
-        console.log(`[cloudbase_module][success] ${moduleName}`, logPayload, payload)
+        console.log(`[cloudbase_module][success] ${moduleName}`, {
+          ...logPayload,
+          hasResult: Boolean(payload)
+        })
         resolve(payload)
       } else if (type === 'timeout') {
         console.error(`[cloudbase_module][timeout] ${moduleName}`, logPayload)
         reject(new Error(`${moduleName} timeout`))
       } else {
-        console.error(`[cloudbase_module][fail] ${moduleName}`, logPayload, payload)
-        reject(payload)
+        const normalized = normalizeError(payload, 'cloud module failed')
+        console.error(`[cloudbase_module][fail] ${moduleName}`, {
+          ...logPayload,
+          code: normalized.code || normalized.errCode,
+          message: normalized.message,
+          errMsg: normalized.errMsg,
+          requestId: normalized.requestId
+        })
+        reject(toError(payload, normalized.message))
       }
 
       return true
@@ -42,7 +60,7 @@ function callCloudBaseModule({ featureName, moduleName, data = {}, timeoutMs = 1
       featureName,
       moduleName,
       timeoutMs,
-      data
+      dataKeys
     })
 
     const timer = setTimeout(() => {
@@ -62,7 +80,7 @@ function callCloudBaseModule({ featureName, moduleName, data = {}, timeoutMs = 1
         finish('fail', err)
       }
     })
-  })
+  }))
 }
 
 module.exports = {

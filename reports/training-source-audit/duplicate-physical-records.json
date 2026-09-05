@@ -1,0 +1,42 @@
+[
+  {
+    "moduleId": "topic",
+    "fingerprint": "00fc5e1a5fb665dedd620f64d4a0a7884072c9808147c347f51c403481e0ce12",
+    "count": 2,
+    "records": [
+      {
+        "sourceFile": "即兴讲话0728（定稿，未上传）(1).docx",
+        "sourceDay": 53,
+        "position": 53,
+        "title": "即兴话题：格局，决定了你能看到多远"
+      },
+      {
+        "sourceFile": "即兴讲话0728（定稿，未上传）(1).docx",
+        "sourceDay": 55,
+        "position": 55,
+        "title": "即兴话题：格局，决定了你能看到多远"
+      }
+    ],
+    "action": "preserved_as_distinct_physical_records"
+  },
+  {
+    "moduleId": "topic",
+    "fingerprint": "e9ac67cfbec1e499546b6c83bae920285ffce8ac4da832e8773afc82aefe42dd",
+    "count": 2,
+    "records": [
+      {
+        "sourceFile": "即兴讲话0728（定稿，未上传）(1).docx",
+        "sourceDay": 54,
+        "position": 54,
+        "title": "即兴话题：眼界和心胸，哪个更重要"
+      },
+      {
+        "sourceFile": "即兴讲话0728（定稿，未上传）(1).docx",
+        "sourceDay": 56,
+        "position": 56,
+        "title": "即兴话题：眼界和心胸，哪个更重要"
+      }
+    ],
+    "action": "preserved_as_distinct_physical_records"
+  }
+]

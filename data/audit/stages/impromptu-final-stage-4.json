@@ -1,0 +1,10 @@
+{
+  "stage": 4,
+  "title": "占位正文安全保护",
+  "generatedAt": "2026-07-28T03:39:38.400Z",
+  "status": "COMPLETE",
+  "placeholderGuards": "task-detail.js:12处 isTrainingContentComplete/ensureTrainingContentReady",
+  "trainingDataGuards": "TRAINING_CONTENT_PLACEHOLDERS数组 + isTrainingContentComplete()",
+  "protectedEntries": "录音/录像/AI点评/发布广场/保存作品/管理端编辑",
+  "guardAdded": "ensureTrainingContentReady()增加isTrainingContentComplete二次检查"
+}

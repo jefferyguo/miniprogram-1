@@ -1,0 +1,7 @@
+<view class="radar-card" wx:if="{{hasRadar}}">
+  <view class="radar-header">
+    <text class="radar-title">表达能力分析</text>
+    <text class="radar-subtitle">本次训练能力画像</text>
+  </view>
+  <canvas type="2d" id="abilityRadarCanvas" class="radar-canvas"></canvas>
+</view>

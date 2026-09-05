@@ -1,10 +1,10 @@
-<page-meta page-style="{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
+<page-meta page-style="{{fontSizePageStyle}}{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
 
 <view class="page" wx:if="{{moduleInfo && task}}">
   <view class="task-hero {{moduleInfo.className}}">
     <text class="module-name">{{moduleInfo.title}}</text>
-    <view class="day-badge">Day {{task.day}}</view>
-    <text class="hero-main-title">{{task.displayTitle || task.contentTitle || task.title}}</text>
+    <view class="day-badge">Day {{task.day || task.displayIndex}}</view>
+    <text class="hero-main-title" style="{{task.titleStyle ? 'color:' + task.titleStyle.color + ';' : ''}}">{{task.displayTitle || task.contentTitle || task.title}}</text>
   </view>
 
   <view class="historical-note" wx:if="{{isHistoricalOriginal}}">
@@ -14,10 +14,10 @@
   <view class="material-card">
     <text class="section-title">训练材料</text>
     <view wx:if="{{trainingContentUnavailable}}" class="training-content-unavailable">
-      <view wx:if="{{contentLoadState === 'loading'}}" class="training-content-loading-dot"></view>
+      <view wx:if="{{contentLoadState === 'CONTENT_LOADING' || contentLoadState === 'ACCESS_LOADING'}}" class="training-content-loading-dot"></view>
       <text class="training-content-message">{{trainingContentMessage}}</text>
       <button
-        wx:if="{{contentLoadState === 'error'}}"
+        wx:if="{{contentLoadState === 'CONTENT_NETWORK_ERROR'}}"
         class="training-content-retry"
         loading="{{retrying}}"
         disabled="{{retrying}}"
@@ -128,7 +128,7 @@
 
         <view class="work-actions secondary-actions">
           <button
-            wx:if="{{!item.isPublic}}"
+            wx:if="{{item.shareAllowed && !item.isPublic}}"
             class="public-btn"
             data-id="{{item.id}}"
             catchtap="publishDraftToSquare"
@@ -183,6 +183,8 @@
         <view class="ai-section-text">{{currentAiFeedback.summary}}</view>
       </view>
 
+      <ability-radar wx:if="{{currentAiFeedback.abilityRadar}}" radar="{{currentAiFeedback.abilityRadar}}"></ability-radar>
+
       <view class="ai-section" wx:if="{{currentAiFeedback.basis}}">
         <view class="ai-section-title">点评依据</view>
         <view class="ai-section-text">{{currentAiFeedback.basis}}</view>
@@ -233,4 +235,6 @@
       </view>
     </scroll-view>
   </view>
+  <login-gate id="login-gate" />
 </view>
+<voice-consent-modal id="voice-consent-modal" />

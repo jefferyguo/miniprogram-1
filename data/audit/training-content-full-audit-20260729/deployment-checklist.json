@@ -1,0 +1,12 @@
+{
+  "currentStatus": "READY_FOR_CLOUD_DRY_RUN_NOT_DEPLOYED",
+  "prerequisites": [
+    "创建/确认 trainingContents、trainingContentModules、trainingContentRevisions 集合及索引。",
+    "部署 cloudApi 与 login 云函数到目标环境。",
+    "用生产凭据先执行训练内容 cloud dry-run，确认 conflicts=0。",
+    "创建完整备份并校验 Hash 后再 apply。",
+    "执行 verify；失败时按备份 rollback。",
+    "对 users 先执行占位昵称 cloud dry-run；重复 openid/手机号会阻塞自动迁移。",
+    "重新编译并上传小程序，完成真机手机号授权、管理端编辑和学员同步验收。"
+  ]
+}

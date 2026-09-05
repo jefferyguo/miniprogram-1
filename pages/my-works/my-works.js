@@ -32,6 +32,7 @@ const {
 } = require('../../utils/local-data')
 const { publishWorkToSquare, unpublishWorkFromSquare } = require('../../utils/work-public')
 const { deleteMyWork, getMyWorks } = require('../../utils/cloud-api')
+const { requireLogin } = require('../../utils/auth')
 const { requirePhoneBound } = require('../../utils/phone-auth')
 const {
   enableShareMenu,
@@ -40,6 +41,10 @@ const {
   getShareImage
 } = require('../../utils/share-config')
 const { buildWorkShareConfig, getWorkPublicId } = require('../../utils/work-share')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('../../utils/work-share-policy')
 
 function getStorageList(key) {
   const list = wx.getStorageSync(key) || []
@@ -98,12 +103,16 @@ function normalizeModuleTitle(title) {
 }
 
 function normalizeWorkSubtitle(item) {
-  const title = item.taskTitle || item.contentTitle || item.content || '训练作品'
+  const title = item.trainingTitleSnapshot || item.taskTitle || item.contentTitle || item.content || '训练作品'
   if (item.moduleId === 'reading' || String(item.moduleTitle || '').indexOf('朗读') > -1) {
     return cleanReadingDisplayTitle(title)
   }
 
   return title
+}
+
+function getWorkSequence(item = {}) {
+  return Number(item.trainingDaySnapshot || item.day || item.dayNumber || 0)
 }
 
 function buildWork(item, sourceType, submitted, index) {
@@ -125,7 +134,7 @@ function buildWork(item, sourceType, submitted, index) {
     typeText: isVideo ? '录像作品' : '录音作品',
     actionText: isVideo ? '查看' : '播放',
     titleText: isMain
-      ? `${normalizeModuleTitle(item.moduleTitle)}${item.day ? ` Day ${item.day}` : ''}`
+      ? `${normalizeModuleTitle(item.moduleTitle)}${getWorkSequence(item) ? ` Day ${getWorkSequence(item)}` : ''}`
       : (item.extraTitle || '额外训练'),
     subtitleText: normalizeWorkSubtitle(item),
     durationText: item.duration || '暂无',
@@ -134,6 +143,7 @@ function buildWork(item, sourceType, submitted, index) {
     statusText: getSavedStatusText(item),
     statusClass: getSavedStatusClass(item),
     publicStatusText: item.isPublic ? '已发布到广场' : '',
+    shareAllowed: isWorkShareAllowed(item),
     feedbackActionText: feedbackAction.text,
     feedbackActionDisabled: feedbackAction.disabled,
     feedbackActionClass: feedbackAction.className,
@@ -183,6 +193,51 @@ function mergeWorks(drafts, submissions, sourceType) {
   return Object.keys(map).map(key => map[key])
 }
 
+const SNAPSHOT_FIELDS = [
+  'trainingTitleSnapshot',
+  'trainingContentSnapshot',
+  'trainingCategorySnapshot',
+  'trainingDaySnapshot'
+]
+
+function getWorkIdentityKeys(item = {}) {
+  return [
+    item.cloudId,
+    item._id,
+    item.id,
+    item.squareWorkId
+  ].map(value => String(value || '').trim()).filter(Boolean)
+}
+
+function getSnapshotPatch(item = {}) {
+  return SNAPSHOT_FIELDS.reduce((patch, field) => {
+    const value = item[field]
+    if (value !== undefined && value !== null && String(value).trim()) {
+      patch[field] = value
+    }
+    return patch
+  }, {})
+}
+
+function buildSnapshotLookup(items = []) {
+  const lookup = new Map()
+  items.forEach(item => {
+    const patch = getSnapshotPatch(item)
+    if (!Object.keys(patch).length) return
+    getWorkIdentityKeys(item).forEach(key => {
+      if (!lookup.has(key)) lookup.set(key, patch)
+    })
+  })
+  return lookup
+}
+
+function applyPreferredSnapshot(item = {}, snapshotLookup) {
+  const patch = getWorkIdentityKeys(item)
+    .map(key => snapshotLookup.get(key))
+    .find(Boolean)
+  return patch ? { ...item, ...patch } : item
+}
+
 function getKeysBySource(sourceType) {
   if (sourceType === 'extra') {
     return {
@@ -227,19 +282,7 @@ Page({
     if (!this.audioPlayer) {
       this.audioPlayer = createAudioPlayer(this)
     }
-    if (!requirePhoneBound('查看训练记录', {
-      page: this,
-      onSuccess: () => this.loadWorks()
-    })) {
-      this.setData({
-        works: [],
-        totalCount: 0,
-        savedCount: 0,
-        aiReadyCount: 0,
-        teacherReviewedCount: 0
-      })
-      return
-    }
+    if (!requireLogin(() => this.loadWorks(), { actionName: '查看训练记录' })) return
     this.loadWorks()
   },
 
@@ -254,16 +297,24 @@ Page({
     const localWorks = mergeWorks(trainingDrafts, trainingSubmissions, 'main')
       .concat(mergeWorks(extraDrafts, extraSubmissions, 'extra'))
       .sort((a, b) => b.sortTime - a.sortTime)
+    const snapshotLookup = buildSnapshotLookup(
+      trainingDrafts
+        .concat(trainingSubmissions, extraDrafts, extraSubmissions)
+        .concat(localWorks)
+    )
     let works = localWorks
 
     try {
       const cloudRes = await getMyWorks(50)
-      const cloudWorks = (cloudRes.works || []).map((item, index) => buildWork(
-        item,
-        item.sourceType || (item.extraType ? 'extra' : 'main'),
-        true,
-        index
-      ))
+      const cloudWorks = (cloudRes.works || []).map((item, index) => {
+        const snapshotItem = applyPreferredSnapshot(item, snapshotLookup)
+        return buildWork(
+          snapshotItem,
+          snapshotItem.sourceType || (snapshotItem.extraType ? 'extra' : 'main'),
+          true,
+          index
+        )
+      })
       const cloudIds = cloudWorks.map(item => item.cloudId || item.id).filter(Boolean)
       const unsyncedLocalWorks = localWorks.filter(item => !item.cloudId || !cloudIds.includes(item.cloudId))
 
@@ -368,6 +419,11 @@ Page({
         title: '作品不存在',
         icon: 'none'
       })
+      return
+    }
+
+    if (!isWorkShareAllowed(target)) {
+      wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
       return
     }
 
@@ -648,7 +704,7 @@ Page({
     const canRetry = res.canRetry === true
     wx.showModal({
       title: '未识别到有效语音',
-      content: '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
+      content: res.message || '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
       confirmText: canRetry ? '重新识别' : '我知道了',
       cancelText: canRetry ? '我知道了' : '',
       showCancel: canRetry,
@@ -752,10 +808,15 @@ Page({
     if (res.from === 'button' && (workId || hasWorkIndex)) {
       const work = this.data.works.find(item => getWorkPublicId(item) === workId) ||
         (Number.isInteger(workIndex) ? this.data.works[workIndex] : null)
+      if (work && !isWorkShareAllowed(work)) {
+        wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+        return undefined
+      }
       if (work && work.isPublic) {
         const shareWorkId = getWorkPublicId(work)
         this.setData({ currentShareWorkId: shareWorkId })
-        return getDefaultShareMessage(buildWorkShareConfig(work, 'mine'))
+        const shareConfig = buildWorkShareConfig(work, 'mine')
+        return shareConfig ? getDefaultShareMessage(shareConfig) : undefined
       }
     }
 

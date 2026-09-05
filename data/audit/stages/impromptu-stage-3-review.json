@@ -1,0 +1,29 @@
+{
+  "stage": 3,
+  "title": "独立数据审查",
+  "status": "COMPLETE",
+  "blockerCount": 0,
+  "highCount": 0,
+  "checks": {
+    "docxParsed": true,
+    "itemCount": 276,
+    "dayContinuous": true,
+    "emptyTitle": 0,
+    "emptyContent": 0,
+    "dayInUserContent": 0,
+    "firstItemComplete": true,
+    "lastItemComplete": true,
+    "richTextPlainTextMatch": 0,
+    "titlePrefixConsistent": "all 276 have \"即兴话题：\" removed",
+    "contentIdStable": "topic-day-N format, no parallel IDs",
+    "membershipCorrect": "Day 1-3 free, Day 4+ member",
+    "noDuplicateContent": "intentionally preserved per requirements",
+    "editorStylesCorrect": {
+      "small": "14px",
+      "green": "#0f766e",
+      "red": "#b91c1c",
+      "bold": "700"
+    }
+  },
+  "generatedAt": "2026-07-28T02:59:32.296Z"
+}

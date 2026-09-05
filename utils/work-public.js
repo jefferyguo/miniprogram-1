@@ -5,6 +5,10 @@ const {
   updateWorkPublicStatus: updateCloudWorkPublicStatus
 } = require('./cloud-api')
 const { uploadMediaToCloud } = require('./cloud-upload')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('./work-share-policy')
 
 const STORAGE_KEYS = {
   main: 'trainingSubmissions',
@@ -228,7 +232,8 @@ function getPublishErrorMessage(error) {
     UPLOAD_FILE_PATH_MISSING: '该作品缺少本地文件，暂时无法发布。',
     NO_MEDIA_PATH: '该作品缺少录音/录像文件，暂时无法发布。',
     UPLOAD_FILE_ID_MISSING: '作品上传失败，请稍后再试。',
-    UPLOAD_FILE_FAILED: '作品上传失败，请检查网络后重试。'
+    UPLOAD_FILE_FAILED: '作品上传失败，请检查网络后重试。',
+    VIDEO_SHARE_DISABLED: VIDEO_SHARE_DISABLED_MESSAGE
   }
   return messages[error && error.code] || error && error.message || '发布失败，请稍后重试。'
 }
@@ -360,6 +365,13 @@ async function ensureCloudMediaFile(work = {}) {
 async function publishWorkToSquare(workId, sourceType) {
   const work = getWorkById(workId, sourceType)
   if (!work) return { success: false, message: '作品不存在' }
+  if (!isWorkShareAllowed(work)) {
+    return {
+      success: false,
+      code: 'VIDEO_SHARE_DISABLED',
+      message: VIDEO_SHARE_DISABLED_MESSAGE
+    }
+  }
 
   wx.showLoading({ title: '正在准备作品...', mask: true })
   try {

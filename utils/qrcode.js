@@ -60,40 +60,6 @@ function extractQrUrl(res) {
   return raw
 }
 
-function generateTeacherLoginQr() {
-  return new Promise((resolve, reject) => {
-    if (!wx.cloud) {
-      reject(new Error('当前基础库不支持 wx.cloud'))
-      return
-    }
-
-    callCloudBaseModule({
-      featureName: 'teacher-login-qrcode',
-      moduleName: 'wx_qrcode_get_qrcode',
-      timeoutMs: 20000,
-      data: {
-        path: 'pages/teacher-login/teacher-login?from=teacher_qr',
-        width: 430,
-        auto_color: false,
-        line_color: { r: 0, g: 0, b: 0 },
-        is_hyaline: false,
-        env_version: 'trial'
-      }
-    }).then(res => {
-      console.log('老师端入口二维码生成结果：', res)
-      const qrUrl = extractQrUrl(res)
-      if (qrUrl) {
-        resolve(qrUrl)
-      } else {
-        reject(new Error('二维码结果为空'))
-      }
-    }).catch(err => {
-      console.error('老师端入口二维码生成失败：', err)
-      reject(err)
-    })
-  })
-}
-
 function generateClassJoinQr(classCode) {
   return new Promise((resolve, reject) => {
     if (!wx.cloud) {
@@ -165,7 +131,6 @@ function generateWeeklyScheduleQr() {
 }
 
 module.exports = {
-  generateTeacherLoginQr,
   generateClassJoinQr,
   generateWeeklyScheduleQr
 }

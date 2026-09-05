@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-08-01T13:16:10.710Z",
+  "sourceRevision": "0728-final-r2-source-faithful",
+  "sourceVsCanonical": {
+    "status": "PASS_SOURCE_HASH_AND_NORMALIZED_CONTENT",
+    "sourceCounts": {
+      "topic": 276,
+      "reading": 216,
+      "leaderSpeech": 24,
+      "retell": 257,
+      "speech": 116,
+      "mandarin": 77
+    },
+    "canonicalCounts": {
+      "topic": 276,
+      "reading": 216,
+      "leaderSpeech": 24,
+      "retell": 257,
+      "speech": 116,
+      "mandarin": 77
+    },
+    "canonicalCount": 966,
+    "canonicalFileHash": "ffe5ddd177b60f3eaad6512a5a6a7e0ae159ebc427bfd60a67f9e41814a0eeae"
+  },
+  "canonicalVsLocalIndex": {
+    "status": "PASS",
+    "canonicalCounts": {
+      "topic": 276,
+      "reading": 216,
+      "leaderSpeech": 24,
+      "retell": 257,
+      "speech": 116,
+      "mandarin": 77
+    },
+    "localCounts": {
+      "topic": 276,
+      "reading": 216,
+      "leaderSpeech": 24,
+      "retell": 257,
+      "speech": 116,
+      "mandarin": 77
+    },
+    "localCanonicalHash": "3957af640b62abfab7721e900a61a32863a4c32cfe1b0416a2855211f2be4783",
+    "fullBodiesInLocalIndex": false
+  },
+  "canonicalVsCloud": {
+    "status": "NOT_VERIFIED",
+    "reason": "当前会话没有生产 CloudBase 凭据，未读取或写入 trainingContents。",
+    "nextCommand": "node scripts/migrate-training-contents-0728.js --cloud-dry-run --env <env>"
+  },
+  "cloudVsStudentResponse": {
+    "status": "STATIC_CONTRACT_PASS_RUNTIME_PENDING",
+    "contract": "Cloud > last-known-good cache > lightweight local index; exact contentId only."
+  },
+  "cloudVsAdminResponse": {
+    "status": "STATIC_CONTRACT_PASS_RUNTIME_PENDING",
+    "contract": "分页、乐观锁、revision、moduleVersion、服务端回读。"
+  }
+}

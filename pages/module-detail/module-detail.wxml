@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page" wx:if="{{moduleInfo}}">
   <view class="module-hero {{moduleInfo.className}}">
     <view class="module-icon-wrap">
@@ -36,7 +37,7 @@
     <text class="module-desc">{{moduleInfo.desc}}</text>
     <view class="progress-panel">
       <view class="progress-row">
-        <text class="module-progress">当前进度：已完成 {{completedCount}} / {{totalDays}} 天</text>
+        <text class="module-progress">当前进度：已完成 {{completedCount}} / {{totalDays}} 项</text>
         <text class="progress-text">{{progressText}}</text>
       </view>
       <view class="progress-track">
@@ -49,18 +50,19 @@
     <view
       class="day-card {{item.completed ? 'completed-card' : ''}} {{item.isLocked ? 'locked-card' : ''}} {{item.isUnlocked && !item.completed ? 'unlocked-card' : ''}}"
       wx:for="{{days}}"
-      wx:key="day"
+      wx:key="contentId"
       data-day="{{item.day}}"
       data-content-id="{{item.contentId}}"
       bindtap="openTask"
     >
       <view class="day-main">
         <view class="day-head">
-          <text class="day-index">Day {{item.day}}</text>
-          <text class="status-tag {{item.isLocked ? 'lock-tag' : (item.isMemberContent && !item.completed ? 'member-tag' : (item.isUnlocked && !item.completed ? 'unlock-tag' : (item.completed ? 'done-tag' : 'todo-tag')))}}">{{item.status}}</text>
+          <text class="day-index">Day {{item.day || item.displayIndex || index + 1}}</text>
+          <text class="status-tag {{item.isLocked ? 'lock-tag' : (item.isUnlocked && !item.completed ? 'unlock-tag' : (item.completed ? 'done-tag' : 'todo-tag'))}}">{{item.status}}</text>
         </view>
         <text class="day-title">{{item.displayTitle || item.contentTitle || item.title}}</text>
       </view>
     </view>
   </view>
+  <login-gate id="login-gate" />
 </view>

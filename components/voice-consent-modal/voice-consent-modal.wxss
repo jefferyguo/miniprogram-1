@@ -1,0 +1,145 @@
+.voice-mask {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  box-sizing: border-box;
+  background: rgba(16, 24, 40, 0.52);
+}
+
+.voice-panel {
+  width: 100%;
+  max-width: 620rpx;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 42rpx 36rpx 30rpx;
+  box-sizing: border-box;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 24rpx 70rpx rgba(20, 35, 55, 0.2);
+}
+
+.voice-icon {
+  width: 88rpx;
+  height: 88rpx;
+  margin: 0 auto 24rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  background: #eef5ff;
+}
+
+.voice-bar {
+  width: 6rpx;
+  border-radius: 999rpx;
+  background: #3478f6;
+}
+
+.voice-bar-short {
+  height: 20rpx;
+}
+
+.voice-bar-mid {
+  height: 34rpx;
+}
+
+.voice-bar-tall {
+  height: 48rpx;
+}
+
+.voice-title,
+.voice-desc,
+.notice-line {
+  display: block;
+}
+
+.voice-title {
+  color: #1f2a3d;
+  font-size: var(--font-ui-38, 38rpx);
+  line-height: 1.3;
+  font-weight: 800;
+  text-align: center;
+}
+
+.voice-desc {
+  margin-top: 16rpx;
+  color: #667085;
+  font-size: var(--font-reading-27, 27rpx);
+  line-height: 1.65;
+  text-align: center;
+}
+
+.voice-notice {
+  margin-top: 26rpx;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid #e4ebf5;
+  border-radius: 16rpx;
+  background: #f7f9fc;
+}
+
+.notice-line {
+  color: #556176;
+  font-size: var(--font-reading-25, 25rpx);
+  line-height: 1.6;
+}
+
+.notice-line + .notice-line {
+  margin-top: 8rpx;
+}
+
+.agreement-link-row {
+  min-height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14rpx;
+  padding: 0 8rpx;
+}
+
+.agreement-link {
+  color: #3478f6;
+  font-size: var(--font-reading-27, 27rpx);
+  font-weight: 600;
+}
+
+.agreement-arrow {
+  color: #9aa4b2;
+  font-size: 42rpx;
+  line-height: 1;
+}
+
+.voice-primary-btn,
+.voice-secondary-btn {
+  width: 100%;
+  height: 82rpx;
+  line-height: 82rpx;
+  padding: 0;
+  border-radius: 41rpx;
+  font-size: var(--font-ui-29, 29rpx);
+  font-weight: 700;
+}
+
+.voice-primary-btn::after,
+.voice-secondary-btn::after {
+  border: 0;
+}
+
+.voice-primary-btn {
+  margin-top: 8rpx;
+  color: #ffffff;
+  background: #3478f6;
+}
+
+.voice-secondary-btn {
+  margin-top: 16rpx;
+  color: #667085;
+  background: #f2f4f7;
+}

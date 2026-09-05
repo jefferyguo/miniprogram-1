@@ -33,17 +33,24 @@ Page({
   onLoad(options) {
     enableShareMenu()
     const moduleId = options.moduleId || 'reading'
+    this._moduleLoadRevision = 0
+    this._isPageActive = true
 
     this.setData({
       moduleId
     })
 
     this.loadModule(moduleId)
-    this.loadRemoteModule()
+    this.loadRemoteModule({ force: true })
   },
 
-  loadRemoteModule() {
-    refreshRemoteTrainingContents({ force: true, category: this.getCloudCategory() }).then(() => this.loadModule())
+  loadRemoteModule(options = {}) {
+    const revision = ++this._moduleLoadRevision
+    refreshRemoteTrainingContents({ force: options.force === true, category: this.getCloudCategory() })
+      .then(() => {
+        if (this._isPageActive && revision === this._moduleLoadRevision) this.loadModule()
+      })
+      .catch(error => console.warn('[module-detail] 训练列表刷新失败，继续使用本地/缓存数据:', error))
   },
 
   getCloudCategory() {
@@ -51,15 +58,22 @@ Page({
   },
 
   onShow() {
+    this._isPageActive = true
     if (this.data.moduleId) {
       this.loadModule()
       if (isPhoneBound()) {
         refreshPhoneMembership()
-          .then(() => refreshRemoteTrainingContents({ force: true, category: this.getCloudCategory() }))
-          .then(() => this.loadModule())
           .catch(error => console.warn('[module-detail] 权益刷新失败:', error))
+          .then(() => this.loadRemoteModule())
+      } else {
+        this.loadRemoteModule()
       }
     }
+  },
+
+  getDisplayIndex(index, item) {
+    const sortOrder = Number(item && item.sortOrder || 0)
+    return sortOrder > 0 ? sortOrder : index + 1
   },
 
   loadModule(moduleId = this.data.moduleId) {
@@ -75,20 +89,20 @@ Page({
 
     const records = getRecords()
     const accessStatus = getCurrentAccessStatus()
-    const completedDays = records
+    const completedContentIds = new Set(records
       .filter(item => item.moduleId === moduleInfo.id)
-      .map(item => Number(item.day))
-      .filter(day => day > 0)
-    const uniqueCompletedDays = Array.from(new Set(completedDays))
-    const days = moduleInfo.days.map(item => {
-      const completed = uniqueCompletedDays.includes(item.day)
+      .map(item => String(item.contentId || '').trim())
+      .filter(Boolean))
+    const days = moduleInfo.days.map((item, index) => {
+      const completed = completedContentIds.has(String(item.contentId || '').trim())
       const accessResult = canAccessTask(moduleInfo.id, item)
       const isLocked = !accessResult.allowed
-      const isMemberContent = item.membershipLevel === 'member'
-      const isUnlocked = Number(item.day) >= 22 && accessResult.allowed
+      const isMemberContent = accessResult.requiresMembership === true
+      const isUnlocked = isMemberContent && accessResult.allowed
 
       return {
         ...item,
+        displayIndex: this.getDisplayIndex(index, item),
         displayTitle: item.displayTitle || formatContentTitle(item),
         completed,
         isMemberContent,
@@ -96,31 +110,44 @@ Page({
         isUnlocked,
         status: isLocked
           ? '会员'
-          : (completed ? '已完成' : (isMemberContent ? '会员' : (isUnlocked ? '已解锁' : '未完成')))
+          : (completed ? '已完成' : (isUnlocked ? '已解锁' : '未完成'))
       }
     })
     const totalDays = moduleInfo.days.length
-    const progressPercent = totalDays ? Math.round((uniqueCompletedDays.length / totalDays) * 1000) / 10 : 0
+    const completedCount = days.filter(item => item.completed).length
+    const progressPercent = totalDays ? Math.round((completedCount / totalDays) * 1000) / 10 : 0
 
     this.setData({
       moduleInfo,
       days,
       accessStatus,
-      completedCount: uniqueCompletedDays.length,
+      completedCount,
       totalDays,
       progressPercent,
       progressText: `${progressPercent}%`
     })
   },
 
+  onHide() {
+    this._isPageActive = false
+  },
+
+  onUnload() {
+    this._isPageActive = false
+    this._moduleLoadRevision = Number(this._moduleLoadRevision || 0) + 1
+  },
+
   openTask(e) {
     const day = Number(e.currentTarget.dataset.day)
     const contentId = e.currentTarget.dataset.contentId || ''
-    const task = this.data.days.find(item => (
-      contentId
-        ? String(item.contentId || '') === String(contentId)
-        : Number(item.day) === day
-    ))
+    const task = contentId
+      ? this.data.days.find(item => String(item.contentId || '') === String(contentId))
+      : null
+
+    if (!contentId || !task) {
+      wx.showToast({ title: '内容目录正在同步，请稍后重试', icon: 'none' })
+      return
+    }
 
     const accessResult = canAccessTask(this.data.moduleId, task)
     const category = this.getCloudCategory()
@@ -150,7 +177,7 @@ Page({
     }
 
     wx.navigateTo({
-      url: `/pages/task-detail/task-detail?moduleId=${this.data.moduleId}&day=${day}${contentId ? `&contentId=${encodeURIComponent(contentId)}` : ''}`
+      url: `/pages/task-detail/task-detail?moduleId=${this.data.moduleId}&day=${day}&contentId=${encodeURIComponent(contentId)}`
     })
   },
 

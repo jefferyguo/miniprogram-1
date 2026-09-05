@@ -22,7 +22,7 @@ button::after {
 
 .hero-title {
   display: block;
-  font-size: 42rpx;
+  font-size: var(--font-ui-42, 42rpx);
   line-height: 1.3;
   font-weight: 900;
   margin-bottom: 12rpx;
@@ -32,7 +32,7 @@ button::after {
 .paragraph,
 .qr-tip {
   display: block;
-  font-size: 27rpx;
+  font-size: var(--font-reading-27, 27rpx);
   line-height: 1.55;
 }
 
@@ -52,7 +52,7 @@ button::after {
 .section-title {
   display: block;
   color: #111111;
-  font-size: 33rpx;
+  font-size: var(--font-ui-33, 33rpx);
   line-height: 1.35;
   font-weight: 900;
   margin-bottom: 16rpx;
@@ -96,6 +96,6 @@ button::after {
   border-radius: 999rpx;
   color: #ffffff;
   background: #07c160;
-  font-size: 28rpx;
+  font-size: var(--font-ui-28, 28rpx);
   font-weight: 900;
 }

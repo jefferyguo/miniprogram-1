@@ -1,4 +1,5 @@
 const { getShareImage } = require('./share-config')
+const { isWorkShareAllowed } = require('./work-share-policy')
 
 function getWorkPublicId(work = {}) {
   return String(
@@ -62,6 +63,7 @@ function getWorkShareImage(work = {}, fallbackType = 'square') {
 }
 
 function buildWorkShareConfig(work = {}, source = 'square') {
+  if (!isWorkShareAllowed(work)) return null
   const workId = getWorkPublicId(work)
   const title = getWorkShareTitle(work)
   const authorName = getWorkAuthorName(work)

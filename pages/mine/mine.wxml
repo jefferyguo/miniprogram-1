@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="profile-card">
     <view class="profile-main">
@@ -10,7 +11,6 @@
           <text class="member-badge {{memberBadgeClass}}">{{memberLabel}}</text>
         </view>
         <text wx:if="{{profileTip}}" class="profile-tip">{{profileTip}}</text>
-        <text class="member-tip">{{memberTip}}</text>
         <text wx:if="{{membershipExpireText}}" class="membership-expire">{{membershipExpireText}}</text>
         <text wx:if="{{phoneBound}}" class="phone-status-text phone-bound-text">{{phoneStatusText}}</text>
       </view>
@@ -18,11 +18,9 @@
 
     <view class="profile-actions">
       <button
-        wx:if="{{!phoneBound}}"
+        wx:if="{{!isAuthenticated}}"
         class="edit-profile-btn"
-        open-type="getPhoneNumber"
-        bindgetphonenumber="onGetPhoneNumberLogin"
-        loading="{{bindingLogin}}"
+        bindtap="openLoginGate"
         disabled="{{bindingLogin}}"
       >登录</button>
       <button wx:else class="edit-profile-btn" bindtap="editProfile">编辑资料</button>
@@ -123,7 +121,7 @@
         <text class="arrow">›</text>
       </view>
 
-      <view wx:if="{{isLoggedIn}}" class="list-item logout-list-item" bindtap="logout">
+      <view wx:if="{{isAuthenticated}}" class="list-item logout-list-item" bindtap="logout">
         <text class="list-title logout-title">退出登录</text>
       </view>
     </view>
@@ -137,6 +135,7 @@
 </view>
 <member-benefit-modal id="memberBenefitModal" bindmembershipchanged="onMembershipChanged" />
 <profile-login-modal id="profileLoginModal" bindsuccess="onProfileSaved" bindskip="onProfileSkipped" />
+<login-gate id="login-gate" />
 
 <view
   wx:if="{{socialModalVisible && socialModalType === 'douyin'}}"

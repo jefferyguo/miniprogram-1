@@ -1,3 +1,5 @@
+const { disableShareMenu } = require('../../utils/share-config')
+
 function formatSeconds(seconds) {
   const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0
   const minute = Math.floor(safeSeconds / 60)
@@ -18,9 +20,22 @@ Page({
     hasError: false
   },
 
-  onLoad(options) {
-    const src = options.src ? decodeURIComponent(options.src) : ''
-    const title = options.title ? decodeURIComponent(options.title) : '视频预览'
+  onLoad(options = {}) {
+    disableShareMenu()
+    const previewKey = options.previewKey ? decodeURIComponent(options.previewKey) : ''
+    let preview = null
+    try {
+      preview = previewKey ? wx.getStorageSync(previewKey) : null
+      if (previewKey) wx.removeStorageSync(previewKey)
+    } catch (error) {
+      preview = null
+    }
+    const createdAt = Number(preview && preview.createdAt || 0)
+    const valid = Boolean(
+      preview && preview.src && createdAt > 0 && Date.now() - createdAt <= 10 * 60 * 1000
+    )
+    const src = valid ? String(preview.src) : ''
+    const title = valid ? String(preview.title || '视频预览') : '视频预览'
 
     this.setData({
       src,
@@ -36,6 +51,10 @@ Page({
         icon: 'none'
       })
     }
+  },
+
+  onShow() {
+    disableShareMenu()
   },
 
   onVideoLoaded(e) {

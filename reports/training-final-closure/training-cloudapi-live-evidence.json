@@ -1,0 +1,249 @@
+{
+  "startedAt": "2026-08-01T13:32:34.549Z",
+  "catalog": {
+    "topic": {
+      "success": true,
+      "source": "cloud",
+      "total": 276,
+      "moduleVersion": "481b86484a744b6404d3",
+      "valid": true
+    },
+    "reading": {
+      "success": true,
+      "source": "cloud",
+      "total": 216,
+      "moduleVersion": "reading-msadne34-3",
+      "valid": true
+    },
+    "leaderSpeech": {
+      "success": true,
+      "source": "cloud",
+      "total": 24,
+      "moduleVersion": "bc6c8a7afe1909701272",
+      "valid": true
+    },
+    "retell": {
+      "success": true,
+      "source": "cloud",
+      "total": 257,
+      "moduleVersion": "96609d4f9ebf47fa12c1",
+      "valid": true
+    },
+    "speech": {
+      "success": true,
+      "source": "cloud",
+      "total": 116,
+      "moduleVersion": "5298a17f6fcb4dfa7993",
+      "valid": true
+    },
+    "mandarin": {
+      "success": true,
+      "source": "cloud",
+      "total": 77,
+      "moduleVersion": "a14605e0bfd0de1a8344",
+      "valid": true
+    }
+  },
+  "samples": [
+    {
+      "moduleId": "topic",
+      "day": 1,
+      "contentId": "tc_2357735d852da01fe24b07a7e7493fd8",
+      "title": "【必看】即兴讲话 | 训练技巧 + 实用框架",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "topic",
+      "day": 138,
+      "contentId": "tc_892a8bd6bd475ecde22bb6f7d766f5ee",
+      "title": "即兴话题：我是如何做时间管理的",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "topic",
+      "day": 276,
+      "contentId": "tc_adb216b88f26af0f266aa6ecb8d9b3b4",
+      "title": "即兴话题：科技让生活更快，但更好了吗",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "reading",
+      "day": 1,
+      "contentId": "tc_4c646238524a9c643cc1a25cd2b06e96",
+      "title": "【必看】朗诵训练｜实用技巧",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "reading",
+      "day": 108,
+      "contentId": "tc_4b9b64165ff452721efd0b295f5feeb4",
+      "title": "每日练嘴：雨巷（戴望舒）",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "reading",
+      "day": 216,
+      "contentId": "tc_8e232a028b7f7b5b399348e299ec6a03",
+      "title": "每日练嘴：放弃取悦别人，学会珍爱自己",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "leaderSpeech",
+      "day": 1,
+      "contentId": "tc_6ae67894dedbf22112aa33c04479cb44",
+      "title": "【必看】领导发言｜实用训练技巧",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "leaderSpeech",
+      "day": 12,
+      "contentId": "tc_11d6e1b3d4fb0c36a07ffd1e39da023d",
+      "title": "领导发言：坚决破除“特殊论”和“补偿心理”",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "leaderSpeech",
+      "day": 24,
+      "contentId": "tc_1c1e286745070aca8fba90fc3361cdcb",
+      "title": "领导发言：广东省高质量发展大会讲话实录。",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "retell",
+      "day": 1,
+      "contentId": "tc_e80818d80ebb3b007a0e39a80f1c3edf",
+      "title": "【必看】复述训练｜实用训练技巧",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "retell",
+      "day": 129,
+      "contentId": "tc_b302dd21341562eb86dc08a408eea339",
+      "title": "每日复述练嘴：风中的芦苇与松柏",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "retell",
+      "day": 257,
+      "contentId": "tc_5a40f74b664404ad240e02c597f4e81f",
+      "title": "每日复述练嘴：敲动生命的大铁球",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "speech",
+      "day": 1,
+      "contentId": "tc_65a5e1283bb2068c669fdfde84aa7e8e",
+      "title": "【必看】公众演讲｜实用训练技巧",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "speech",
+      "day": 58,
+      "contentId": "tc_c91a0cc8c95005bd14dbf4592311cf6c",
+      "title": "演讲：我们将在海滩上战斗（温斯顿·丘吉尔）",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "speech",
+      "day": 116,
+      "contentId": "tc_74ed2cc79050c5ad582ef34680f44993",
+      "title": "演讲：致人类（查理·卓别林）",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "mandarin",
+      "day": 1,
+      "contentId": "tc_127506b7602a88c405607381d6d3e303",
+      "title": "【必看】主持、普通话声音训练｜实用训练技巧",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "mandarin",
+      "day": 39,
+      "contentId": "tc_07e909ce2b08d9302bbe38a368854bc5",
+      "title": "普通话考试：读单音节字词（1）",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    },
+    {
+      "moduleId": "mandarin",
+      "day": 77,
+      "contentId": "tc_b801f27c3a3dfccb4baafb81b60e20c7",
+      "title": "主持开场：自踏青云志",
+      "responseOk": true,
+      "responseCode": "",
+      "passed": true
+    }
+  ],
+  "readingDay5": {
+    "contentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c",
+    "expectedTitle": "每日练嘴：别让“我不配”，拖垮你的人生",
+    "found": true,
+    "idMatch": true,
+    "titleMatch": true,
+    "contentMatch": true,
+    "contentLength": 727,
+    "contentVersion": 1,
+    "status": "active"
+  },
+  "logs": [
+    {
+      "type": "warn",
+      "args": [
+        "[cloud-api] fail:",
+        "getAppContentConfigs",
+        {
+          "code": "server_error",
+          "result": {
+            "success": false,
+            "code": "server_error",
+            "message": "云函数执行失败，请稍后重试。"
+          }
+        }
+      ]
+    },
+    {
+      "type": "warn",
+      "args": [
+        "[training] 首页文字配置读取失败，继续使用本地文案:",
+        "云函数执行失败，请稍后重试。"
+      ]
+    }
+  ],
+  "exceptions": [],
+  "completedAt": "2026-08-01T13:33:14.603Z",
+  "success": true
+}

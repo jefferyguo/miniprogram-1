@@ -1,4 +1,4 @@
-<page-meta page-style="{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
+<page-meta page-style="{{fontSizePageStyle}}{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
 
 <view class="page">
   <view class="hero-card {{heroClass}}">
@@ -100,7 +100,7 @@
 
         <view class="work-actions secondary-actions">
           <button
-            wx:if="{{!item.isPublic}}"
+            wx:if="{{item.shareAllowed && !item.isPublic}}"
             class="public-btn"
             data-id="{{item.id}}"
             catchtap="publishDraftToSquare"
@@ -147,6 +147,7 @@
         <view class="ai-section-title">综合评价</view>
         <view class="ai-section-text">{{currentAiFeedback.summary}}</view>
       </view>
+      <ability-radar wx:if="{{currentAiFeedback.abilityRadar}}" radar="{{currentAiFeedback.abilityRadar}}"></ability-radar>
       <view class="ai-section" wx:if="{{currentAiFeedback.basis}}">
         <view class="ai-section-title">点评依据</view>
         <view class="ai-section-text">{{currentAiFeedback.basis}}</view>
@@ -189,4 +190,6 @@
       </view>
     </scroll-view>
   </view>
+  <login-gate id="login-gate" />
 </view>
+<voice-consent-modal id="voice-consent-modal" />

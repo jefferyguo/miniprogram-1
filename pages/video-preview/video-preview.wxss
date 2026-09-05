@@ -47,7 +47,7 @@ button::after {
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.76);
-  font-size: 27rpx;
+  font-size: var(--font-reading-27, 27rpx);
   background: rgba(0, 0, 0, 0.22);
 }
 
@@ -59,7 +59,7 @@ button::after {
 .video-title {
   display: block;
   color: #ffffff;
-  font-size: 34rpx;
+  font-size: var(--font-ui-34, 34rpx);
   line-height: 1.4;
   font-weight: 900;
 }
@@ -86,7 +86,7 @@ button::after {
   border-radius: 999rpx;
   color: #ffffff;
   background: #16c784;
-  font-size: 27rpx;
+  font-size: var(--font-ui-27, 27rpx);
   font-weight: 900;
 }
 

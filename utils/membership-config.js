@@ -1,5 +1,5 @@
 const NORMAL_USER_BENEFITS = [
-  '前 21 天训练内容',
+  '前 3 天训练内容',
   '每天 1 次 AI 点评/测评',
   '可保存训练记录',
   '可浏览广场公开作品'
@@ -17,7 +17,7 @@ const MEMBERSHIP_PLANS = [
   {
     id: 'monthly',
     title: '季度会员',
-    price: '¥29.9',
+    price: '¥39.9',
     unit: '/ 季',
     desc: '适合阶段性集中训练',
     membershipType: 'monthly'

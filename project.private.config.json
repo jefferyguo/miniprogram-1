@@ -28,13 +28,6 @@
           "query": "",
           "scene": null,
           "launchMode": "default"
-        },
-        {
-          "name": "老师端",
-          "pathName": "pages/teacher-login/teacher-login",
-          "query": "from=teacher_qr",
-          "launchMode": "default",
-          "scene": null
         }
       ]
     }

@@ -137,10 +137,25 @@ function enableShareMenu() {
   }
 }
 
+function disableShareMenu() {
+  if (typeof wx === 'undefined' || typeof wx.hideShareMenu !== 'function') return
+  try {
+    wx.hideShareMenu({
+      menus: ['shareAppMessage', 'shareTimeline'],
+      fail(error) {
+        console.warn('[share-config] 隐藏分享菜单失败:', error && error.errMsg ? error.errMsg : 'unknown')
+      }
+    })
+  } catch (error) {
+    console.warn('[share-config] 当前基础库不支持隐藏分享菜单:', error && error.message ? error.message : 'unknown')
+  }
+}
+
 module.exports = {
   DEFAULT_SHARE_PATH,
   DEFAULT_SHARE_TITLE,
   buildTimelineQuery,
+  disableShareMenu,
   enableShareMenu,
   getDefaultShareMessage,
   getDefaultShareTimeline,

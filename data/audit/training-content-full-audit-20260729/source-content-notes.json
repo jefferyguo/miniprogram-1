@@ -1,0 +1,38 @@
+{
+  "sourceRevision": "0728-final-r2-source-faithful",
+  "policy": "源文档中的重复编号和缺号仅记录，不擅自修正文案。",
+  "notes": [
+    {
+      "code": "READING_BASELINE_COUNT_CONFLICT",
+      "severity": "source_fact",
+      "expectedByBrief": 213,
+      "lockedDocxPhysicalCount": 216,
+      "resolution": "采用锁定 DOCX 的 216 个完整物理文章块；未删除第 16-18 篇以凑 963。"
+    },
+    {
+      "code": "RETELL_DUPLICATE_SOURCE_LABEL",
+      "moduleId": "retell",
+      "label": 118,
+      "occurrences": 2,
+      "resolution": "保留原文顺序，以 sourceIndex 区分。"
+    },
+    {
+      "code": "SPEECH_MISSING_SOURCE_LABELS",
+      "moduleId": "speech",
+      "labels": [
+        28,
+        45
+      ],
+      "resolution": "不补造内容，以 sourceIndex 连续排序。"
+    },
+    {
+      "code": "MANDARIN_MISSING_SOURCE_LABELS",
+      "moduleId": "mandarin",
+      "labels": [
+        6,
+        7
+      ],
+      "resolution": "不补造内容，以 sourceIndex 连续排序。"
+    }
+  ]
+}

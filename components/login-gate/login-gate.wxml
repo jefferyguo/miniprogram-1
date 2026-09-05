@@ -1,0 +1,48 @@
+<view wx:if="{{visible}}" class="gate-mask" bindtap="close" catchtouchmove="noop">
+  <view class="gate-panel" catchtap="noop">
+    <view class="gate-close" bindtap="close">×</view>
+
+    <view class="gate-head">
+      <text class="gate-brand">杨勤口才训练KEEP</text>
+      <text class="gate-title">手机号快捷登录</text>
+      <text class="gate-desc">登录后可以保存训练记录、生成 AI 点评，并自动匹配已有会员权益。</text>
+    </view>
+
+    <view class="gate-agreement">
+      <view class="agreement-check-row" bindtap="onToggleAgreement">
+        <view class="agree-checkbox {{privacyAgreed ? 'checked' : ''}}">
+          <text wx:if="{{privacyAgreed}}">✓</text>
+        </view>
+        <text class="agreement-text">
+          <text>我已阅读并同意</text>
+          <text class="agreement-link" catchtap="onOpenPrivacy">《隐私政策》</text>
+          <text>和</text>
+          <text class="agreement-link" catchtap="onOpenUserAgreement">《用户服务协议》</text>
+        </text>
+      </view>
+    </view>
+
+    <view class="gate-actions">
+      <button
+        wx:if="{{!privacyAgreed}}"
+        class="gate-btn gate-btn-primary gate-btn-disabled"
+        bindtap="onPrivacyRequired"
+      >手机号快捷登录</button>
+      <button
+        wx:else
+        class="gate-btn gate-btn-primary {{phoneBinding ? 'btn-disabled' : ''}}"
+        open-type="getPhoneNumber"
+        bindgetphonenumber="onGetPhoneNumber"
+        loading="{{phoneBinding}}"
+        disabled="{{phoneBinding}}"
+      >手机号快捷登录</button>
+    </view>
+
+    <text class="phone-tip">手机号仅用于身份识别和会员权益匹配，不会在作品或广场中公开。</text>
+    <view class="gate-footer">
+      <text class="gate-link" bindtap="viewPrivacy">查看隐私政策</text>
+      <text class="gate-divider">|</text>
+      <text class="gate-link" bindtap="skip">暂不登录</text>
+    </view>
+  </view>
+</view>

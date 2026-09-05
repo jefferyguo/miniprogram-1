@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
     <text class="hero-kicker">课表管理</text>

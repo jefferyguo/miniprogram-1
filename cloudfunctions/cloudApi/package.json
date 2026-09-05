@@ -4,6 +4,7 @@
   "description": "Yangqin Kou Cai CloudBase API",
   "main": "index.js",
   "dependencies": {
+    "pdfkit": "0.17.2",
     "wx-server-sdk": "latest"
   }
 }

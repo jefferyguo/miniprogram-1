@@ -1,3 +1,4 @@
+const { requireLogin } = require('../../utils/auth')
 const {
   STORAGE_KEY,
   cleanReadingDisplayTitle,
@@ -135,6 +136,7 @@ Page({
   },
 
   onShow() {
+    this._isPageActive = true
     enableShareMenu()
     const records = getRecords()
     const recentRecord = records[0] || null
@@ -152,10 +154,12 @@ Page({
     })
     this.loadHomeContentConfigs()
     this.loadWeeklySchedules()
+    this.loadRemoteTrainingContents()
   },
 
   loadHomeContentConfigs() {
     getAppContentConfigs('home').then(result => {
+      if (!this._isPageActive) return
       const list = Array.isArray(result.data) ? result.data : []
       if (!list.length) return
       const byKey = list.reduce((map, item) => {
@@ -176,19 +180,26 @@ Page({
   },
 
   loadRemoteTrainingContents() {
+    const revision = Number(this._catalogRefreshRevision || 0) + 1
+    this._catalogRefreshRevision = revision
     refreshRemoteTrainingContents().then(() => {
+      if (!this._isPageActive || revision !== this._catalogRefreshRevision) return
       this.setData({
         modules: getTrainingModules(),
         extraTrainings: buildExtraTrainingList()
       })
+    }).catch(error => {
+      console.warn('[training] 远程训练目录刷新失败，继续使用本地轻量目录:', error)
     })
   },
 
   openModule(e) {
     const moduleId = e.currentTarget.dataset.id
-    wx.navigateTo({
-      url: `/pages/module-detail/module-detail?moduleId=${moduleId}`
-    })
+    requireLogin(() => {
+      wx.navigateTo({
+        url: `/pages/module-detail/module-detail?moduleId=${moduleId}`
+      })
+    }, { actionName: '进入训练模块' })
   },
 
   openExtraTraining(e) {
@@ -221,11 +232,25 @@ Page({
     const record = this.data.recentRecord
 
     if (!record) {
-      wx.navigateTo({ url: '/pages/task-detail/task-detail?moduleId=reading&day=1' })
+      const reading = (this.data.modules || []).find(item => item.id === 'reading')
+      const firstTask = reading && reading.days && reading.days[0]
+      if (!firstTask || !firstTask.contentId) {
+        wx.showToast({ title: '训练目录正在同步，请稍后重试', icon: 'none' })
+        return
+      }
+      wx.navigateTo({
+        url: `/pages/task-detail/task-detail?moduleId=reading&day=${firstTask.day}&contentId=${encodeURIComponent(firstTask.contentId)}`
+      })
       return
     }
 
-    wx.navigateTo({ url: `/pages/task-detail/task-detail?moduleId=${record.moduleId}&day=${record.day}` })
+    if (!record.contentId) {
+      wx.navigateTo({ url: `/pages/module-detail/module-detail?moduleId=${record.moduleId || 'reading'}` })
+      return
+    }
+    wx.navigateTo({
+      url: `/pages/task-detail/task-detail?moduleId=${record.moduleId}&day=${record.day}&contentId=${encodeURIComponent(record.contentId)}`
+    })
   },
 
   loadWeeklySchedules() {
@@ -239,8 +264,18 @@ Page({
     ))
 
     return Promise.all(requests).then(weeklyScheduleEntries => {
+      if (!this._isPageActive) return
       this.setData({ weeklyScheduleEntries })
     })
+  },
+
+  onHide() {
+    this._isPageActive = false
+  },
+
+  onUnload() {
+    this._isPageActive = false
+    this._catalogRefreshRevision = Number(this._catalogRefreshRevision || 0) + 1
   },
 
   goWeeklySchedule(e) {

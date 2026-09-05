@@ -1,0 +1,9 @@
+[
+  {
+    "moduleId": "retell",
+    "type": "duplicate_source_day_label_non_blocking",
+    "sourceDay": 118,
+    "count": 2,
+    "action": "preserve_physical_order; sourceDay_is_audit_only"
+  }
+]

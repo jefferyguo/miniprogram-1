@@ -1,113 +1,592 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="page-head">
-    <view>
-      <text class="page-title">会员/权限管理</text>
-      <text class="page-desc">按手机号管理学员身份和有效期</text>
+    <view class="page-head-copy">
+      <text class="page-title">用户与会员</text>
+      <text class="page-desc">用户、会员、收入与经营数据统一管理</text>
     </view>
-    <button wx:if="{{isAdmin}}" class="add-btn" bindtap="openCreateEditor">添加学员</button>
+    <button wx:if="{{isAdmin}}" class="refresh-btn" bindtap="verifyAdmin">刷新</button>
   </view>
 
-  <view wx:if="{{isAdmin}}" class="search-card">
-    <view class="search-row">
-      <input
-        class="search-input"
-        value="{{keyword}}"
-        placeholder="请输入姓名或手机号"
-        confirm-type="search"
-        bindinput="onSearchInput"
-        bindconfirm="searchMembers"
-      />
-      <button class="search-btn" loading="{{loadingList}}" bindtap="searchMembers">搜索</button>
+  <scroll-view wx:if="{{isAdmin}}" class="section-tabs" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <view class="section-tabs-inner">
+      <view
+        class="section-tab {{activeSection === item.value ? 'section-tab-active' : ''}}"
+        wx:for="{{sections}}"
+        wx:key="value"
+        data-section="{{item.value}}"
+        bindtap="switchSection"
+      >{{item.label}}</view>
     </view>
-    <button wx:if="{{keyword}}" class="clear-btn" bindtap="clearSearch">清除搜索条件</button>
-  </view>
+  </scroll-view>
 
-  <view wx:if="{{isAdmin}}" class="member-list">
-    <view
-      class="member-card"
-      wx:for="{{phoneEntitlements}}"
-      wx:key="phone"
-      data-id="{{item.id}}"
-      data-phone="{{item.phone}}"
-      bindtap="openEditEditor"
-    >
-      <view class="member-head">
-        <view class="member-name-wrap">
-          <text class="member-name">{{item.name}}</text>
-          <text wx:if="{{item.isLegacy}}" class="legacy-tag">旧数据</text>
+  <block wx:if="{{isAdmin && activeSection === 'overview'}}">
+    <view class="section-heading">
+      <text class="section-title">数据总览</text>
+      <text class="section-note">付费用户仅统计真实微信支付成功用户</text>
+    </view>
+
+    <view class="metric-grid">
+      <view class="metric-card metric-{{item.tone}}" wx:for="{{overview.userMetrics}}" wx:key="label">
+        <text class="metric-label">{{item.label}}</text>
+        <text class="metric-value">{{item.value}}</text>
+      </view>
+    </view>
+
+    <view class="summary-band">
+      <view class="summary-head"><text class="summary-title">用户与会员增长</text><text class="summary-sub">上海时区</text></view>
+      <view class="summary-grid">
+        <view class="summary-item" wx:for="{{overview.growthMetrics}}" wx:key="label">
+          <text class="summary-label">{{item.label}}</text>
+          <text class="summary-value summary-{{item.tone}}">{{item.value}}</text>
         </view>
-        <text class="status-tag {{item.statusClass}}">{{item.statusText}}</text>
       </view>
-      <text class="member-phone">{{item.phoneMask}}</text>
-      <view class="member-meta">
-        <view class="meta-item"><text class="meta-label">身份类型</text><text class="meta-value">{{item.membershipName}}</text></view>
-        <view class="meta-item"><text class="meta-label">有效期</text><text class="meta-value">{{item.expireText}}</text></view>
-        <view class="meta-item meta-wide"><text class="meta-label">班级</text><text class="meta-value">{{item.className || '未填写班级'}}</text></view>
-      </view>
-      <view class="card-enter"><text>查看并编辑</text><text class="arrow">›</text></view>
     </view>
 
-    <view wx:if="{{loadingList}}" class="state-card">正在读取学员列表...</view>
-    <view wx:elif="{{phoneEntitlements.length === 0}}" class="state-card">
-      <text class="state-title">暂无学员档案</text>
-      <text class="state-desc">点击右上角“添加学员”建立第一条档案</text>
-    </view>
-  </view>
-
-  <view wx:elif="{{!checkingAdmin}}" class="state-card no-admin-card">
-    <text class="state-title">暂无管理员权限</text>
-    <text class="state-desc">请使用管理员账号进入此页面</text>
-  </view>
-</view>
-
-<view wx:if="{{showEditor}}" class="editor-mask" bindtap="closeEditor">
-  <view class="editor-panel" catchtap="noop">
-    <view class="editor-head">
-      <text class="editor-title">{{editorTitle}}</text>
-      <view class="editor-close" bindtap="closeEditor">×</view>
+    <view class="summary-band">
+      <view class="summary-head"><text class="summary-title">到期运营</text><text class="summary-sub">点击会员管理筛选用户</text></view>
+      <view class="summary-grid summary-grid-three">
+        <view class="summary-item summary-item-action" wx:for="{{overview.expiryMetrics}}" wx:key="label" data-state="{{item.state}}" bindtap="openExpiryFilter">
+          <text class="summary-label">{{item.label}}</text>
+          <text class="summary-value summary-{{item.tone}}">{{item.value}}</text>
+        </view>
+      </view>
     </view>
 
-    <scroll-view class="editor-scroll" scroll-y>
-      <view class="form-field">
-        <text class="form-label">姓名</text>
-        <input class="form-input" value="{{form.name}}" placeholder="请输入姓名" data-field="name" bindinput="onFormInput" />
+    <view class="section-heading section-heading-spaced">
+      <text class="section-title">已确认支付收入</text>
+      <text class="section-note">后台赠送会员不计入收入</text>
+    </view>
+    <view class="metric-grid">
+      <view class="metric-card metric-{{item.tone}}" wx:for="{{overview.revenueMetrics}}" wx:key="label">
+        <text class="metric-label">{{item.label}}</text>
+        <text class="metric-value metric-money">{{item.value}}</text>
       </view>
-      <view class="form-field">
-        <text class="form-label">手机号</text>
-        <input class="form-input {{isEditing ? 'form-input-disabled' : ''}}" type="number" maxlength="11" disabled="{{isEditing}}" value="{{form.phone}}" placeholder="请输入手机号" data-field="phone" bindinput="onFormInput" />
-      </view>
-      <view class="form-field">
-        <text class="form-label">班级</text>
-        <input class="form-input" value="{{form.className}}" placeholder="例如：成人口才一期班" data-field="className" bindinput="onFormInput" />
-      </view>
-      <view class="form-field">
-        <text class="form-label">备注</text>
-        <textarea class="form-textarea" value="{{form.remark}}" placeholder="选填" data-field="remark" bindinput="onFormInput"></textarea>
-      </view>
-      <view class="form-field">
-        <text class="form-label">身份类型</text>
-        <picker mode="selector" range="{{membershipOptions}}" range-key="name" value="{{membershipIndex}}" bindchange="onMembershipChange">
-          <view class="picker-box"><text>{{selectedMembershipName}}</text><text class="picker-arrow">›</text></view>
-        </picker>
-      </view>
-      <view wx:if="{{showExpiryPicker}}" class="form-field">
-        <text class="form-label">到期日期</text>
-        <picker mode="date" value="{{form.membershipEndAt}}" bindchange="onEndDateChange">
-          <view class="picker-box"><text>{{form.membershipEndAt || '请选择到期日期'}}</text><text class="picker-arrow">›</text></view>
-        </picker>
-        <text class="form-tip">月度默认 30 天，年度默认 365 天，可手动修改</text>
-      </view>
-      <view wx:else class="validity-hint">{{form.membershipType === 'admin' ? '管理员长期有效，AI 次数不限' : '普通用户无会员到期日期'}}</view>
+    </view>
 
-      <view wx:if="{{isEditing && !currentIsLegacy}}" class="manage-actions">
-        <button class="manage-btn toggle-btn" bindtap="toggleCurrentMember">{{currentIsDisabled ? '启用学员' : '停用学员'}}</button>
-        <button class="manage-btn delete-btn" bindtap="deleteCurrentMember">删除档案</button>
+    <view wx:if="{{overviewLoading}}" class="state-card">正在更新经营数据...</view>
+  </block>
+
+  <block wx:if="{{isAdmin && (activeSection === 'users' || activeSection === 'members')}}">
+    <scroll-view class="state-tabs" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="state-tabs-inner">
+        <view
+          class="state-tab {{userState === item.value ? 'state-tab-active' : ''}}"
+          wx:for="{{userStateOptions}}"
+          wx:key="value"
+          data-state="{{item.value}}"
+          bindtap="switchUserState"
+        >
+          <text>{{item.label}}</text>
+          <text class="state-count">{{item.count}}</text>
+        </view>
       </view>
     </scroll-view>
 
-    <view class="editor-actions">
-      <button class="cancel-btn" disabled="{{saving}}" bindtap="closeEditor">取消</button>
-      <button class="save-btn" loading="{{saving}}" disabled="{{saving}}" bindtap="saveMember">保存</button>
+    <view class="search-tools">
+      <view class="search-row">
+        <input
+          class="search-input"
+          value="{{keyword}}"
+          placeholder="手机号、昵称或用户 ID"
+          confirm-type="search"
+          bindinput="onKeywordInput"
+          bindconfirm="searchUsers"
+        />
+        <button class="search-btn" loading="{{usersLoading}}" bindtap="searchUsers">搜索</button>
+      </view>
+      <view class="tool-row">
+        <button wx:if="{{keyword || appliedKeyword}}" class="text-tool-btn" bindtap="clearSearch">清除搜索</button>
+        <button class="filter-btn" bindtap="toggleFilters">筛选与排序</button>
+      </view>
+    </view>
+
+    <view wx:if="{{showFilters}}" class="filter-panel">
+      <view class="filter-grid">
+        <view class="filter-field">
+          <text class="filter-label">会员类型</text>
+          <picker mode="selector" range="{{membershipOptions}}" range-key="label" value="{{membershipIndex}}" bindchange="onMembershipFilterChange">
+            <view class="picker-box">{{membershipOptions[membershipIndex].label}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">排序</text>
+          <picker mode="selector" range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="onSortChange">
+            <view class="picker-box">{{sortOptions[sortIndex].label}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">注册开始</text>
+          <picker mode="date" value="{{registeredStartDate}}" data-field="registeredStartDate" bindchange="onFilterDateChange">
+            <view class="picker-box">{{registeredStartDate || '不限'}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">注册结束</text>
+          <picker mode="date" value="{{registeredEndDate}}" data-field="registeredEndDate" bindchange="onFilterDateChange">
+            <view class="picker-box">{{registeredEndDate || '不限'}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">到期开始</text>
+          <picker mode="date" value="{{expiryStartDate}}" data-field="expiryStartDate" bindchange="onFilterDateChange">
+            <view class="picker-box">{{expiryStartDate || '不限'}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">到期结束</text>
+          <picker mode="date" value="{{expiryEndDate}}" data-field="expiryEndDate" bindchange="onFilterDateChange">
+            <view class="picker-box">{{expiryEndDate || '不限'}}<text>›</text></view>
+          </picker>
+        </view>
+      </view>
+      <view class="filter-actions">
+        <button class="secondary-btn" bindtap="resetFilters">重置</button>
+        <button class="primary-btn" bindtap="applyFilters">应用筛选</button>
+      </view>
+    </view>
+
+    <view class="list-summary"><text>共 {{total}} 位用户</text><text>第 {{page}} / {{totalPages}} 页</text></view>
+
+    <view class="user-list">
+      <view
+        class="user-card"
+        wx:for="{{users}}"
+        wx:key="userId"
+        data-user-id="{{item.userId}}"
+        bindtap="openUserDetail"
+      >
+        <view class="user-head">
+          <view class="user-title-wrap">
+            <text class="user-name">{{item.nickname}}</text>
+            <text class="user-tag {{item.stateClass}}">{{item.membershipStatusLabel}}</text>
+          </view>
+          <text class="card-arrow">›</text>
+        </view>
+        <view class="phone-row">
+          <text class="user-phone">{{item.displayPhone}}</text>
+          <button wx:if="{{item.phone}}" class="copy-btn" data-phone="{{item.phone}}" catchtap="copyPhone">复制</button>
+        </view>
+        <view class="user-facts">
+          <view class="fact"><text class="fact-label">会员类型</text><text class="fact-value">{{item.membershipLabel}}</text></view>
+          <view class="fact"><text class="fact-label">注册时间</text><text class="fact-value">{{item.registeredAtLabel}}</text></view>
+          <view wx:if="{{item.isMember}}" class="fact"><text class="fact-label">购买时间</text><text class="fact-value">{{item.purchaseTimeLabel}}</text></view>
+          <view wx:if="{{item.isMember}}" class="fact"><text class="fact-label">到期时间</text><text class="fact-value">{{item.membershipEndAtLabel}}</text></view>
+          <view wx:if="{{item.isMember}}" class="fact"><text class="fact-label">实付金额</text><text class="fact-value">{{item.amountLabel}}</text></view>
+          <view wx:if="{{item.isMember}}" class="fact"><text class="fact-label">来源</text><text class="fact-value">{{item.membershipSourceLabel}}</text></view>
+        </view>
+        <view class="card-actions">
+          <button class="card-secondary-btn" data-user-id="{{item.userId}}" catchtap="openUserDetail">查看详情</button>
+          <button wx:if="{{item.canManageMembership}}" class="card-primary-btn" data-user-id="{{item.userId}}" catchtap="openMembershipEditor">{{item.actionLabel}}</button>
+        </view>
+      </view>
+
+      <view wx:if="{{usersLoading}}" class="state-card">正在读取用户数据...</view>
+      <view wx:elif="{{users.length === 0}}" class="state-card">
+        <text class="state-title">当前筛选下暂无用户</text>
+        <text class="state-desc">可以清除搜索或调整筛选范围</text>
+      </view>
+    </view>
+
+    <view wx:if="{{totalPages > 1}}" class="pagination">
+      <button class="page-btn" disabled="{{page === 1 || usersLoading}}" bindtap="previousPage">上一页</button>
+      <text class="page-indicator">{{page}} / {{totalPages}}</text>
+      <button class="page-btn" disabled="{{page >= totalPages || usersLoading}}" bindtap="nextPage">下一页</button>
+    </view>
+  </block>
+
+  <block wx:if="{{isAdmin && activeSection === 'preauth'}}">
+    <view class="section-heading preauth-heading">
+      <view class="section-heading-copy">
+        <text class="section-title">待注册授权</text>
+        <text class="section-note">提前配置手机号权益，用户授权微信手机号后自动领取</text>
+      </view>
+      <button class="preauth-add-btn" bindtap="openPreauthEditor">添加未注册学员</button>
+    </view>
+
+    <scroll-view class="state-tabs" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="state-tabs-inner">
+        <view
+          class="state-tab {{preauthStatusIndex === index ? 'state-tab-active' : ''}}"
+          wx:for="{{preauthStatusOptions}}"
+          wx:key="value"
+          data-index="{{index}}"
+          bindtap="switchPreauthStatus"
+        >
+          <text>{{item.label}}</text>
+          <text class="state-count">{{item.count}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view class="search-tools">
+      <view class="search-row">
+        <input
+          class="search-input"
+          value="{{preauthKeyword}}"
+          placeholder="搜索手机号或备注"
+          confirm-type="search"
+          bindinput="onPreauthKeywordInput"
+          bindconfirm="searchPreauthorizations"
+        />
+        <button class="search-btn" loading="{{preauthLoading}}" bindtap="searchPreauthorizations">搜索</button>
+      </view>
+      <view class="tool-row">
+        <button wx:if="{{preauthKeyword || preauthAppliedKeyword}}" class="text-tool-btn" bindtap="clearPreauthSearch">清除搜索</button>
+        <button class="filter-btn" bindtap="togglePreauthFilters">筛选</button>
+      </view>
+    </view>
+
+    <view wx:if="{{showPreauthFilters}}" class="filter-panel">
+      <view class="filter-grid">
+        <view class="filter-field">
+          <text class="filter-label">会员套餐</text>
+          <picker mode="selector" range="{{preauthMembershipOptions}}" range-key="label" value="{{preauthMembershipIndex}}" bindchange="onPreauthMembershipFilterChange">
+            <view class="picker-box">{{preauthMembershipOptions[preauthMembershipIndex].label}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">创建开始</text>
+          <picker mode="date" value="{{preauthCreatedStartDate}}" data-field="preauthCreatedStartDate" bindchange="onPreauthFilterDateChange">
+            <view class="picker-box">{{preauthCreatedStartDate || '不限'}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">创建结束</text>
+          <picker mode="date" value="{{preauthCreatedEndDate}}" data-field="preauthCreatedEndDate" bindchange="onPreauthFilterDateChange">
+            <view class="picker-box">{{preauthCreatedEndDate || '不限'}}<text>›</text></view>
+          </picker>
+        </view>
+      </view>
+      <view class="filter-actions">
+        <button class="secondary-btn" bindtap="resetPreauthFilters">重置</button>
+        <button class="primary-btn" bindtap="applyPreauthFilters">应用筛选</button>
+      </view>
+    </view>
+
+    <view class="list-summary"><text>共 {{preauthTotal}} 条授权</text><text>第 {{preauthPage}} / {{preauthTotalPages}} 页</text></view>
+    <view class="preauth-list">
+      <view class="preauth-card" wx:for="{{preauthList}}" wx:key="id">
+        <view class="user-head">
+          <view class="user-title-wrap">
+            <text class="user-phone">{{item.phone}}</text>
+            <text class="user-tag {{item.stateClass}}">{{item.statusLabel}}</text>
+          </view>
+          <button class="copy-btn" data-phone="{{item.phone}}" catchtap="copyPhone">复制</button>
+        </view>
+        <view class="preauth-plan-row">
+          <text class="preauth-plan">{{item.membershipLabel}}</text>
+          <text class="preauth-mode">{{item.activationModeLabel}}</text>
+        </view>
+        <view class="user-facts">
+          <view class="fact"><text class="fact-label">权益时间</text><text class="fact-value">{{item.dateRangeLabel}}</text></view>
+          <view class="fact"><text class="fact-label">预授权时间</text><text class="fact-value">{{item.createdAtLabel}}</text></view>
+          <view class="fact"><text class="fact-label">创建管理员</text><text class="fact-value">{{item.createdByName}}</text></view>
+          <view class="fact"><text class="fact-label">来源</text><text class="fact-value">后台预授权</text></view>
+          <view wx:if="{{item.status === 'claimed'}}" class="fact"><text class="fact-label">领取时间</text><text class="fact-value">{{item.claimedAtLabel}}</text></view>
+          <view wx:if="{{item.note}}" class="fact fact-wide"><text class="fact-label">备注</text><text class="fact-value">{{item.note}}</text></view>
+        </view>
+        <view wx:if="{{item.canEdit || item.canRevoke}}" class="card-actions">
+          <button wx:if="{{item.canEdit}}" class="card-secondary-btn" data-id="{{item.id}}" catchtap="openPreauthEditor">编辑</button>
+          <button wx:if="{{item.canRevoke}}" class="card-danger-btn" data-id="{{item.id}}" catchtap="revokePreauthorization">撤销</button>
+        </view>
+      </view>
+      <view wx:if="{{preauthLoading}}" class="state-card">正在读取待注册授权...</view>
+      <view wx:elif="{{preauthList.length === 0}}" class="state-card">
+        <text class="state-title">当前筛选下暂无授权</text>
+        <text class="state-desc">可以添加未注册学员，或调整状态与搜索条件</text>
+      </view>
+    </view>
+    <view wx:if="{{preauthTotalPages > 1}}" class="pagination">
+      <button class="page-btn" disabled="{{preauthPage === 1 || preauthLoading}}" bindtap="previousPreauthPage">上一页</button>
+      <text class="page-indicator">{{preauthPage}} / {{preauthTotalPages}}</text>
+      <button class="page-btn" disabled="{{preauthPage >= preauthTotalPages || preauthLoading}}" bindtap="nextPreauthPage">下一页</button>
+    </view>
+  </block>
+
+  <block wx:if="{{isAdmin && activeSection === 'revenue'}}">
+    <view class="section-heading">
+      <text class="section-title">收入分析</text>
+      <text class="section-note">总收益包含微信支付与后台人工会员</text>
+    </view>
+    <view class="range-tabs">
+      <view
+        class="range-tab {{revenueRangeIndex === index ? 'range-tab-active' : ''}}"
+        wx:for="{{revenueRangeOptions}}"
+        wx:key="value"
+        data-index="{{index}}"
+        bindtap="onRevenueRangeChange"
+      >{{item.label}}</view>
+    </view>
+    <view class="metric-grid">
+      <view class="metric-card metric-{{item.tone}}" wx:for="{{revenue.metricCards}}" wx:key="label">
+        <text class="metric-label">{{item.label}}</text>
+        <text class="metric-value metric-money">{{item.value}}</text>
+      </view>
+    </view>
+
+    <view class="chart-band">
+      <view class="summary-head"><text class="summary-title">收入趋势</text><text class="summary-sub">金额 / 元</text></view>
+      <scroll-view class="chart-scroll" scroll-x="{{true}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="bar-chart">
+          <view class="bar-item" wx:for="{{revenue.trendBars}}" wx:key="label">
+            <text class="bar-value">{{item.valueLabel}}</text>
+            <view class="bar-track"><view class="bar-fill" style="height: {{item.barHeight}}rpx;"></view></view>
+            <text class="bar-label">{{item.showLabel ? item.shortLabel : ''}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="summary-band">
+      <view class="summary-head"><text class="summary-title">会员收入结构</text><text class="summary-sub">支付与后台人工发放分开记账</text></view>
+      <view wx:if="{{revenue.packagesView.length}}" class="package-list">
+        <view class="package-row" wx:for="{{revenue.packagesView}}" wx:key="membershipType">
+          <view><text class="package-name">{{item.membershipLabel}}</text><text class="package-orders">{{item.orderCount}} 单</text></view>
+          <view class="package-amount-wrap"><text class="package-amount">{{item.amountLabel}}</text><text class="package-share">{{item.shareLabel}}</text></view>
+        </view>
+      </view>
+      <view wx:else class="inline-empty">当前暂无会员收入</view>
+    </view>
+
+    <view class="summary-band">
+      <view class="summary-head"><text class="summary-title">最近收益明细</text><text class="summary-sub">来源可追溯</text></view>
+      <view class="history-table">
+        <view class="history-row" wx:for="{{revenue.revenueDetailsView}}" wx:key="id">
+          <text>{{item.sourceLabel}}</text><text>{{item.membershipLabel}}</text><text class="history-money">{{item.amountLabel}}</text>
+        </view>
+        <view wx:if="{{revenue.revenueDetailsView.length === 0}}" class="inline-empty">暂无收益明细</view>
+      </view>
+    </view>
+
+    <view class="summary-band">
+      <view class="summary-head"><text class="summary-title">历史总收益</text><text class="summary-sub">支付 + 后台人工会员</text></view>
+      <view class="range-tabs history-tabs">
+        <view
+          class="range-tab {{historyIndex === index ? 'range-tab-active' : ''}}"
+          wx:for="{{historyOptions}}"
+          wx:key="value"
+          data-index="{{index}}"
+          bindtap="switchHistoryType"
+        >{{item.label}}</view>
+      </view>
+      <view class="history-table">
+        <view class="history-row" wx:for="{{revenue.historyRows}}" wx:key="label">
+          <text>{{item.label}}</text><text>{{item.orderCount}} 单</text><text class="history-money">{{item.amountLabel}}</text>
+        </view>
+        <view wx:if="{{revenue.historyRows.length === 0}}" class="inline-empty">当前周期暂无收入</view>
+      </view>
+    </view>
+
+    <view class="scope-note">{{revenue.note || '收入仅统计已确认支付金额。'}}</view>
+    <view wx:if="{{revenueLoading}}" class="state-card">正在更新收入数据...</view>
+  </block>
+
+  <block wx:if="{{isAdmin && activeSection === 'export'}}">
+    <view class="section-heading">
+      <text class="section-title">数据导出</text>
+      <text class="section-note">完整手机号仅出现在管理员授权的 CSV 中</text>
+    </view>
+
+    <view class="export-band">
+      <view class="export-head"><text class="export-title">用户与会员 CSV</text><text class="export-badge">当前筛选</text></view>
+      <text class="export-desc">导出当前用户管理筛选结果，包含会员状态、真实购买时间与支付金额。</text>
+      <view class="export-summary">
+        <text>用户状态：{{selectedUserStateLabel}}</text>
+        <text>搜索条件：{{appliedKeyword || '无'}}</text>
+        <text>会员类型：{{membershipOptions[membershipIndex].label}}</text>
+      </view>
+      <button class="export-primary-btn" loading="{{exportingCsv}}" disabled="{{exportingCsv}}" bindtap="exportCsv">导出 CSV</button>
+    </view>
+
+    <view class="export-band">
+      <view class="export-head"><text class="export-title">经营数据 PDF</text><text class="export-badge export-badge-blue">经营报告</text></view>
+      <text class="export-desc">生成用户、会员、收入、增长趋势和套餐结构报告。PDF 不包含手机号明细。</text>
+      <view class="report-date-grid">
+        <view class="filter-field">
+          <text class="filter-label">开始日期</text>
+          <picker mode="date" value="{{exportStartDate}}" data-field="exportStartDate" bindchange="onExportDateChange">
+            <view class="picker-box">{{exportStartDate || '本月首日'}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="filter-field">
+          <text class="filter-label">结束日期</text>
+          <picker mode="date" value="{{exportEndDate}}" data-field="exportEndDate" bindchange="onExportDateChange">
+            <view class="picker-box">{{exportEndDate || '今天'}}<text>›</text></view>
+          </picker>
+        </view>
+      </view>
+      <button class="export-secondary-btn" loading="{{exportingPdf}}" disabled="{{exportingPdf}}" bindtap="exportPdf">生成 PDF 报告</button>
+    </view>
+
+    <view class="export-band">
+      <view class="export-head"><text class="export-title">待注册授权 CSV</text><text class="export-badge export-badge-violet">独立数据</text></view>
+      <text class="export-desc">单独导出预授权手机号、套餐、激活方式和领取状态，不混入真实注册用户 CSV。</text>
+      <button class="export-secondary-btn" loading="{{exportingPreauthCsv}}" disabled="{{exportingPreauthCsv}}" bindtap="exportPreauthCsv">导出待注册授权 CSV</button>
+    </view>
+
+    <view class="scope-note">导出操作会写入管理员审计日志；临时下载地址会过期。</view>
+  </block>
+
+  <view wx:if="{{!checkingAdmin && !isAdmin}}" class="state-card no-admin-card">
+    <text class="state-title">暂无管理员权限</text>
+    <text class="state-desc">请使用已授权管理员账号进入此页面</text>
+  </view>
+
+  <view wx:if="{{checkingAdmin}}" class="state-card no-admin-card">正在核验管理员身份...</view>
+</view>
+
+<view wx:if="{{showDetail}}" class="sheet-mask" bindtap="closeDetail">
+  <view class="sheet-panel" catchtap="noop">
+    <view class="sheet-head">
+      <view><text class="sheet-title">用户详情</text><text class="sheet-subtitle">会员与操作历史</text></view>
+      <view class="sheet-close" bindtap="closeDetail">×</view>
+    </view>
+    <scroll-view class="sheet-scroll" scroll-y="{{true}}">
+      <view wx:if="{{detailLoading}}" class="state-card">正在读取用户详情...</view>
+      <block wx:elif="{{currentUser}}">
+        <view class="detail-block">
+          <text class="detail-block-title">基本信息</text>
+          <view class="detail-row"><text>用户 ID</text><text class="detail-value selectable">{{currentUser.userId}}</text></view>
+          <view class="detail-row"><text>昵称</text><text class="detail-value">{{currentUser.nickname}}</text></view>
+          <view class="detail-row"><text>手机号</text><view class="detail-phone"><text class="detail-value selectable">{{currentUser.displayPhone}}</text><button wx:if="{{currentUser.phone}}" class="copy-btn" data-phone="{{currentUser.phone}}" catchtap="copyPhone">复制</button></view></view>
+          <view class="detail-row"><text>注册时间</text><text class="detail-value">{{currentUser.registeredAtLabel}}</text></view>
+          <view class="detail-row"><text>最近活跃</text><text class="detail-value">{{currentUser.lastActiveAtLabel}}</text></view>
+          <view class="detail-row"><text>注册来源</text><text class="detail-value">{{currentUser.registrationSource || '历史数据未记录'}}</text></view>
+        </view>
+
+        <view class="detail-block">
+          <view class="detail-title-row"><text class="detail-block-title">当前会员</text><text class="user-tag {{currentUser.stateClass}}">{{currentUser.membershipStatusLabel}}</text></view>
+          <view class="detail-row"><text>会员类型</text><text class="detail-value">{{currentUser.membershipLabel}}</text></view>
+          <view class="detail-row"><text>购买时间</text><text class="detail-value">{{currentUser.purchaseTimeLabel}}</text></view>
+          <view class="detail-row"><text>生效时间</text><text class="detail-value">{{currentUser.membershipStartAtLabel}}</text></view>
+          <view class="detail-row"><text>到期时间</text><text class="detail-value">{{currentUser.membershipEndAtLabel}}</text></view>
+          <view class="detail-row"><text>真实实付</text><text class="detail-value">{{currentUser.amountLabel}}</text></view>
+          <view class="detail-row"><text>来源</text><text class="detail-value">{{currentUser.membershipSourceLabel}}</text></view>
+          <block wx:if="{{currentUser.preauthorization}}">
+            <view class="detail-row"><text>预授权时间</text><text class="detail-value">{{currentUser.preauthorization.createdAt || '—'}}</text></view>
+            <view class="detail-row"><text>领取时间</text><text class="detail-value">{{currentUser.preauthorization.claimedAt || '—'}}</text></view>
+            <view class="detail-row"><text>创建管理员</text><text class="detail-value">尾号 {{currentUser.preauthorization.createdBySuffix || '—'}}</text></view>
+            <view wx:if="{{currentUser.preauthorization.note}}" class="detail-row"><text>预授权备注</text><text class="detail-value">{{currentUser.preauthorization.note}}</text></view>
+          </block>
+          <button wx:if="{{currentUser.canManageMembership}}" class="detail-action-btn" bindtap="openMembershipEditor">{{currentUser.actionLabel}}</button>
+        </view>
+
+        <view class="detail-block">
+          <text class="detail-block-title">会员历史与操作记录</text>
+          <view wx:if="{{membershipHistory.length}}" class="timeline">
+            <view class="timeline-item" wx:for="{{membershipHistory}}" wx:key="historyKey">
+              <view class="timeline-dot"></view>
+              <view class="timeline-content">
+                <view class="timeline-head"><text>{{item.actionLabel || item.membershipLabel}}</text><text>{{item.happenedAtLabel}}</text></view>
+                <text class="timeline-meta">{{item.source}} · {{item.amountLabel}} · 到期 {{item.endAtLabel}}</text>
+                <text wx:if="{{item.reason}}" class="timeline-reason">原因：{{item.reason}}</text>
+              </view>
+            </view>
+          </view>
+          <view wx:else class="inline-empty">暂无可追溯会员历史</view>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+</view>
+
+<view wx:if="{{showMembershipEditor}}" class="sheet-mask sheet-mask-top" bindtap="closeMembershipEditor">
+  <view class="sheet-panel membership-sheet" catchtap="noop">
+    <view class="sheet-head">
+      <view><text class="sheet-title">{{membershipEditorTitle}}</text><text class="sheet-subtitle">{{currentUser.nickname}} · {{currentUser.displayPhone}}</text></view>
+      <view class="sheet-close" bindtap="closeMembershipEditor">×</view>
+    </view>
+    <scroll-view class="sheet-scroll membership-form" scroll-y="{{true}}">
+      <view class="current-membership-box">
+        <text>当前状态</text>
+        <text>{{currentUser.membershipLabel}} · {{currentUser.membershipEndAtLabel}}</text>
+      </view>
+      <view class="form-field">
+        <text class="filter-label">会员类型</text>
+        <picker mode="selector" range="{{managedMembershipOptions}}" range-key="label" value="{{managedMembershipIndex}}" bindchange="onManagedMembershipChange">
+          <view class="picker-box">{{managedMembershipOptions[managedMembershipIndex].label}}<text>›</text></view>
+        </picker>
+        <text class="field-tip">季度会员默认 90 天，年度会员默认 365 天；可以自定义到期日期。</text>
+      </view>
+      <view class="report-date-grid">
+        <view class="form-field">
+          <text class="filter-label">生效日期</text>
+          <picker mode="date" value="{{membershipEditor.startDate}}" data-field="startDate" bindchange="onMembershipDateChange">
+            <view class="picker-box">{{membershipEditor.startDate}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="form-field">
+          <text class="filter-label">到期日期</text>
+          <picker mode="date" value="{{membershipEditor.endDate}}" data-field="endDate" bindchange="onMembershipDateChange">
+            <view class="picker-box">{{membershipEditor.endDate}}<text>›</text></view>
+          </picker>
+        </view>
+      </view>
+      <view class="form-field">
+        <text class="filter-label">调整原因</text>
+        <textarea class="reason-input" maxlength="200" value="{{membershipEditor.reason}}" placeholder="例如：线下学员赠送、活动赠送、补偿或测试" bindinput="onMembershipReasonInput"></textarea>
+      </view>
+      <view class="source-hint">本次新增或延长会计入会员总收益，但不会计入微信支付收入。</view>
+      <button wx:if="{{currentUser.isMember}}" class="end-membership-btn" disabled="{{savingMembership}}" bindtap="endMembership">提前结束会员</button>
+    </scroll-view>
+    <view class="sheet-actions">
+      <button class="secondary-btn" disabled="{{savingMembership}}" bindtap="closeMembershipEditor">取消</button>
+      <button class="primary-btn" loading="{{savingMembership}}" disabled="{{savingMembership}}" bindtap="saveMembership">确认保存</button>
+    </view>
+  </view>
+</view>
+
+<view wx:if="{{showPreauthEditor}}" class="sheet-mask sheet-mask-top" bindtap="closePreauthEditor">
+  <view class="sheet-panel membership-sheet" catchtap="noop">
+    <view class="sheet-head">
+      <view><text class="sheet-title">{{preauthEditorTitle}}</text><text class="sheet-subtitle">手机号匹配成功后自动领取</text></view>
+      <view class="sheet-close" bindtap="closePreauthEditor">×</view>
+    </view>
+    <scroll-view class="sheet-scroll membership-form" scroll-y="{{true}}">
+      <view class="source-hint preauth-security-hint">仅微信可信手机号授权后可领取；创建授权时计入会员总收益，后续领取不重复计入。</view>
+      <view class="form-field">
+        <text class="filter-label">手机号 *</text>
+        <input class="form-input" type="number" maxlength="11" value="{{preauthEditor.phone}}" placeholder="请输入学员手机号" disabled="{{preauthEditor.id}}" bindinput="onPreauthPhoneInput" />
+        <text wx:if="{{preauthEditor.id}}" class="field-tip">手机号不可直接修改；录入错误时请撤销后重新创建。</text>
+      </view>
+      <view class="form-field">
+        <text class="filter-label">会员套餐 *</text>
+        <picker mode="selector" range="{{preauthPlanOptions}}" range-key="label" value="{{preauthPlanIndex}}" bindchange="onPreauthPlanChange">
+          <view class="picker-box">{{preauthPlanOptions[preauthPlanIndex].label}}<text>›</text></view>
+        </picker>
+      </view>
+      <view class="form-field">
+        <text class="filter-label">激活方式 *</text>
+        <picker mode="selector" range="{{preauthActivationOptions}}" range-key="label" value="{{preauthActivationIndex}}" bindchange="onPreauthActivationChange">
+          <view class="picker-box">{{preauthActivationOptions[preauthActivationIndex].label}}<text>›</text></view>
+        </picker>
+        <text wx:if="{{preauthEditor.activationMode === 'on_claim'}}" class="field-tip">会员从用户实际授权手机号当天开始计算。</text>
+        <text wx:else class="field-tip">领取后保持下方固定起止日期，不会重新增加套餐天数。</text>
+      </view>
+      <view wx:if="{{preauthEditor.activationMode === 'fixed'}}" class="report-date-grid">
+        <view class="form-field">
+          <text class="filter-label">生效日期</text>
+          <picker mode="date" value="{{preauthEditor.startDate}}" data-field="startDate" bindchange="onPreauthDateChange">
+            <view class="picker-box">{{preauthEditor.startDate}}<text>›</text></view>
+          </picker>
+        </view>
+        <view class="form-field">
+          <text class="filter-label">到期日期</text>
+          <picker mode="date" value="{{preauthEditor.endDate}}" data-field="endDate" bindchange="onPreauthDateChange">
+            <view class="picker-box">{{preauthEditor.endDate}}<text>›</text></view>
+          </picker>
+        </view>
+      </view>
+      <view class="form-field">
+        <text class="filter-label">备注</text>
+        <textarea class="reason-input" maxlength="300" value="{{preauthEditor.note}}" placeholder="例如：线下学员、活动赠送" bindinput="onPreauthNoteInput"></textarea>
+      </view>
+      <view class="source-hint">来源固定为“后台预授权”，不会生成微信支付订单或微信支付收入。</view>
+    </scroll-view>
+    <view class="sheet-actions">
+      <button class="secondary-btn" disabled="{{savingPreauth}}" bindtap="closePreauthEditor">取消</button>
+      <button class="primary-btn" loading="{{savingPreauth}}" disabled="{{savingPreauth}}" bindtap="savePreauthorization">确认保存</button>
     </view>
   </view>
 </view>

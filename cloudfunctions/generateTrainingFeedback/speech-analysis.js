@@ -33,26 +33,6 @@ function getContentMatchScore(transcript, material) {
   return Math.round((matched / materialSet.size) * 100)
 }
 
-function getDurationLevel(durationSeconds, targetSeconds) {
-  const duration = Number(durationSeconds || 0)
-  const target = Number(targetSeconds || 0)
-  if (!duration || !target) return 'unknown'
-  const ratio = duration / target
-  if (ratio < 0.35) return 'too_short'
-  if (ratio < 0.8) return 'short'
-  if (ratio <= 1.4) return 'suitable'
-  return 'long'
-}
-
-function getSpeechRateLevel(rate) {
-  if (!Number.isFinite(rate) || rate <= 0) return 'unknown'
-  if (rate < 80) return 'very_slow'
-  if (rate < 130) return 'slow'
-  if (rate <= 230) return 'normal'
-  if (rate <= 320) return 'fast'
-  return 'very_fast'
-}
-
 function getContentMatchLevel(score) {
   if (score === null || score === undefined) return 'unknown'
   if (score >= 55) return 'high'
@@ -98,13 +78,6 @@ function getStructureLevel(transcript, isStructuredTraining) {
 function buildOverallRuleScore(analysis) {
   if (analysis.possibleEmptyRecording) return 5
   let score = 78
-  if (analysis.durationLevel === 'too_short') score -= 30
-  if (analysis.durationLevel === 'short') score -= 12
-  if (analysis.durationLevel === 'long') score -= 5
-  if (analysis.durationLevel === 'suitable') score += 5
-  if (['very_slow', 'very_fast'].includes(analysis.speechRateLevel)) score -= 15
-  if (['slow', 'fast'].includes(analysis.speechRateLevel)) score -= 7
-  if (analysis.speechRateLevel === 'normal') score += 6
   if (analysis.contentMatchLevel === 'high') score += 8
   if (analysis.contentMatchLevel === 'low') score -= 18
   if (analysis.possibleOffTopic) score -= 15
@@ -119,13 +92,9 @@ function buildOverallRuleScore(analysis) {
 function buildRuleTags(analysis) {
   const tags = []
   const maps = {
-    duration: { too_short: '时长明显偏短', short: '时长偏短', suitable: '时长合适', long: '时长偏长' },
-    rate: { very_slow: '语速明显偏慢', slow: '语速偏慢', normal: '语速适中', fast: '语速偏快', very_fast: '语速明显偏快' },
     match: { high: '内容匹配较高', medium: '内容基本匹配', low: '内容匹配偏低' },
     structure: { clear: '结构较清楚', basic: '有基本结构', weak: '结构可再加强' }
   }
-  if (maps.duration[analysis.durationLevel]) tags.push(maps.duration[analysis.durationLevel])
-  if (maps.rate[analysis.speechRateLevel]) tags.push(maps.rate[analysis.speechRateLevel])
   if (maps.match[analysis.contentMatchLevel]) tags.push(maps.match[analysis.contentMatchLevel])
   if (maps.structure[analysis.structureLevel]) tags.push(maps.structure[analysis.structureLevel])
   if (analysis.repetitionRiskLevel === 'high') tags.push('重复风险较高')
@@ -139,11 +108,6 @@ function analyzeSpeechForTraining(input = {}) {
   const transcript = String(input.transcript || '')
   const effectiveTextLength = normalizePlainText(transcript).length
   const transcriptLength = transcript.trim().length
-  const durationSeconds = Math.max(Number(input.durationSeconds || 0), 0)
-  const targetSeconds = Math.max(Number(input.targetSeconds || 0), 0)
-  const durationLevel = getDurationLevel(durationSeconds, targetSeconds)
-  const speechRate = durationSeconds > 0 && effectiveTextLength > 0 ? Math.round((effectiveTextLength / durationSeconds) * 60) : null
-  const speechRateLevel = getSpeechRateLevel(speechRate)
   const moduleText = `${input.moduleId || ''} ${input.moduleTitle || ''} ${input.taskTitle || ''}`
   const isReading = input.moduleId === 'reading' || moduleText.indexOf('朗读') > -1 || moduleText.indexOf('朗诵') > -1
   const isMandarin = input.moduleId === 'mandarin' || moduleText.indexOf('普通话') > -1
@@ -153,12 +117,11 @@ function analyzeSpeechForTraining(input = {}) {
   const contentMatchScore = isReading || isMandarin || isRetell || isTopic ? getContentMatchScore(transcript, referenceText) : null
   const contentMatchLevel = getContentMatchLevel(contentMatchScore)
   const possibleEmptyRecording = effectiveTextLength < 8
-  const possibleTooShort = possibleEmptyRecording || ['too_short', 'short'].includes(durationLevel) || effectiveTextLength < 20
   const possibleOffTopic = Boolean(isTopic && effectiveTextLength >= 20 && contentMatchLevel === 'low')
   const possibleIncomplete = Boolean((isReading || isMandarin || isRetell) && (effectiveTextLength < 20 || (contentMatchLevel === 'low' && effectiveTextLength < 80)))
   const repetitionRiskLevel = getRepetitionRiskLevel(transcript)
   const structureLevel = getStructureLevel(transcript, isTopic || isRetell)
-  const base = { transcriptLength, effectiveTextLength, durationSeconds, targetSeconds, durationLevel, speechRate, speechRateLevel, contentMatchScore, contentMatchLevel, possibleEmptyRecording, possibleTooShort, possibleOffTopic, possibleIncomplete, repetitionRiskLevel, structureLevel }
+  const base = { transcriptLength, effectiveTextLength, contentMatchScore, contentMatchLevel, possibleEmptyRecording, possibleOffTopic, possibleIncomplete, repetitionRiskLevel, structureLevel }
   const overallRuleScore = buildOverallRuleScore(base)
   const ruleTags = buildRuleTags({ ...base, overallRuleScore })
   const ruleSummary = possibleEmptyRecording
@@ -166,10 +129,9 @@ function analyzeSpeechForTraining(input = {}) {
     : `${ruleTags.length ? ruleTags.join('，') : '已完成一次有效训练记录'}。规则参考分${overallRuleScore}分。`.slice(0, 80)
   const analysisNotes = []
   if (possibleEmptyRecording) analysisNotes.push('未识别到足够的有效表达文字。')
-  if (possibleTooShort) analysisNotes.push('本次表达可能偏短。')
   if (possibleIncomplete) analysisNotes.push('内容可能未完整覆盖训练材料。')
   if (possibleOffTopic) analysisNotes.push('内容与题目关键词匹配偏低，建议检查是否围绕主题。')
-  return { ...base, overallRuleScore, ruleTags, ruleSummary, isEmptySpeech: possibleEmptyRecording, effectiveSpeechSeconds: possibleEmptyRecording ? 0 : durationSeconds, analysisNotes }
+  return { ...base, overallRuleScore, ruleTags, ruleSummary, isEmptySpeech: possibleEmptyRecording, analysisNotes }
 }
 
 module.exports = { analyzeSpeechForTraining, normalizePlainText }

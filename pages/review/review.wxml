@@ -1,4 +1,4 @@
-<page-meta page-style="{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
+<page-meta page-style="{{fontSizePageStyle}}{{showAiFeedbackPanel ? 'overflow: hidden;' : ''}}"></page-meta>
 
 <view class="page">
   <view class="hero-card">
@@ -112,7 +112,7 @@
 
           <view class="work-action-row secondary-row">
             <button
-              wx:if="{{item.isPublic}}"
+              wx:if="{{item.shareAllowed && item.isPublic}}"
               class="work-action-btn share-btn"
               open-type="share"
               data-work-id="{{item.squareWorkId || item.cloudId || item.shareId}}"
@@ -122,12 +122,12 @@
               data-thumb="{{item.thumbTempFilePath || item.coverUrl || item.poster || ''}}"
             >分享</button>
             <button
-              wx:else
+              wx:if="{{item.shareAllowed && !item.isPublic}}"
               class="work-action-btn share-btn"
               bindtap="showPrivateShareTip"
             >分享</button>
             <button
-              wx:if="{{!item.isPublic}}"
+              wx:if="{{item.shareAllowed && !item.isPublic}}"
               class="work-action-btn public-btn"
               data-key="{{item.key}}"
               bindtap="publishWork"
@@ -177,6 +177,7 @@
         <view class="ai-section-title">综合评价</view>
         <view class="ai-section-text">{{currentAiFeedback.summary}}</view>
       </view>
+      <ability-radar wx:if="{{currentAiFeedback.abilityRadar}}" radar="{{currentAiFeedback.abilityRadar}}"></ability-radar>
       <view class="ai-section" wx:if="{{currentAiFeedback.basis}}">
         <view class="ai-section-title">点评依据</view>
         <view class="ai-section-text">{{currentAiFeedback.basis}}</view>
@@ -219,4 +220,5 @@
       </view>
     </scroll-view>
   </view>
+  <login-gate id="login-gate" />
 </view>

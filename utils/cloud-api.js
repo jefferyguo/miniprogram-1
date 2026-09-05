@@ -1,3 +1,5 @@
+const { normalizeError, toError } = require('./error-normalizer')
+
 function sanitizeLogData(data = {}) {
   if (Array.isArray(data)) return data.map(item => sanitizeLogData(item))
   if (!data || typeof data !== 'object') return data
@@ -7,6 +9,9 @@ function sanitizeLogData(data = {}) {
     const lowerKey = key.toLowerCase()
     if (
       lowerKey === 'code' ||
+      lowerKey === 'openid' ||
+      lowerKey === '_id' ||
+      lowerKey === 'userid' ||
       lowerKey.includes('token') ||
       lowerKey.includes('signature') ||
       lowerKey === 'paysig' ||
@@ -27,22 +32,31 @@ function sanitizeLogData(data = {}) {
 function callCloudApi(action, data = {}, options = {}) {
   const showLog = options.showLog !== false
 
-  if (!wx.cloud) {
-    const err = new Error('wx.cloud 不可用')
-    console.warn('[cloud-api] wx.cloud 不可用')
-    return Promise.reject(err)
-  }
+  // 等待云开发就绪
+  const app = typeof getApp === 'function' ? getApp() : null
+  const ready = (app && typeof app.ensureCloudReady === 'function')
+    ? app.ensureCloudReady()
+    : Promise.resolve(true)
 
-  if (showLog) {
-    console.log('[cloud-api] call:', action, sanitizeLogData(data))
-  }
-
-  return wx.cloud.callFunction({
-    name: 'cloudApi',
-    data: {
-      action,
-      ...data
+  return ready.then(() => {
+    if (!wx.cloud) {
+      const err = new Error('wx.cloud 不可用')
+      err.code = 'CLOUD_NOT_SUPPORTED'
+      console.warn('[cloud-api] wx.cloud 不可用')
+      return Promise.reject(err)
     }
+
+    if (showLog) {
+      console.log('[cloud-api] call:', action, sanitizeLogData(data))
+    }
+
+    return wx.cloud.callFunction({
+      name: 'cloudApi',
+      data: {
+        action,
+        ...data
+      }
+    })
   }).then(res => {
     const result = res.result || {}
 
@@ -59,8 +73,9 @@ function callCloudApi(action, data = {}, options = {}) {
 
     return result
   }).catch(err => {
-    console.warn('[cloud-api] fail:', action, err)
-    throw err
+    const normalized = normalizeError(err, '云函数调用失败')
+    console.warn('[cloud-api] fail:', action, normalized)
+    throw toError(err, normalized.message)
   })
 }
 
@@ -101,20 +116,20 @@ function adminAuditLogs(limit = 100) {
 }
 
 function bindPhoneAndGetAccess(phone, nickname = '同学') {
-  return callCloudApi('bindPhoneAndGetAccess', {
-    phone,
-    nickname
-  })
+  const error = new Error('请使用手机号快捷登录完成绑定')
+  error.code = 'PHONE_CODE_REQUIRED'
+  return Promise.reject(error)
 }
 
-function bindPhoneByCode(code, nickname = '同学') {
-  return callCloudApi('bindPhoneByCode', {
-    code,
-    nickname
-  }, {
+function bindPhoneByCode(code) {
+  return callCloudApi('bindPhoneByCode', { code }, {
     // 手机号授权 code 为一次性敏感凭证，不写入前端调试日志。
     showLog: false
   })
+}
+
+function updateMyProfile(profile = {}) {
+  return callCloudApi('updateMyProfile', { profile })
 }
 
 function adminCreateStudent(data) {
@@ -145,6 +160,50 @@ function adminDeletePhoneEntitlement(data) {
   return callCloudApi('adminDeletePhoneEntitlement', { data })
 }
 
+function adminUserOverview(data = {}) {
+  return callCloudApi('adminUserOverview', data, { showLog: false })
+}
+
+function adminListUsers(data = {}) {
+  return callCloudApi('adminListUsers', data, { showLog: false })
+}
+
+function adminListPreRegistrationEntitlements(data = {}) {
+  return callCloudApi('adminListPreRegistrationEntitlements', data, { showLog: false })
+}
+
+function adminSavePreRegistrationEntitlement(data = {}) {
+  return callCloudApi('adminSavePreRegistrationEntitlement', data, { showLog: false })
+}
+
+function adminRevokePreRegistrationEntitlement(data = {}) {
+  return callCloudApi('adminRevokePreRegistrationEntitlement', data, { showLog: false })
+}
+
+function adminGetUserDetail(userId) {
+  return callCloudApi('adminGetUserDetail', { userId }, { showLog: false })
+}
+
+function adminUpdateUserMembership(data = {}) {
+  return callCloudApi('adminUpdateUserMembership', data, { showLog: false })
+}
+
+function adminRevenueOverview(data = {}) {
+  return callCloudApi('adminRevenueOverview', data, { showLog: false })
+}
+
+function adminExportUsersCsv(data = {}) {
+  return callCloudApi('adminExportUsersCsv', data, { showLog: false })
+}
+
+function adminExportPreRegistrationCsv(data = {}) {
+  return callCloudApi('adminExportPreRegistrationCsv', data, { showLog: false })
+}
+
+function adminGenerateOperationsPdf(data = {}) {
+  return callCloudApi('adminGenerateOperationsPdf', data, { showLog: false })
+}
+
 function adminListData() {
   return callCloudApi('adminListData')
 }
@@ -161,10 +220,12 @@ function getMyWorks(limit = 50) {
   return callCloudApi('getMyWorks', { limit })
 }
 
-function getSquareWorks(filter = 'all', limit = 50) {
+function getSquareWorks(filter = 'all', options = {}) {
+  const pagination = typeof options === 'number' ? { pageSize: options } : options
   return callCloudApi('getSquareWorks', {
     filter,
-    limit
+    pageSize: pagination.pageSize || 20,
+    cursor: pagination.cursor || ''
   })
 }
 
@@ -278,24 +339,21 @@ function getTrainingContents(membershipType = 'free', filters = {}) {
   })
 }
 
-function getTrainingContentById(contentId, category = '', options = {}) {
-  const includeArchived = options.includeArchived === true
-  const day = Number(options.day || 0)
-  const allowLegacyCurrentFallback = !includeArchived && options.allowLegacyCurrentFallback === true
+function getTrainingCatalogByModule(moduleId) {
+  return callCloudApi('getTrainingCatalogByModule', {
+    moduleId: String(moduleId || '').trim()
+  }, {
+    showLog: false
+  })
+}
+
+function getTrainingContentById(contentId) {
   console.log('[cloud-api][training-content-by-id] request:', {
     action: 'getTrainingContentById',
-    contentId,
-    category,
-    day,
-    includeArchived,
-    allowLegacyCurrentFallback
+    contentId
   })
   return callCloudApi('getTrainingContentById', {
-    contentId,
-    category,
-    day,
-    includeArchived,
-    allowLegacyCurrentFallback
+    contentId
   }, {
     showLog: false
   }).then(result => {
@@ -305,12 +363,10 @@ function getTrainingContentById(contentId, category = '', options = {}) {
       code: result && result.code || '',
       found: result && result.found === true,
       returnedContentId: content && content.contentId || '',
-      sourceContentId: result && result.sourceContentId || content && content.sourceContentId || '',
       contentLength: content
-        ? String(content.content || content.material || content.promptText || '').length
+        ? String(content.content || '').length
         : 0,
-      source: result && result.source || '',
-      legacyFallback: result && result.legacyFallback === true
+      source: result && result.source || ''
     })
     return result
   })
@@ -374,10 +430,26 @@ function adminDeleteTrainingContent(data = {}) {
   })
 }
 
-function adminReplaceTrainingContentsBatch(data = {}) {
-  return callCloudApi('adminReplaceTrainingContentsBatch', data, {
+function adminReorderTrainingContents(data = {}) {
+  return callCloudApi('adminReorderTrainingContents', data, {
     showLog: false
   })
+}
+
+function adminGetDailyRegistrationReport(data = {}) {
+  return callCloudApi('adminGetDailyRegistrationReport', data, { showLog: false })
+}
+
+function adminGetWeeklyRegistrationReport(data = {}) {
+  return callCloudApi('adminGetWeeklyRegistrationReport', data, { showLog: false })
+}
+
+function adminRegenerateRegistrationReport(data = {}) {
+  return callCloudApi('adminRegenerateRegistrationReport', data, { showLog: false })
+}
+
+function adminExportRegistrationReport(data = {}) {
+  return callCloudApi('adminExportRegistrationReport', data, { showLog: false })
 }
 
 function checkAiUsage(type, extra = {}) {
@@ -423,6 +495,7 @@ module.exports = {
   adminAuditLogs,
   bindPhoneAndGetAccess,
   bindPhoneByCode,
+  updateMyProfile,
   adminCreateStudent,
   adminGrantEntitlement,
   adminListPhoneEntitlements,
@@ -430,6 +503,17 @@ module.exports = {
   adminDisablePhoneEntitlement,
   adminEnablePhoneEntitlement,
   adminDeletePhoneEntitlement,
+  adminUserOverview,
+  adminListUsers,
+  adminListPreRegistrationEntitlements,
+  adminSavePreRegistrationEntitlement,
+  adminRevokePreRegistrationEntitlement,
+  adminGetUserDetail,
+  adminUpdateUserMembership,
+  adminRevenueOverview,
+  adminExportUsersCsv,
+  adminExportPreRegistrationCsv,
+  adminGenerateOperationsPdf,
   adminListData,
   adminDisableEntitlement,
   submitWorkRecord,
@@ -456,6 +540,7 @@ module.exports = {
   getPublicWeeklySchedule,
   getAppContentConfigs,
   getTrainingContents,
+  getTrainingCatalogByModule,
   getTrainingContentById,
   adminGetWeeklySchedule,
   adminListWeeklySchedules,
@@ -464,7 +549,11 @@ module.exports = {
   adminListTrainingContents,
   adminSaveTrainingContent,
   adminDeleteTrainingContent,
-  adminReplaceTrainingContentsBatch,
+  adminReorderTrainingContents,
+  adminGetDailyRegistrationReport,
+  adminGetWeeklyRegistrationReport,
+  adminRegenerateRegistrationReport,
+  adminExportRegistrationReport,
   checkAiUsage,
   recordAiUsage,
   listMembershipProducts,

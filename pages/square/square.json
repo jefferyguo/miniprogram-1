@@ -1,3 +1,4 @@
 {
-  "navigationBarTitleText": "杨勤口才训练KEEP"
+  "navigationBarTitleText": "杨勤口才训练KEEP",
+  "enablePullDownRefresh": true
 }

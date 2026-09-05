@@ -6,8 +6,7 @@ const { JUST_LOGGED_OUT_KEY } = require('../../utils/profile-auth')
 const {
   bindPhoneWithCode,
   isPhoneBound,
-  refreshPhoneMembership,
-  requirePhoneBound
+  refreshPhoneMembership
 } = require('../../utils/phone-auth')
 const {
   formatDateTime,
@@ -43,7 +42,6 @@ const SOCIAL_MODAL_CONFIG = {
 Page({
   data: {
     // 当前版本仅展示学员身份和个人训练相关入口
-    isLoggedIn: false,
     userInfo: null,
     displayName: '同学',
     roleText: '普通用户',
@@ -53,7 +51,7 @@ Page({
     memberStatus: null,
     memberLabel: '普通用户',
     memberBadgeClass: 'member-free',
-    memberTip: '可使用前 21 天训练，每天 1 次 AI 点评/测评',
+    // memberTip removed — 不在顶部卡片显示免费/AI次数
     membershipExpireText: '',
     memberButtonText: '开通会员',
     phoneBound: false,
@@ -141,52 +139,56 @@ Page({
 
   loadUserInfo() {
     const userInfo = getUserInfo() || {}
-    const phoneBound = isPhoneBound(userInfo)
-    const isLoggedIn = phoneBound
-    const nickname = phoneBound ? (userInfo.nickname || userInfo.nickName || '同学') : '同学'
+    const rawPhoneBound = isPhoneBound(userInfo)
+    // 两层模型：基础登录（有稳定身份+profile）vs 手机绑定
+    // phoneBound 只在 isAuthenticated=true 时有效；无身份时忽略旧缓存
+    const isAuthenticated = auth.isAuthenticated()
+    const phoneBound = isAuthenticated && rawPhoneBound
+    const nickname = (isAuthenticated ? (userInfo.nickname || userInfo.nickName || '同学') : '同学').trim()
     const currentClass = userInfo.currentClass || null
     const accessStatus = getCurrentAccessStatus()
-    const memberLabel = isLoggedIn ? accessStatus.label : '普通用户'
+    const memberLabel = phoneBound ? accessStatus.label : '普通用户'
     const membershipEndAt = accessStatus.membershipEndAt || ''
-    const memberTip = accessStatus.roleType === 'admin'
-      ? '已解锁全部训练内容与 AI 权限'
-      : accessStatus.canAccessAdvanced
-        ? '每天 5 次 AI 点评/测评'
-        : '可使用前 21 天训练，每天 1 次 AI 点评/测评'
     const membershipExpireText = phoneBound && accessStatus.canAccessAdvanced && membershipEndAt
       ? `有效期至：${membershipEndAt}`
       : ''
 
     const app = getApp()
     if (app && app.globalData) {
-      app.globalData.userInfo = isLoggedIn ? userInfo : null
-      app.globalData.isLogin = isLoggedIn
-      app.globalData.profileCompleted = isLoggedIn && userInfo.profileCompleted === true
+      app.globalData.userInfo = isAuthenticated ? userInfo : null
+      app.globalData.isLogin = phoneBound
+      app.globalData.isAuthenticated = isAuthenticated
+      app.globalData.profileCompleted = isAuthenticated
     }
 
     this.setData({
-      isLoggedIn,
-      userInfo: isLoggedIn ? {
-        ...userInfo,
-        nickname
-      } : null,
-      displayName: isLoggedIn ? nickname : '同学',
-      roleText: isLoggedIn ? '学员' : '普通用户',
-      profileTip: isLoggedIn ? '' : '登录后保存训练记录',
-      avatarText: isLoggedIn ? this.getAvatarText(nickname) : '同',
-      avatarUrl: isLoggedIn ? (userInfo.avatarUrl || '') : '',
-      memberStatus: isLoggedIn ? accessStatus : null,
+      phoneBound,
+      isAuthenticated,
+      userInfo: isAuthenticated ? { ...userInfo, nickname } : null,
+      displayName: isAuthenticated ? (nickname || '同学') : '同学',
+      roleText: isAuthenticated ? '学员' : '普通用户',
+      profileTip: isAuthenticated ? '' : '登录后保存训练记录',
+      avatarText: isAuthenticated ? this.getAvatarText(nickname || '同学') : '同',
+      avatarUrl: isAuthenticated ? (userInfo.avatarUrl || '') : '',
+      memberStatus: phoneBound ? accessStatus : null,
       memberLabel,
-      memberBadgeClass: isLoggedIn ? `member-${accessStatus.roleType}` : 'member-free',
-      memberTip,
+      memberBadgeClass: isAuthenticated ? `member-${accessStatus.roleType}` : 'member-free',
       membershipExpireText,
-      memberButtonText: isLoggedIn && accessStatus.canAccessAdvanced ? '会员权益' : '开通会员',
+      memberButtonText: isAuthenticated && accessStatus.canAccessAdvanced ? '会员权益' : '开通会员',
       phoneBound,
       phoneStatusText: phoneBound
         ? `已绑定：${userInfo.phoneMasked || '手机号已脱敏'}`
         : '',
       currentClass,
       hasClass: !!currentClass
+    })
+  },
+
+  openLoginGate() {
+    auth.requirePhoneBound(null, {
+      actionName: '登录',
+      source: 'mine_page',
+      resumePolicy: 'manual_retry'
     })
   },
 
@@ -223,7 +225,7 @@ Page({
   },
 
   handleProfileAction() {
-    if (!this.data.isLoggedIn) {
+    if (!this.data.isAuthenticated) {
       wx.showToast({ title: '请先登录', icon: 'none' })
       return
     }
@@ -254,7 +256,7 @@ Page({
   },
 
   handleProfileTap() {
-    if (this.data.isLoggedIn) this.editProfile()
+    if (this.data.isAuthenticated) this.editProfile()
   },
 
   joinClass() {
@@ -281,7 +283,6 @@ Page({
           ...getUserInfo(),
           nickname: this.data.displayName || '同学',
           role: 'student',
-          isLoggedIn: true,
           currentClass: {
             classId: targetClass.id,
             className: targetClass.className,
@@ -389,22 +390,9 @@ Page({
   handleActionWithLogin(item) {
     if (!item) return
 
-    const phoneRequiredUrls = [
-      '/pages/my-works/my-works',
-      '/pages/review/review',
-      '/pages/growth/growth'
-    ]
-    if (phoneRequiredUrls.includes(item.url) && !requirePhoneBound('查看训练记录', {
-      page: this,
-      onSuccess: () => this.handleAction(item)
-    })) return
-
-    if (item.type === 'share') {
-      this.handleShareTap()
-      return
-    }
-
-    this.handleAction(item)
+    // 个人数据入口统一要求手机号登录；高风险操作仍由目标页面自行校验并要求手动重试。
+    // requireLogin 在已登录时会同步执行回调，未登录时则在 Level 1 完成后执行；此处不再重复调用。
+    auth.requireLogin(() => this.handleAction(item), { actionName: '查看个人中心' })
   },
 
   handleAction(item) {
@@ -577,12 +565,15 @@ Page({
 
   testCloudHealth() {
     healthCheck().then(async res => {
-      console.log('[mine] cloud health:', res)
+      console.log('[mine] cloud health:', { success: res && res.success === true })
       const adminProfile = await getAdminProfile().catch(err => {
         console.warn('[mine] getAdminProfile failed:', err)
         return null
       })
-      console.log('[mine] admin profile:', adminProfile)
+      console.log('[mine] admin profile:', {
+        success: Boolean(adminProfile),
+        isAdmin: Boolean(adminProfile && adminProfile.isAdmin)
+      })
 
       const roleText = adminProfile && adminProfile.isAdmin
         ? `管理员角色：${adminProfile.role}（${adminProfile.source}）`
@@ -650,7 +641,8 @@ Page({
         if (profileModal && typeof profileModal.close === 'function') profileModal.close()
 
         this.setData({
-          isLoggedIn: false,
+          isAuthenticated: false,
+          phoneBound: false,
           userInfo: null,
           displayName: '同学',
           roleText: '普通用户',
@@ -660,7 +652,7 @@ Page({
           memberStatus: null,
           memberLabel: '普通用户',
           memberBadgeClass: 'member-free',
-          memberTip: '可使用前 21 天训练，每天 1 次 AI 点评/测评',
+          // memberTip removed — 不在顶部卡片显示免费/AI次数
           membershipExpireText: '',
           memberButtonText: '开通会员',
           phoneBound: false,

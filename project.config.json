@@ -27,11 +27,27 @@
       },
       {
         "type": "folder",
+        "value": "data/audit"
+      },
+      {
+        "type": "folder",
         "value": "node_modules"
       },
       {
         "type": "folder",
         "value": ".agents"
+      },
+      {
+        "type": "folder",
+        "value": "cloudfunctions"
+      },
+      {
+        "type": "folder",
+        "value": ".claude"
+      },
+      {
+        "type": "folder",
+        "value": "reports"
       },
       {
         "type": "file",
@@ -59,15 +75,27 @@
       },
       {
         "type": "file",
-        "value": "朗诵训练0720.docx"
+        "value": "主持、普通话声音训练0728（定稿，未上传）.docx"
       },
       {
         "type": "file",
-        "value": "每日复述练嘴.docx"
+        "value": "即兴讲话0728（定稿，未上传）(1).docx"
       },
       {
         "type": "file",
-        "value": "演讲0720.docx"
+        "value": "朗诵训练0728（已定稿，未上传）.docx"
+      },
+      {
+        "type": "file",
+        "value": "每日复述练嘴0728（定稿，未上传）.docx"
+      },
+      {
+        "type": "file",
+        "value": "演讲训练0728（定稿，未上传）.docx"
+      },
+      {
+        "type": "file",
+        "value": "领导发言0728（定稿，未上传）.docx"
       },
       {
         "type": "file",
@@ -96,6 +124,7 @@
     "compileWorklet": false,
     "uglifyFileName": false,
     "uploadWithSourceMap": true,
+    "ignoreUploadUnusedFiles": true,
     "packNpmManually": false,
     "minifyWXSS": true,
     "minifyWXML": true,

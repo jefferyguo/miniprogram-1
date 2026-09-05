@@ -1,0 +1,62 @@
+[
+  {
+    "path": "/Users/jefferyguo/WeChatProjects/miniprogram-1/resources/training-source/0728-final/即兴讲话0728（定稿，未上传）(1).docx",
+    "fileType": ".docx",
+    "moduleId": "topic",
+    "sha256": "1d5ad68db8a39cc91de5914d2e31a2bbe16c5ad95a7dc12329621e4839f7feb2",
+    "manifestSha256": "1d5ad68db8a39cc91de5914d2e31a2bbe16c5ad95a7dc12329621e4839f7feb2",
+    "rawDayBoundaryCount": 276,
+    "parsedRecordCount": 276,
+    "expectedRecordCount": 276
+  },
+  {
+    "path": "/Users/jefferyguo/WeChatProjects/miniprogram-1/resources/training-source/0728-final/朗诵训练0728（已定稿，未上传）.docx",
+    "fileType": ".docx",
+    "moduleId": "reading",
+    "sha256": "9dacda651e107f40e9e6e8620d175a5511de0814faa3dd8c17de0441de4a4f60",
+    "manifestSha256": "9dacda651e107f40e9e6e8620d175a5511de0814faa3dd8c17de0441de4a4f60",
+    "rawDayBoundaryCount": 216,
+    "parsedRecordCount": 216,
+    "expectedRecordCount": 216
+  },
+  {
+    "path": "/Users/jefferyguo/WeChatProjects/miniprogram-1/resources/training-source/0728-final/领导发言0728（定稿，未上传）.docx",
+    "fileType": ".docx",
+    "moduleId": "leaderSpeech",
+    "sha256": "1e0b97efbc527915490802bfcf7d8e48674292609663762389c5186859ef12ad",
+    "manifestSha256": "1e0b97efbc527915490802bfcf7d8e48674292609663762389c5186859ef12ad",
+    "rawDayBoundaryCount": 24,
+    "parsedRecordCount": 24,
+    "expectedRecordCount": 24
+  },
+  {
+    "path": "/Users/jefferyguo/WeChatProjects/miniprogram-1/resources/training-source/0728-final/每日复述练嘴0728（定稿，未上传）.docx",
+    "fileType": ".docx",
+    "moduleId": "retell",
+    "sha256": "6ec50337b013ed7b99bbbbed831189749b671948670306c0e7e0b44cfb3d7e83",
+    "manifestSha256": "6ec50337b013ed7b99bbbbed831189749b671948670306c0e7e0b44cfb3d7e83",
+    "rawDayBoundaryCount": 257,
+    "parsedRecordCount": 257,
+    "expectedRecordCount": 257
+  },
+  {
+    "path": "/Users/jefferyguo/WeChatProjects/miniprogram-1/resources/training-source/0728-final/演讲训练0728（定稿，未上传）.docx",
+    "fileType": ".docx",
+    "moduleId": "speech",
+    "sha256": "458937b2a3048a82e50e76ef7a41a420c7d752f96f3cafe73452103669e8ce90",
+    "manifestSha256": "458937b2a3048a82e50e76ef7a41a420c7d752f96f3cafe73452103669e8ce90",
+    "rawDayBoundaryCount": 116,
+    "parsedRecordCount": 116,
+    "expectedRecordCount": 116
+  },
+  {
+    "path": "/Users/jefferyguo/WeChatProjects/miniprogram-1/resources/training-source/0728-final/主持、普通话声音训练0728（定稿，未上传）.docx",
+    "fileType": ".docx",
+    "moduleId": "mandarin",
+    "sha256": "044707f0f745a0306535053b42eba4b88411fa7285f0aab67254053386d146c1",
+    "manifestSha256": "044707f0f745a0306535053b42eba4b88411fa7285f0aab67254053386d146c1",
+    "rawDayBoundaryCount": 77,
+    "parsedRecordCount": 77,
+    "expectedRecordCount": 77
+  }
+]

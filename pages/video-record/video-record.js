@@ -1,3 +1,5 @@
+const { ensureVoiceConsentAndMicPermission } = require('../../utils/voice-consent')
+
 function formatSeconds(seconds) {
   const minute = Math.floor(seconds / 60)
   const second = seconds % 60
@@ -42,11 +44,21 @@ function getBaseLibraryVersion() {
   return ''
 }
 
+function createVideoAsrTraceId() {
+  return `video_asr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+function getFileExtension(filePath = '') {
+  const match = String(filePath).split('?')[0].toLowerCase().match(/\.([a-z0-9]+)$/)
+  return match ? match[1] : 'unknown'
+}
+
 Page({
   data: {
     devicePosition: 'front',
     cameraLabel: '前置摄像头',
     cameraKey: 0,
+    voiceConsentVisible: false,
     isSwitchingCamera: false,
     isRecording: false,
     isStopping: false,
@@ -163,6 +175,12 @@ Page({
     })
   },
 
+  onVoiceConsentVisibilityChange(event) {
+    this.setData({
+      voiceConsentVisible: Boolean(event && event.detail && event.detail.visible)
+    })
+  },
+
   increasePromptFont() {
     this.increaseFontSize()
   },
@@ -195,7 +213,7 @@ Page({
     this.startRecord()
   },
 
-  startRecord() {
+  async startRecord() {
     if (this.data.isRecording || this.data.isStopping || this.startRequestPending || this.stopRequestPending) return
     if (this.data.hasVideo) {
       wx.showToast({
@@ -206,12 +224,20 @@ Page({
     }
 
     this.startRequestPending = true
+    const voiceAllowed = await ensureVoiceConsentAndMicPermission(this)
+    if (!voiceAllowed) {
+      this.startRequestPending = false
+      return
+    }
+
     this.ensureCameraPermission(() => {
       if (!this.cameraContext) {
         this.cameraContext = wx.createCameraContext()
       }
 
       const sessionId = ++this.recordSessionId
+      this.videoAsrTraceId = createVideoAsrTraceId()
+      this.videoMediaInfo = null
       const maxDuration = normalizeVideoMaxDuration(this.data.maxVideoDuration)
       const autoStopAtSeconds = getAutoStopAtSeconds(maxDuration)
       this.maxDurationWarningShown = false
@@ -220,6 +246,13 @@ Page({
         maxDurationSeconds: maxDuration,
         autoStopAtSeconds,
         sdkVersion: getBaseLibraryVersion() || 'unknown'
+      })
+      console.log(`[VIDEO_ASR][${this.videoAsrTraceId}][record]`, {
+        event: 'start',
+        sessionId,
+        sdkVersion: getBaseLibraryVersion() || 'unknown',
+        devicePosition: this.data.devicePosition,
+        microphonePermissionConfirmed: true
       })
       const startOptions = {
         // 新基础库使用 camera timeout；旧基础库即使忽略该字段，JS timer 仍会兜底停止。
@@ -537,6 +570,57 @@ Page({
       hasTempVideoPath: true,
       hasTempThumbPath: Boolean(result.tempThumbPath || result.thumbTempFilePath)
     })
+    const traceId = this.videoAsrTraceId || createVideoAsrTraceId()
+    this.videoAsrTraceId = traceId
+    let fileSize = null
+    try {
+      const stat = wx.getFileSystemManager && wx.getFileSystemManager().statSync(tempVideoPath)
+      fileSize = stat && Number.isFinite(Number(stat.size)) ? Number(stat.size) : null
+    } catch (error) {
+      console.warn(`[VIDEO_ASR][${traceId}][record]`, {
+        event: 'stat_failed',
+        errMsg: error && (error.errMsg || error.message) || ''
+      })
+    }
+    const baseMediaInfo = {
+      duration: savedDuration,
+      fileSize,
+      extension: getFileExtension(tempVideoPath),
+      mimeType: getFileExtension(tempVideoPath) === 'mp4' ? 'video/mp4' : 'application/octet-stream',
+      hasAudioStream: null,
+      audioCodec: null,
+      sampleRate: null,
+      channels: null
+    }
+    this.videoMediaInfo = baseMediaInfo
+    console.log(`[VIDEO_ASR][${traceId}][record]`, {
+      event: 'saved',
+      VIDEO_ASR_MEDIA_INFO: baseMediaInfo
+    })
+    if (typeof wx.getVideoInfo === 'function') {
+      wx.getVideoInfo({
+        src: tempVideoPath,
+        success: info => {
+          this.videoMediaInfo = {
+            ...baseMediaInfo,
+            duration: Number(info.duration || savedDuration),
+            bitrate: Number(info.bitrate || 0) || null,
+            fps: Number(info.fps || 0) || null,
+            width: Number(info.width || 0) || null,
+            height: Number(info.height || 0) || null,
+            orientation: info.orientation || ''
+          }
+          console.log(`[VIDEO_ASR][${traceId}][record]`, {
+            event: 'video_info',
+            VIDEO_ASR_MEDIA_INFO: this.videoMediaInfo
+          })
+        },
+        fail: error => console.warn(`[VIDEO_ASR][${traceId}][record]`, {
+          event: 'video_info_failed',
+          errMsg: error && (error.errMsg || error.message) || ''
+        })
+      })
+    }
     return true
   },
 
@@ -577,7 +661,11 @@ Page({
       devicePosition: this.data.devicePosition,
       promptText: this.data.promptText,
       recordTitle: this.data.recordTitle,
-      recordSubtitle: this.data.recordSubtitle
+      recordSubtitle: this.data.recordSubtitle,
+      traceId: this.videoAsrTraceId || createVideoAsrTraceId(),
+      fileSize: this.videoMediaInfo && this.videoMediaInfo.fileSize,
+      mimeType: this.videoMediaInfo && this.videoMediaInfo.mimeType || 'video/mp4',
+      mediaInfo: this.videoMediaInfo || null
     })
     wx.navigateBack()
   },

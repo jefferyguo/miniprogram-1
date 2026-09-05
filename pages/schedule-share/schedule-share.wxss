@@ -52,7 +52,7 @@ button::after {
 
 .hero-title {
   color: #17352d;
-  font-size: 42rpx;
+  font-size: var(--font-ui-42, 42rpx);
   line-height: 1.25;
   font-weight: 800;
 }
@@ -60,7 +60,7 @@ button::after {
 .hero-desc {
   margin-top: 12rpx;
   color: #657281;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.5;
 }
 
@@ -82,14 +82,14 @@ button::after {
 
 .summary-title {
   color: #17202e;
-  font-size: 30rpx;
+  font-size: var(--font-reading-30, 30rpx);
   font-weight: 800;
 }
 
 .summary-text {
   margin-top: 12rpx;
   color: #687280;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.64;
   white-space: pre-wrap;
 }
@@ -136,7 +136,7 @@ button::after {
 
 .course-title {
   color: #17202e;
-  font-size: 32rpx;
+  font-size: var(--font-ui-32, 32rpx);
   line-height: 1.4;
   font-weight: 800;
 }
@@ -150,7 +150,7 @@ button::after {
 
 .course-content-label {
   color: #7b8493;
-  font-size: 22rpx;
+  font-size: var(--font-ui-22, 22rpx);
   line-height: 1.4;
   font-weight: 700;
 }
@@ -158,7 +158,7 @@ button::after {
 .course-content-text {
   margin-top: 8rpx;
   color: #596373;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -169,7 +169,7 @@ button::after {
   border-radius: 16rpx;
   background: #fff8e8;
   color: #8c681d;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.6;
 }
 
@@ -179,7 +179,7 @@ button::after {
   border-radius: 24rpx;
   background: #eef9f5;
   color: #087b4d;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.5;
   text-align: center;
 }
@@ -190,7 +190,7 @@ button::after {
 
 .state-title {
   color: #303948;
-  font-size: 30rpx;
+  font-size: var(--font-ui-30, 30rpx);
   line-height: 1.4;
   font-weight: 800;
 }
@@ -198,7 +198,7 @@ button::after {
 .state-desc {
   margin-top: 12rpx;
   color: #8a92a3;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.5;
 }
 
@@ -226,6 +226,6 @@ button::after {
   border-radius: 34rpx;
   color: #3478f6;
   background: #eef4ff;
-  font-size: 25rpx;
+  font-size: var(--font-ui-25, 25rpx);
   font-weight: 700;
 }

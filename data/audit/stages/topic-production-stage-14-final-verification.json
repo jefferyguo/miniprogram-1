@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-07-28T06:56:05.439Z",
+  "agentExists": true,
+  "skillsExist": true,
+  "moduleTitle": "即兴讲话",
+  "moduleDays": 276,
+  "otherCategories": [
+    214,
+    255,
+    111,
+    22
+  ],
+  "jsSyntax": "ALL PASS (verified via node --check)",
+  "gitClean": "PASS (git diff --check)",
+  "compilePreview": "PASS (IDE preview QR generated, no 80051)",
+  "cloudDeploy": "cloudApi (8files/134KB) + login (2files/2.5KB) via IDE HTTP API",
+  "generatedDataSize": "218KB",
+  "lightweight": true,
+  "titleStyleDay1": "{\"color\":\"#b91c1c\"}",
+  "presetCount": 276,
+  "freeCount": 3,
+  "memberCount": 273
+}

@@ -1,0 +1,27 @@
+{
+  "stage": 2,
+  "title": "运行时数据与富文本生成",
+  "status": "COMPLETE",
+  "runtimeFile": "utils/generated-training-data.js",
+  "topicCount": 276,
+  "dayRange": "1-276",
+  "richContentCount": 276,
+  "titleStyleCount": 1,
+  "day1TitleStyle": {
+    "color": "#b91c1c"
+  },
+  "plainTextMismatches": 0,
+  "contentIdFormat": "topic-day-N (consistent with existing)",
+  "styleValues": {
+    "small": "14px/28rpx",
+    "green": "#0f766e",
+    "red": "#b91c1c",
+    "bold": "font-weight:700"
+  },
+  "membershipDistribution": {
+    "free": 3,
+    "member": 273
+  },
+  "backupPath": "data/backup/",
+  "generatedAt": "2026-07-28T02:59:32.296Z"
+}

@@ -10,8 +10,6 @@ const {
 const { updateWorkAiFeedback } = require('./cloud-api')
 const { uploadWorkFile } = require('./cloud-upload')
 
-const MIN_AI_FEEDBACK_DURATION_SECONDS = 30
-
 const TRANSCRIPT_FIELDS = [
   'transcript',
   'recognizedText',
@@ -125,7 +123,7 @@ function parseDurationToSeconds(duration) {
 }
 
 function getAiMinRequiredSeconds() {
-  return MIN_AI_FEEDBACK_DURATION_SECONDS
+  return 0
 }
 
 function getFeedbackDurationSeconds(work = {}) {
@@ -150,10 +148,7 @@ function getFeedbackDurationSeconds(work = {}) {
 }
 
 function isAiFeedbackDurationTooShort(work = {}, computed) {
-  const durationSeconds = computed && Number(computed.durationSeconds || 0) > 0
-    ? Number(computed.durationSeconds)
-    : getFeedbackDurationSeconds(work)
-  return durationSeconds < MIN_AI_FEEDBACK_DURATION_SECONDS
+  return false
 }
 
 function getSubmissionStorageKey(submission = {}) {
@@ -188,12 +183,12 @@ function wait(milliseconds) {
   return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
-async function waitForCloudAudio(storageKey, submission, timeoutMs = 6000) {
+async function waitForCloudMedia(storageKey, submission, timeoutMs = 10000) {
   const workType = submission.workType || submission.type || ''
   const hasCloudFile = submission.cloudFileID || submission.fileID
-  const hasLocalAudio = submission.filePath || submission.tempFilePath || submission.audioPath || submission.recordPath
+  const hasLocalMedia = submission.filePath || submission.tempFilePath || submission.audioPath || submission.recordPath
 
-  if (workType !== 'audio' || hasCloudFile || !hasLocalAudio) return submission
+  if (!['audio', 'video'].includes(workType) || hasCloudFile || !hasLocalMedia) return submission
 
   const startedAt = Date.now()
   while (Date.now() - startedAt < timeoutMs) {
@@ -243,6 +238,20 @@ function normalizeDimensionScores(value) {
     .slice(0, 6)
 }
 
+function normalizeAbilityRadar(value) {
+  const source = value && Array.isArray(value.dimensions) ? value.dimensions : []
+  if (source.length < 5 || source.length > 6) return null
+
+  const dimensions = source
+    .map(item => ({
+      name: String(item && item.name || '').trim().slice(0, 8),
+      score: clampScore(item && item.score)
+    }))
+    .filter(item => item.name)
+
+  return dimensions.length === source.length ? { dimensions } : null
+}
+
 function unwrapAiFeedback(feedback, meta = {}) {
   if (!feedback || typeof feedback !== 'object' || Array.isArray(feedback)) return feedback
   const directKeys = ['summary', 'contentReview', 'content_review', 'voiceStateReview', 'voice_state_review', 'strengths', 'improvements', 'nextPractice', 'next_practice']
@@ -281,7 +290,7 @@ function getModeNotice(feedbackMode) {
 
   if (feedbackMode === 'metadata_only') {
     return {
-      noticeText: '本次反馈暂未分析真实语音内容，仅基于任务和时长生成。',
+      noticeText: '本次反馈暂未分析真实语音内容，仅基于训练任务信息生成。',
       noticeClass: 'ai-mode-metadata'
     }
   }
@@ -316,6 +325,7 @@ function normalizeAiFeedback(feedback, meta = {}) {
       improvements: [],
       nextPractice: [],
       dimensionScores: [],
+      abilityRadar: null,
       totalScore: 0,
       level: '',
       caution: '',
@@ -339,6 +349,7 @@ function normalizeAiFeedback(feedback, meta = {}) {
       improvements: [],
       nextPractice: [],
       dimensionScores: [],
+      abilityRadar: null,
       totalScore: 0,
       level: '',
       caution: '',
@@ -354,6 +365,7 @@ function normalizeAiFeedback(feedback, meta = {}) {
   const improvements = toArray(feedback.improvements || feedback.weaknesses || feedback.improvementPoints || feedback.improvement_points, 3)
   const nextPractice = toArray(feedback.nextPractice || feedback.next_practice || feedback.suggestions || feedback.trainingAdvice || feedback.training_advice, 3)
   const dimensionScores = normalizeDimensionScores(feedback.dimensionScores || feedback.dimension_scores)
+  const abilityRadar = normalizeAbilityRadar(feedback.abilityRadar || feedback.ability_radar)
   const feedbackMode = getFeedbackMode(meta, feedback)
   const notice = getModeNotice(feedbackMode)
 
@@ -367,6 +379,7 @@ function normalizeAiFeedback(feedback, meta = {}) {
     improvements,
     nextPractice,
     dimensionScores,
+    abilityRadar,
     totalScore: clampScore(feedback.totalScore || feedback.total_score || feedback.score),
     level: feedback.level || '',
     caution: feedback.caution || '',
@@ -449,6 +462,10 @@ function buildFeedbackPayload(submission = {}, computed = {}) {
     fileID: effectiveCloudFileID,
     filePath: localFilePath || submission.filePath || '',
     fileName: submission.fileName || '',
+    fileSize: Object.prototype.hasOwnProperty.call(submission, 'fileSize') ? submission.fileSize : undefined,
+    mimeType: submission.mimeType || '',
+    traceId: submission.traceId || '',
+    mediaInfo: submission.mediaInfo || null,
     tempFilePath: localFilePath || submission.tempFilePath || '',
     audioPath: submission.audioPath || '',
     recordPath: submission.recordPath || '',
@@ -469,16 +486,10 @@ function buildFeedbackPayload(submission = {}, computed = {}) {
 
 function getFeedbackStatus(submission = {}) {
   const status = submission.aiFeedbackStatus
-  if (status === 'blocked') {
-    return isAiFeedbackDurationTooShort(submission) ? 'blocked' : ''
-  }
+  if (status === 'blocked') return ''
   if (['pending', 'done', 'error'].indexOf(status) > -1) return status
-  if (submission.aiFeedbackBlockedReason === 'duration_too_short') {
-    return isAiFeedbackDurationTooShort(submission) ? 'blocked' : ''
-  }
   if (submission.aiFeedbackError) return 'error'
   if (submission.aiFeedback) return 'done'
-  if (getFeedbackDurationSeconds(submission) > 0 && isAiFeedbackDurationTooShort(submission)) return 'blocked'
   return ''
 }
 
@@ -497,18 +508,6 @@ function getSuccessfulGenerateCount(submission = {}) {
 
 function getFeedbackActionState(submission = {}) {
   const status = getFeedbackStatus(submission)
-
-  if (status === 'blocked') {
-    return {
-      status,
-      text: '时长不足',
-      disabled: false,
-      blocked: true,
-      canGenerate: false,
-      canView: false,
-      className: 'feedback-blocked-btn'
-    }
-  }
 
   if (status === 'pending') {
     return {
@@ -587,27 +586,6 @@ function buildComputedFields(submission = {}) {
   }
 }
 
-function markBlocked(storageKey, submission, computed) {
-  const patch = {
-    aiFeedbackStatus: 'blocked',
-    aiFeedback: null,
-    aiFeedbackBlockedReason: 'duration_too_short',
-    aiFeedbackSource: 'none',
-    aiFeedbackModel: 'none',
-    aiFeedbackError: false,
-    durationSeconds: computed.durationSeconds,
-    minRequiredSeconds: computed.minRequiredSeconds
-  }
-
-  updateSubmissionFeedback(storageKey, submission.id, patch)
-
-  return {
-    status: 'blocked',
-    blocked: true,
-    ...patch
-  }
-}
-
 function markError(storageKey, submission, message, patch = {}) {
   const errorMessage = message || 'AI反馈生成失败，请稍后重试'
   const nextPatch = {
@@ -643,7 +621,6 @@ async function generateFeedbackForSubmission(submission = {}, options = {}) {
     durationSeconds: computed.durationSeconds,
     minRequiredSeconds: computed.minRequiredSeconds
   })
-  console.log('[ai-feedback] duration check', computed)
 
   if (currentStatus === 'done' && submission.aiFeedback) {
     return {
@@ -659,11 +636,6 @@ async function generateFeedbackForSubmission(submission = {}, options = {}) {
       status: 'pending',
       message: 'AI点评正在生成中，请稍候。'
     }
-  }
-
-  if (computed.durationSeconds < computed.minRequiredSeconds) {
-    console.log('[ai-feedback] blocked: duration too short', computed)
-    return markBlocked(storageKey, submission, computed)
   }
 
   const usage = await canUseAi('training_feedback')
@@ -691,28 +663,41 @@ async function generateFeedbackForSubmission(submission = {}, options = {}) {
   }
 
   const nextAttemptCount = attemptCount + 1
-  const activeSubmission = await waitForCloudAudio(storageKey, submission)
+  const activeSubmission = await waitForCloudMedia(storageKey, submission)
   const feedbackType = options.feedbackType === 'deep' || activeSubmission.feedbackType === 'deep'
     ? 'deep'
     : 'normal'
 
   let ensuredSubmission = activeSubmission
-  if (!getFirstCloudFileID(ensuredSubmission) && getFirstLocalFilePath(ensuredSubmission) && (ensuredSubmission.type || ensuredSubmission.workType) !== 'video') {
+  if (!getFirstCloudFileID(ensuredSubmission) && getFirstLocalFilePath(ensuredSubmission)) {
     console.log('[ai-feedback] no cloud file, will upload local:', {
       workId: submission.id,
       localPath: getFirstLocalFilePath(ensuredSubmission)
     })
     try {
-      wx.showLoading({ title: '上传录音...', mask: true })
+      wx.showLoading({ title: '上传作品...', mask: true })
       const uploadRes = await uploadWorkFile(
         getFirstLocalFilePath(ensuredSubmission),
-        ensuredSubmission.type || ensuredSubmission.workType || 'audio'
+        ensuredSubmission.type || ensuredSubmission.workType || 'audio',
+        { traceId: ensuredSubmission.traceId || '', mimeType: ensuredSubmission.mimeType || '' }
       )
       const uploadedFileID = uploadRes && uploadRes.fileID ? String(uploadRes.fileID) : ''
       if (uploadedFileID) {
         console.log('[ai-feedback] local upload success:', { workId: submission.id, fileID: uploadedFileID })
-        ensuredSubmission = { ...ensuredSubmission, cloudFileID: uploadedFileID, fileID: uploadedFileID }
-        updateSubmissionFeedback(storageKey, submission.id, { cloudFileID: uploadedFileID, fileID: uploadedFileID })
+        const uploadedFileSize = uploadRes.fileSize !== null && uploadRes.fileSize !== undefined
+          ? uploadRes.fileSize
+          : ensuredSubmission.fileSize
+        ensuredSubmission = {
+          ...ensuredSubmission,
+          cloudFileID: uploadedFileID,
+          fileID: uploadedFileID,
+          fileSize: uploadedFileSize
+        }
+        updateSubmissionFeedback(storageKey, submission.id, {
+          cloudFileID: uploadedFileID,
+          fileID: uploadedFileID,
+          fileSize: uploadedFileSize
+        })
       }
     } catch (uploadErr) {
       console.warn('[ai-feedback] local upload failed:', uploadErr)
@@ -783,6 +768,11 @@ async function generateFeedbackForSubmission(submission = {}, options = {}) {
           code,
           message,
           asrStatus: result.asrStatus || 'failed',
+          debugCode: result.debugCode || 'ASR_EMPTY_RESULT',
+          asrErrorMessage: result.asrErrorMessage || '',
+          providerCode: result.providerCode || '',
+          requestId: result.requestId || '',
+          traceId: result.traceId || payload.traceId || '',
           canRetry: hasMediaFile(submission)
         }
       }
@@ -791,7 +781,13 @@ async function generateFeedbackForSubmission(submission = {}, options = {}) {
         durationSeconds: computed.durationSeconds,
         minRequiredSeconds: computed.minRequiredSeconds,
         aiFeedbackGenerateCount: generateCount,
-        aiFeedbackAttemptCount: nextAttemptCount
+        aiFeedbackAttemptCount: nextAttemptCount,
+        asrStatus: result.asrStatus || 'failed',
+        asrDebugCode: result.debugCode || code || '',
+        asrErrorMessage: result.asrErrorMessage || message,
+        asrProviderCode: result.providerCode || '',
+        asrRequestId: result.requestId || '',
+        asrTraceId: result.traceId || payload.traceId || ''
       })
     }
 
@@ -895,7 +891,6 @@ module.exports = {
   TRAINING_SUBMISSIONS_KEY,
   EXTRA_SUBMISSIONS_KEY,
   DAILY_USAGE_KEY: AI_DAILY_USAGE_KEY,
-  MIN_AI_FEEDBACK_DURATION_SECONDS,
   normalizeTranscript,
   getFirstCloudFileID,
   getFirstLocalFilePath,
@@ -911,6 +906,7 @@ module.exports = {
   buildFeedbackModalTitle,
   buildFeedbackModalContent,
   normalizeAiFeedback,
+  normalizeAbilityRadar,
   generateFeedbackForSubmission,
   requestTrainingFeedback,
   updateSubmissionFeedback

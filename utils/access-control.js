@@ -5,6 +5,11 @@ const {
   MEMBER_DAILY_AI_LIMIT,
   MEMBER_MONTHLY_AI_LIMIT
 } = require('./membership-config')
+const {
+  canAccessTrainingContent,
+  isAdminUser
+} = require('./training-access-policy')
+const { isPhoneBoundUser } = require('./auth-state')
 
 const USERS_KEY = 'users'
 const STUDENTS_KEY = 'students'
@@ -52,7 +57,7 @@ function maskPhone(phone) {
 }
 
 function isPhoneBound(user = getCurrentUser()) {
-  return user.phoneBound === true && /^1\d{10}$/.test(normalizePhone(user.phone))
+  return isPhoneBoundUser(user)
 }
 
 function createId(prefix) {
@@ -324,14 +329,6 @@ function normalizeMembershipType(value, fallback = 'free') {
   return fallback
 }
 
-function normalizeContentMembershipLevel(value, fallback = '') {
-  const level = String(value || '').toLowerCase()
-  if (level === 'member') return 'member'
-  if (level === 'monthly' || level === 'yearly' || level === 'admin') return 'member'
-  if (level === 'free') return 'free'
-  return fallback
-}
-
 function getActiveMemberAccess() {
   const user = getCurrentUser()
   const phoneBound = isPhoneBound(user)
@@ -351,7 +348,24 @@ function getActiveMemberAccess() {
     : ''
   const membershipType = normalizeMembershipType(userMembershipType || packageMembershipType, 'monthly')
 
-  if (phoneBound && userMembershipType === 'admin' && user.isAdmin === true) {
+  if (isAdminUser(user, getMemberProfile())) {
+    return {
+      isMember: true,
+      isAdmin: true,
+      type: 'admin',
+      membershipType: 'admin',
+      membershipStatus: 'active',
+      membershipEndAt: null,
+      label: '管理员',
+      source: user.adminSource || 'current_user',
+      aiDailyLimit: -1,
+      aiMonthlyLimit: -1,
+      phoneBound,
+      packages: mergedPackages
+    }
+  }
+
+  if (phoneBound && userMembershipType === 'admin') {
     return {
       isMember: true,
       isAdmin: true,
@@ -508,7 +522,7 @@ function getCurrentAccessStatus() {
     roleType: 'free',
     membershipType: 'free',
     label: '普通用户',
-    desc: '可使用前 21 天训练，每天 1 次 AI 点评/测评',
+    desc: `可使用前 3 天训练，每天 1 次 AI 点评/测评`,
     packages: memberAccess.packages,
     canAccessBasic: true,
     canAccessAdvanced: false,
@@ -518,6 +532,37 @@ function getCurrentAccessStatus() {
     isAdmin: false,
     phoneBound: memberAccess.phoneBound === true
   }
+}
+
+function syncCloudTrainingAccess(access = {}) {
+  if (!access || typeof access !== 'object') return false
+  const currentUser = getCurrentUser()
+  const isAdmin = isAdminUser(access)
+  const membershipType = isAdmin
+    ? 'admin'
+    : normalizeMembershipType(access.membershipType, 'free')
+  const nextUser = saveCurrentUser({
+    ...currentUser,
+    role: access.role || (isAdmin ? 'admin' : 'user'),
+    isAdmin,
+    adminSource: access.adminSource || '',
+    membershipType,
+    membershipStatus: access.membershipStatus || 'active',
+    membershipEndAt: isAdmin ? '' : (access.membershipEndAt || ''),
+    hasAdvancedAccess: access.hasAdvancedAccess === true || isAdmin
+  })
+
+  wx.setStorageSync(MEMBER_PROFILE_KEY, {
+    isMember: isAdmin || ['monthly', 'yearly'].includes(membershipType),
+    isAdmin,
+    membershipType,
+    memberType: membershipType,
+    membershipStatus: nextUser.membershipStatus,
+    membershipEndAt: nextUser.membershipEndAt,
+    expireAt: nextUser.membershipEndAt,
+    source: access.adminSource || 'cloud_training_access'
+  })
+  return true
 }
 
 function canAccessModule(moduleId) {
@@ -539,62 +584,17 @@ function canAccessAnyContent() {
 }
 
 function canAccessTask(moduleId, task = {}) {
-  const requiredMembership = normalizeContentMembershipLevel(task.membershipLevel)
-  if (requiredMembership === 'free') {
-    return {
-      allowed: true,
-      reason: 'cloud_free_access',
-      isFreeAccess: true,
-      packages: getActiveMemberAccess().packages
-    }
-  }
-
-  if (requiredMembership === 'member') {
-    const memberAccess = getActiveMemberAccess()
-    const currentUser = getCurrentUser()
-    const currentMembership = normalizeMembershipType(memberAccess.membershipType, 'free')
-    const allowed = currentUser.isAdmin === true ||
-      memberAccess.isAdmin === true ||
-      memberAccess.isMember === true ||
-      ['monthly', 'yearly', 'admin'].includes(currentMembership)
-    return {
-      allowed,
-      reason: allowed ? 'member_content_access' : 'need_member',
-      isMemberAccess: allowed,
-      packages: memberAccess.packages
-    }
-  }
-
-  const day = Number(task.day || (task.isPaid === true ? 22 : 1))
-  if (!requiredMembership && day <= 21) {
-    return {
-      allowed: true,
-      reason: 'free_basic_day',
-      isFreeAccess: true,
-      packages: getActiveMemberAccess().packages
-    }
-  }
-
   const memberAccess = getActiveMemberAccess()
-
-  if (!memberAccess.phoneBound && !isPhoneBound()) {
-    return {
-      allowed: false,
-      reason: 'need_phone',
-      isPhoneRequired: true,
-      packages: memberAccess.packages
-    }
-  }
-
-  const ranks = { free: 0, monthly: 1, yearly: 2, admin: 3 }
-  const currentMembership = normalizeMembershipType(memberAccess.membershipType, 'free')
-  const allowed = requiredMembership
-    ? ranks[currentMembership] >= ranks[requiredMembership]
-    : memberAccess.isMember
+  const result = canAccessTrainingContent({
+    user: getCurrentUser(),
+    access: memberAccess,
+    content: task,
+    category: moduleId
+  })
   return {
-    allowed,
-    reason: allowed ? 'member_advanced_access' : 'need_member',
-    isMemberAccess: allowed,
+    ...result,
+    isFreeAccess: result.allowed && !result.requiresMembership,
+    isMemberAccess: result.allowed && result.requiresMembership,
     packages: memberAccess.packages
   }
 }
@@ -628,6 +628,8 @@ module.exports = {
   canAccessTask,
   canAccessAnyContent,
   getCurrentAccessStatus,
+  syncCloudTrainingAccess,
+  isAdminUser,
   recordLead,
   normalizePhone,
   maskPhone,

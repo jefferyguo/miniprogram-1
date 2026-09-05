@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page {{step === 'question' ? 'question-page' : ''}}">
   <view wx:if="{{step === 'intro'}}">
     <view class="hero-card">
@@ -263,3 +264,4 @@
   </view>
 </view>
 <member-benefit-modal id="memberBenefitModal" />
+<login-gate id="login-gate" />

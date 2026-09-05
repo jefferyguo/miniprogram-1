@@ -24,7 +24,7 @@ page {
 
 .hero-title {
   display: block;
-  font-size: 44rpx;
+  font-size: var(--font-ui-44, 44rpx);
   line-height: 1.25;
   font-weight: 900;
   margin-bottom: 12rpx;
@@ -33,7 +33,7 @@ page {
 .hero-desc {
   display: block;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 27rpx;
+  font-size: var(--font-reading-27, 27rpx);
   line-height: 1.5;
 }
 
@@ -42,12 +42,129 @@ page {
   padding: 8rpx 30rpx;
 }
 
+.font-size-section {
+  padding-top: 30rpx;
+  padding-bottom: 30rpx;
+}
+
+.font-size-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.font-size-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+.font-scale-value {
+  flex-shrink: 0;
+  min-width: 94rpx;
+  padding: 9rpx 16rpx;
+  border-radius: 999rpx;
+  color: #087a40;
+  background: #eaf8f0;
+  font-size: var(--font-ui-28, 28rpx);
+  line-height: 1.2;
+  font-weight: 900;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.font-slider-area {
+  margin-top: 24rpx;
+  padding: 0 4rpx;
+}
+
+.font-slider-visual {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 10rpx;
+  color: #354052;
+}
+
+.font-slider-a {
+  line-height: 1;
+  font-weight: 900;
+}
+
+.font-slider-a-small {
+  font-size: 26rpx;
+}
+
+.font-slider-a-large {
+  font-size: 44rpx;
+}
+
+.font-scale-slider {
+  margin: 4rpx 0 0;
+  padding: 12rpx 0;
+}
+
+.font-slider-scale {
+  position: relative;
+  height: 34rpx;
+  margin: -2rpx 8rpx 0;
+  color: #8a8f99;
+  font-size: 21rpx;
+  line-height: 1.4;
+}
+
+.font-slider-min,
+.font-slider-standard,
+.font-slider-max {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+.font-slider-min {
+  left: 0;
+}
+
+.font-slider-standard {
+  color: #5f6877;
+  font-weight: 800;
+  transform: translateX(-50%);
+}
+
+.font-slider-max {
+  right: 0;
+}
+
+.font-size-preview {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  border-radius: 22rpx;
+  background: #f5f7fb;
+}
+
+.font-size-preview-label {
+  display: block;
+  margin-bottom: 10rpx;
+  color: #8a8f99;
+  font-size: var(--font-ui-22, 22rpx);
+  line-height: 1.4;
+}
+
+.font-size-preview-copy {
+  display: block;
+  color: #20242c;
+  font-size: var(--font-reading-30, 30rpx);
+  line-height: 1.65;
+}
+
 .setting-item {
   min-height: 120rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 20rpx 0;
   border-bottom: 1rpx solid #f0f2f6;
+  box-sizing: border-box;
 }
 
 .setting-item:last-child {
@@ -62,7 +179,7 @@ page {
 .setting-title {
   display: block;
   color: #111111;
-  font-size: 30rpx;
+  font-size: var(--font-ui-30, 30rpx);
   line-height: 1.35;
   font-weight: 900;
   margin-bottom: 8rpx;
@@ -75,7 +192,7 @@ page {
 .setting-desc {
   display: block;
   color: #8a8f99;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.45;
 }
 
@@ -94,7 +211,7 @@ page {
 .version-label {
   display: block;
   color: #111111;
-  font-size: 30rpx;
+  font-size: var(--font-ui-30, 30rpx);
   line-height: 1.35;
   font-weight: 900;
   margin-bottom: 10rpx;
@@ -103,6 +220,6 @@ page {
 .version-text {
   display: block;
   color: #8a8f99;
-  font-size: 26rpx;
+  font-size: var(--font-reading-26, 26rpx);
   line-height: 1.5;
 }

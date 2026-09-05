@@ -6,7 +6,7 @@ const MEMBERSHIP_PRODUCTS = [
     membershipType: 'monthly',
     wechatProductName: '杨勤口才训练KEEP季度会员',
     title: '季度会员',
-    priceFen: 2990,
+    priceFen: 3990,
     durationDays: 90,
     description: '适合阶段性集中训练，每天 5 次 AI 点评/测评。'
   },

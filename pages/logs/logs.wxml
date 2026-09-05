@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <!--logs.wxml-->
 <scroll-view class="scrollarea" scroll-y type="list">
   <block wx:for="{{logs}}" wx:key="timeStamp" wx:for-item="log">

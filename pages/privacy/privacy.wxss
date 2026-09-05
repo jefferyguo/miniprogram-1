@@ -9,10 +9,53 @@ page {
 }
 
 .hero-card,
-.section-card {
+.section-card,
+.voice-agreement-entry {
   border-radius: 32rpx;
   background: #ffffff;
   box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.05);
+}
+
+.voice-agreement-entry {
+  min-height: 118rpx;
+  margin-top: 24rpx;
+  padding: 24rpx 28rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1rpx solid #dfe8f8;
+}
+
+.voice-entry-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.voice-entry-title,
+.voice-entry-desc {
+  display: block;
+}
+
+.voice-entry-title {
+  color: #24324a;
+  font-size: var(--font-ui-30, 30rpx);
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.voice-entry-desc {
+  margin-top: 6rpx;
+  color: #7b8493;
+  font-size: var(--font-reading-24, 24rpx);
+  line-height: 1.5;
+}
+
+.voice-entry-arrow {
+  margin-left: 20rpx;
+  color: #9aa4b2;
+  font-size: 44rpx;
+  line-height: 1;
 }
 
 .hero-card {
@@ -23,7 +66,7 @@ page {
 
 .hero-title {
   display: block;
-  font-size: 44rpx;
+  font-size: var(--font-ui-44, 44rpx);
   line-height: 1.25;
   font-weight: 900;
   margin-bottom: 12rpx;
@@ -32,7 +75,7 @@ page {
 .hero-desc {
   display: block;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 26rpx;
+  font-size: var(--font-reading-26, 26rpx);
   line-height: 1.55;
 }
 
@@ -44,7 +87,7 @@ page {
 .section-title {
   display: block;
   color: #111111;
-  font-size: 32rpx;
+  font-size: var(--font-ui-32, 32rpx);
   line-height: 1.35;
   font-weight: 900;
   margin-bottom: 18rpx;
@@ -73,6 +116,6 @@ page {
 .privacy-text {
   flex: 1;
   color: #606875;
-  font-size: 27rpx;
+  font-size: var(--font-reading-27, 27rpx);
   line-height: 1.6;
 }

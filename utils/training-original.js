@@ -1,4 +1,5 @@
 const HISTORY_ORIGINAL_UNAVAILABLE_MESSAGE = '该作品对应的历史训练内容暂不可查看。'
+const PERMANENT_CONTENT_ID_RE = /^tc_[0-9a-f]{32}$/
 
 const MODULE_ALIASES = {
   reading: 'reading',
@@ -34,35 +35,26 @@ function normalizeModuleId(value) {
   return ''
 }
 
-function parseModuleFromContentId(contentId) {
-  const text = cleanText(contentId)
-  if (!text) return ''
-  const match = text.match(/^(.+?)(?:-v\d+)?-day-\d+$/i)
-  return normalizeModuleId(match ? match[1] : text)
-}
-
-function parseDayFromContentId(contentId) {
-  const match = cleanText(contentId).match(/(?:day[-_]?|^)(\d+)/i)
-  return match ? Number(match[1] || 0) : 0
+function normalizePermanentContentId(value) {
+  const contentId = cleanText(value)
+  return PERMANENT_CONTENT_ID_RE.test(contentId) ? contentId : ''
 }
 
 function getTrainingLocator(work = {}) {
-  const contentId = cleanText(work.contentId || work.taskId)
+  const contentId = normalizePermanentContentId(work.contentId || work.taskId)
   const moduleId = normalizeModuleId(
     work.trainingCategorySnapshot ||
     work.moduleId ||
     work.category ||
     work.moduleType ||
     work.trainingType ||
-    work.trainingCategory ||
-    parseModuleFromContentId(contentId)
+    work.trainingCategory
   )
   const day = Number(
     work.trainingDaySnapshot ||
     work.day ||
     work.dayNumber ||
     work.taskDay ||
-    parseDayFromContentId(contentId) ||
     0
   )
 
@@ -78,16 +70,15 @@ function getTrainingSnapshot(work = {}) {
   const content = cleanText(work.trainingContentSnapshot)
   if (!content) return null
 
-  const contentId = cleanText(work.contentId || work.taskId)
+  const contentId = normalizePermanentContentId(work.contentId || work.taskId)
   const category = cleanText(
     work.trainingCategorySnapshot ||
     work.category ||
     work.moduleType ||
-    work.trainingType ||
-    parseModuleFromContentId(contentId)
+    work.trainingType
   )
   const moduleId = normalizeModuleId(category)
-  const day = Number(work.trainingDaySnapshot || work.day || work.dayNumber || parseDayFromContentId(contentId) || 0)
+  const day = Number(work.trainingDaySnapshot || work.day || work.dayNumber || 0)
   const title = cleanText(
     work.trainingTitleSnapshot ||
     work.contentTitle ||
@@ -111,12 +102,10 @@ function getTrainingSnapshot(work = {}) {
 }
 
 function createTrainingSnapshot(task = {}, category = '') {
-  const content = cleanText(task.material || task.content || task.promptText)
   const title = cleanText(task.displayTitle || task.contentTitle || task.title)
   const day = Number(task.day || task.dayNumber || 0)
   return {
     trainingTitleSnapshot: title,
-    trainingContentSnapshot: content,
     trainingCategorySnapshot: cleanText(category),
     trainingDaySnapshot: day
   }
@@ -160,8 +149,7 @@ module.exports = {
   createTrainingSnapshot,
   getTrainingLocator,
   getTrainingSnapshot,
+  normalizePermanentContentId,
   normalizeModuleId,
-  parseDayFromContentId,
-  parseModuleFromContentId,
   resolveHistoricalOriginal
 }

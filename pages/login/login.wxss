@@ -22,7 +22,7 @@ button::after {
 
 .hero-title {
   display: block;
-  font-size: 46rpx;
+  font-size: var(--font-ui-46, 46rpx);
   line-height: 1.25;
   font-weight: 900;
   margin-bottom: 14rpx;
@@ -31,7 +31,7 @@ button::after {
 .hero-desc {
   display: block;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 27rpx;
+  font-size: var(--font-reading-27, 27rpx);
   line-height: 1.55;
 }
 
@@ -85,7 +85,7 @@ button::after {
   display: block;
   margin-top: 12rpx;
   color: #5568d9;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   font-weight: 800;
 }
 
@@ -95,13 +95,13 @@ button::after {
   border-radius: 20rpx;
   color: #182233;
   background: #f5f7fb;
-  font-size: 27rpx;
+  font-size: var(--font-ui-27, 27rpx);
 }
 
 .section-title {
   display: block;
   color: #111111;
-  font-size: 34rpx;
+  font-size: var(--font-ui-34, 34rpx);
   line-height: 1.35;
   font-weight: 900;
   margin-bottom: 24rpx;
@@ -124,7 +124,7 @@ button::after {
 
 .benefit-text {
   color: #24315f;
-  font-size: 28rpx;
+  font-size: var(--font-reading-28, 28rpx);
   line-height: 1.45;
   font-weight: 700;
 }
@@ -137,7 +137,7 @@ button::after {
   border-radius: 999rpx;
   color: #ffffff;
   background: #5568d9;
-  font-size: 28rpx;
+  font-size: var(--font-ui-28, 28rpx);
   font-weight: 900;
 }
 
@@ -150,7 +150,7 @@ button::after {
   margin-top: 24rpx;
   text-align: center;
   color: #8a8f99;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.5;
 }
 
@@ -161,5 +161,5 @@ button::after {
   padding: 0;
   color: #8a8f99;
   background: transparent;
-  font-size: 25rpx;
+  font-size: var(--font-ui-25, 25rpx);
 }

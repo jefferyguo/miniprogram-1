@@ -9,6 +9,27 @@ cloud.init({
 
 const db = cloud.database()
 
+const DURATION_EVALUATION_PATTERNS = [
+  /\d+\s*(?:秒|分钟)/,
+  /(?:一分钟|几分钟)/,
+  /(?:时长|时间长度|篇幅).{0,18}(?:过长|过短|偏长|偏短|略长|略短|控制|压缩|缩短|延长|精简|建议|推荐|合适|达到|不足)/,
+  /(?:控制|压缩|缩短|延长|精简).{0,18}(?:时长|时间|\d+\s*(?:秒|分钟)|一分钟|几分钟)/
+]
+
+function sanitizeDurationEvaluationText(text, fallback = '') {
+  const parts = (String(text || '').trim().match(/[^。！？；\n]+[。！？；\n]?/g) || [])
+    .map(part => part.trim())
+    .filter(part => part && !DURATION_EVALUATION_PATTERNS.some(pattern => pattern.test(part)))
+  return parts.join('').trim() || fallback
+}
+
+function sanitizeDurationEvaluationList(items, fallback = []) {
+  const safeItems = (Array.isArray(items) ? items : [])
+    .map(item => sanitizeDurationEvaluationText(item))
+    .filter(Boolean)
+  return safeItems.length ? safeItems : fallback
+}
+
 async function hasBoundPhone() {
   try {
     const openid = cloud.getWXContext().OPENID || ''
@@ -25,16 +46,16 @@ async function hasBoundPhone() {
 function normalizeReport(report) {
   if (!report || typeof report !== 'object') return null
 
-  const summary = String(report.summary || '').trim()
+  const summary = sanitizeDurationEvaluationText(report.summary, '请继续围绕内容组织、表达清晰度和沟通效果进行针对性练习。')
   if (!summary) return null
 
   return {
     summary,
-    strengths: Array.isArray(report.strengths) ? report.strengths.slice(0, 2) : [],
-    weaknesses: Array.isArray(report.weaknesses) ? report.weaknesses.slice(0, 2) : [],
-    trainingAdvice: Array.isArray(report.trainingAdvice) ? report.trainingAdvice.slice(0, 3) : [],
-    recommendedModule: report.recommendedModule ? String(report.recommendedModule).slice(0, 15) : '',
-    encouragement: report.encouragement ? String(report.encouragement).slice(0, 20) : ''
+    strengths: sanitizeDurationEvaluationList(report.strengths).slice(0, 2),
+    weaknesses: sanitizeDurationEvaluationList(report.weaknesses, ['可以继续加强内容重点和结构衔接。']).slice(0, 2),
+    trainingAdvice: sanitizeDurationEvaluationList(report.trainingAdvice, ['选择一个具体表达问题复练，并通过回听检查改进效果。']).slice(0, 3),
+    recommendedModule: sanitizeDurationEvaluationText(report.recommendedModule).slice(0, 15),
+    encouragement: sanitizeDurationEvaluationText(report.encouragement).slice(0, 20)
   }
 }
 
@@ -52,6 +73,7 @@ function buildPrompt(data) {
   return `你是一名专业口才训练教练，请根据用户的表达力测评数据，生成一份简短、温和、具体、可执行的表达训练报告。
 
 要求：
+0. 【最高优先级】不得评价、引用或推断用户作品总时长，不得判断过长或过短，不得建议压缩、缩短、延长或控制到任何秒数/分钟数。录音时长属于技术元数据，不参与评分、总体评价和训练建议；只依据用户实际表达内容及答题数据评价。
 1. 不做心理诊断。
 2. 不做医学判断。
 3. 不夸大 AI 能力。

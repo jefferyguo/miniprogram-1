@@ -1,0 +1,41 @@
+{
+  "stage": 3,
+  "title": "新用户日报周报实现",
+  "generatedAt": "2026-07-28T02:22:58.165Z",
+  "status": "CODE_COMPLETE",
+  "changes": {
+    "cloudApi": {
+      "newFunctions": [
+        "adminGetDailyRegistrationReport",
+        "adminGetWeeklyRegistrationReport",
+        "adminRegenerateRegistrationReport",
+        "adminExportRegistrationReport"
+      ],
+      "newCollection": "userRegistrationReports",
+      "newSwitchCases": 4,
+      "syntaxCheck": "PASS"
+    },
+    "cloudApiClient": {
+      "newFunctions": [
+        "adminGetDailyRegistrationReport",
+        "adminGetWeeklyRegistrationReport",
+        "adminRegenerateRegistrationReport",
+        "adminExportRegistrationReport"
+      ],
+      "syntaxCheck": "PASS"
+    },
+    "adminUI": "待实现 (admin-mini-config.js 新用户报表Tab)"
+  },
+  "features": {
+    "dailyReport": "按日期查询新注册用户，统计手机号授权率、用户名来源",
+    "weeklyReport": "按周查询，含环比变化、每日趋势",
+    "snapshotRegeneration": "幂等生成报告快照(userRegistrationReports集合)",
+    "csvExport": "服务端鉴权CSV导出，不含完整手机号",
+    "phonePrivacy": "默认掩码，完整手机号需showFullPhone=true+管理员鉴权",
+    "timezone": "Asia/Shanghai，半开区间[startAt, endAt)"
+  },
+  "blockers": {
+    "cloudApiDeploy": "MANUAL_BLOCKER: 需部署cloudApi云函数",
+    "adminUIDeploy": "MANUAL_BLOCKER: 需实现管理端UI并重新编译小程序"
+  }
+}

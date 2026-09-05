@@ -1,0 +1,61 @@
+{
+  "startedAt": "2026-08-01T13:34:14.382Z",
+  "contentId": "tc_4c646238524a9c643cc1a25cd2b06e96",
+  "marker": "闭环同步验证-1785591254382",
+  "logs": [
+    {
+      "type": "warn",
+      "args": [
+        "[cloud-api] fail:",
+        "getAppContentConfigs",
+        {
+          "code": "server_error",
+          "result": {
+            "success": false,
+            "code": "server_error",
+            "message": "云函数执行失败，请稍后重试。"
+          }
+        }
+      ]
+    },
+    {
+      "type": "warn",
+      "args": [
+        "[training] 首页文字配置读取失败，继续使用本地文案:",
+        "云函数执行失败，请稍后重试。"
+      ]
+    }
+  ],
+  "exceptions": [],
+  "before": {
+    "title": "【必看】朗诵训练｜实用技巧",
+    "contentVersion": 3,
+    "contentLength": 396
+  },
+  "update": {
+    "success": true,
+    "verificationMatched": true,
+    "fromVersion": 3,
+    "toVersion": 4
+  },
+  "propagation": {
+    "catalogTitleVisible": true,
+    "detailContentVisible": true
+  },
+  "optimisticLock": {
+    "rejected": true,
+    "code": "CONTENT_VERSION_CONFLICT"
+  },
+  "restore": {
+    "success": true,
+    "verificationMatched": true,
+    "contentVersion": 5
+  },
+  "finalReadback": {
+    "catalogCanonical": true,
+    "detailCanonical": true,
+    "contentVersion": 5
+  },
+  "success": true,
+  "completedAt": "2026-08-01T13:34:34.531Z"
+}

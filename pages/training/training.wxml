@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="header">
     <text class="title">{{homeCopy.welcomeText}}</text>
@@ -148,4 +149,5 @@
       </view>
     </view>
   </view>
+  <login-gate id="login-gate" />
 </view>

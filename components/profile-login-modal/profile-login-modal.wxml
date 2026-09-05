@@ -20,7 +20,7 @@
         class="nickname-input"
         type="nickname"
         value="{{nickname}}"
-        placeholder="请输入微信昵称"
+        placeholder="请输入昵称"
         bindinput="onNicknameInput"
         bindblur="onNicknameBlur"
       />

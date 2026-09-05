@@ -18,7 +18,7 @@
   border-radius: 18rpx;
   background: #eef4ff;
   color: #3458c8;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.5;
   font-weight: 700;
   box-sizing: border-box;

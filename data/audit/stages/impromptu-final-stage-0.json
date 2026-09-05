@@ -1,0 +1,16 @@
+{
+  "stage": 0,
+  "title": "当前真实状态审查",
+  "generatedAt": "2026-07-28T03:39:38.395Z",
+  "status": "COMPLETE",
+  "generatedTrainingDataSize": "366KB",
+  "topicItems": 276,
+  "lightweight": true,
+  "hasFullContent": 0,
+  "hasRichHtml": 0,
+  "cloudApiStyleFields": "titleStyle+contentStylePreset已添加(4处)",
+  "migrationScript": "scripts/migrate-impromptu-0728.js存在,支持--offline-validate/--audit-history/--dry-run/--backup/--apply/--verify/--rollback/--help",
+  "otherCategories": "reading:214 retell:255 speech:111 leaderSpeech:22 (不变)",
+  "syntax": "全部通过",
+  "gitDiffCheck": "PASS"
+}

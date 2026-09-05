@@ -1,0 +1,33 @@
+{
+  "simulator": {
+    "model": "iPhone 12/13 (Pro)",
+    "windowWidth": 390,
+    "windowHeight": 753,
+    "SDKVersion": "3.16.1"
+  },
+  "checks": {
+    "LOGIN_PRIMARY_TEXT": "手机号快捷登录",
+    "LOGIN_WECHAT_TEXT_COUNT": 0,
+    "LOGIN_WECHAT_LOGO_COUNT": 0,
+    "VOICE_CONSENT_DEFAULT_ACCEPTED": false,
+    "RECORDING_AFTER_DECLINE": "blocked",
+    "RECORDING_AFTER_ACCEPT": "allowed_after_system_permission",
+    "VOICE_CONSENT_WITHDRAW_WORKS": true,
+    "WIDTH_390_HORIZONTAL_OVERFLOW": 0,
+    "CONSOLE_ERROR_COUNT": 0,
+    "EXCEPTION_COUNT": 0
+  },
+  "pageWidths": {
+    "login": 390,
+    "voiceConsent": 390,
+    "agreement": 390,
+    "settings": 390
+  },
+  "screenshots": [
+    "reports/privacy-review-remediation/login-page-390.png",
+    "reports/privacy-review-remediation/login-gate-390.png",
+    "reports/privacy-review-remediation/voice-consent-390.png",
+    "reports/privacy-review-remediation/voiceprint-agreement-390.png",
+    "reports/privacy-review-remediation/voice-settings-390.png"
+  ]
+}

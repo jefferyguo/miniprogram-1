@@ -32,10 +32,15 @@ const {
   previewVideoByPath
 } = require('../../utils/work-media')
 const { publishWorkToSquare, unpublishWorkFromSquare } = require('../../utils/work-public')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('../../utils/work-share-policy')
 const { uploadWorkFile } = require('../../utils/cloud-upload')
 const { submitWorkRecord } = require('../../utils/cloud-api')
-const { getActiveMemberAccess } = require('../../utils/access-control')
+const { canAccessTask } = require('../../utils/access-control')
 const { requirePhoneBound } = require('../../utils/phone-auth')
+const { ensureVoiceConsentAndMicPermission } = require('../../utils/voice-consent')
 const { refreshRemoteTrainingContents } = require('../../utils/remote-training')
 const {
   enableShareMenu,
@@ -82,6 +87,7 @@ function buildWorkItem(item) {
 
   return {
     ...item,
+    shareAllowed: isWorkShareAllowed(item),
     audioKey: `extra-${item.id}`,
     typeTitle: item.type === 'audio' ? '录音作品' : '录像作品',
     typeIcon: item.type === 'audio' ? '🎤' : '🎥',
@@ -170,7 +176,9 @@ function normalizeExtraItem(item) {
       id: '',
       text: item,
       category: '',
-      usageTip: ''
+      usageTip: '',
+      membershipLevel: 'free',
+      day: 1
     }
   }
 
@@ -181,7 +189,11 @@ function normalizeExtraItem(item) {
     author: item && item.author ? item.author : '',
     category: item && item.category ? item.category : '',
     usageTip: item && item.usageTip ? item.usageTip : '',
-    membershipLevel: item && item.membershipLevel === 'member' ? 'member' : 'free'
+    membershipLevel: item && item.membershipLevel === 'member' ? 'member' : 'free',
+    day: Number(item && (item.day || item.dayNumber) || 0),
+    status: item && item.status ? item.status : '',
+    active: item && item.active,
+    visible: item && item.visible
   }
 }
 
@@ -221,6 +233,9 @@ function buildSavedSubmission(draft) {
     tempFilePath: draft.tempFilePath || draft.filePath || '',
     thumbPath: draft.thumbPath || '',
     fileSize: draft.fileSize || 0,
+    mimeType: draft.mimeType || '',
+    traceId: draft.traceId || '',
+    mediaInfo: draft.mediaInfo || null,
     isPublic: false,
     publicPermissionConfirmed: false,
     aiFeedbackStatus: '',
@@ -326,15 +341,17 @@ Page({
   },
 
   hasMemberAccess() {
-    const access = getActiveMemberAccess()
-    return access.isAdmin === true ||
-      access.isMember === true ||
-      ['monthly', 'yearly', 'admin'].includes(access.membershipType)
+    return canAccessTask('extra', {
+      day: 4,
+      membershipLevel: 'member'
+    }).allowed
   },
 
   getAvailableItems(items = []) {
-    if (this.hasMemberAccess()) return items
-    return (items || []).filter(item => this.normalizeExtraItem(item).membershipLevel !== 'member')
+    return (items || []).filter(item => canAccessTask(
+      'extra',
+      this.normalizeExtraItem(item)
+    ).allowed)
   },
 
   showMemberModal() {
@@ -354,7 +371,10 @@ Page({
   },
 
   ensureCurrentExtraAccess() {
-    if (this.data.currentItemMembershipLevel !== 'member' || this.hasMemberAccess()) return true
+    if (canAccessTask('extra', {
+      day: 4,
+      membershipLevel: this.data.currentItemMembershipLevel
+    }).allowed) return true
     this.showMemberModal()
     return false
   },
@@ -524,20 +544,27 @@ Page({
     })
   },
 
-  toggleAudio() {
+  async toggleAudio() {
     if (this.data.isVideoRecording) return
     if (!this.ensureCurrentExtraAccess()) return
 
     if (this.data.isAudioRecording) {
       this.stopAudioRecord()
     } else {
+      if (this._audioStartPending) return
       if (!requirePhoneBound('提交训练作品', {
         page: this,
         onSuccess: () => this.toggleAudio()
       })) return
-      this.ensureRecordPermission(() => {
+
+      this._audioStartPending = true
+      try {
+        const allowed = await ensureVoiceConsentAndMicPermission(this)
+        if (!allowed || this.data.isAudioRecording || this.data.isVideoRecording) return
         this.startAudioRecord()
-      })
+      } finally {
+        this._audioStartPending = false
+      }
     }
   },
 
@@ -660,6 +687,10 @@ Page({
       teacherFeedbackStatus: '',
       teacherFeedback: null,
       filePath: data.filePath || '',
+      fileSize: data.fileSize || 0,
+      mimeType: data.mimeType || 'video/mp4',
+      traceId: data.traceId || '',
+      mediaInfo: data.mediaInfo || null,
       thumbPath: data.thumbPath || '',
       promptText: data.promptText || '',
       recordTitle: data.recordTitle || '',
@@ -815,7 +846,7 @@ Page({
       }
 
       if (res.status === 'empty_transcript') {
-        this.showEmptyTranscriptModal(res)
+        this.showEmptyTranscriptModal(res, target)
         return
       }
 
@@ -888,17 +919,24 @@ Page({
     })
   },
 
-  showEmptyTranscriptModal(res = {}) {
+  showEmptyTranscriptModal(res = {}, retryTarget = null) {
     const canRetry = res.canRetry === true
+    console.error('[extra-training][ai-feedback] ASR returned no transcript:', {
+      debugCode: res.debugCode || '',
+      asrStatus: res.asrStatus || '',
+      asrErrorMessage: res.asrErrorMessage || '',
+      providerCode: res.providerCode || '',
+      requestId: res.requestId || ''
+    })
     wx.showModal({
       title: '未识别到有效语音',
-      content: '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
+      content: res.message || '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
       confirmText: canRetry ? '重新识别' : '我知道了',
       cancelText: canRetry ? '我知道了' : '',
       showCancel: canRetry,
       success: modalRes => {
         if (modalRes.confirm && canRetry) {
-          const currentTarget = this.findMergedDraft(this.data.aiGeneratingWorkId)
+          const currentTarget = retryTarget || this.findMergedDraft(this.data.aiGeneratingWorkId)
           if (currentTarget) {
             this.generateAiFeedback(currentTarget)
           }
@@ -986,13 +1024,18 @@ Page({
 
     try {
       if (localFilePath) {
-        const uploadRes = await uploadWorkFile(localFilePath, submission.workType || submission.type || 'audio')
+        const uploadRes = await uploadWorkFile(localFilePath, submission.workType || submission.type || 'audio', {
+          traceId: submission.traceId || '',
+          mimeType: submission.mimeType || ''
+        })
         fileID = uploadRes.fileID || ''
+        if (uploadRes.fileSize !== null && uploadRes.fileSize !== undefined) submission.fileSize = uploadRes.fileSize
       }
 
       const cloudRes = await submitWorkRecord({
         ...submission,
         fileID,
+        fileSize: submission.fileSize,
         filePath: '',
         localFilePath
       })
@@ -1000,6 +1043,7 @@ Page({
         cloudId: cloudRes.submission && cloudRes.submission._id,
         cloudFileID: fileID,
         fileID,
+        fileSize: submission.fileSize,
         cloudUploaded: true,
         cloudError: ''
       }
@@ -1044,6 +1088,15 @@ Page({
 
   publishDraftToSquare(e) {
     const id = e.currentTarget.dataset.id
+    const target = this.findMergedDraft(id)
+
+    if (!target || !isWorkShareAllowed(target)) {
+      wx.showToast({
+        title: target ? VIDEO_SHARE_DISABLED_MESSAGE : '作品不存在',
+        icon: 'none'
+      })
+      return
+    }
 
     if (!requirePhoneBound('发布广场', {
       page: this,
@@ -1155,34 +1208,6 @@ Page({
       clearInterval(this.recordingTimer)
       this.recordingTimer = null
     }
-  },
-
-  ensureRecordPermission(callback) {
-    wx.getSetting({
-      success: setting => {
-        if (setting.authSetting['scope.record']) {
-          callback()
-          return
-        }
-
-        wx.authorize({
-          scope: 'scope.record',
-          success: callback,
-          fail: () => {
-            wx.showModal({
-              title: '需要录音权限',
-              content: '需要开启录音权限后才能使用该功能。',
-              confirmText: '去设置',
-              success: res => {
-                if (res.confirm) {
-                  wx.openSetting()
-                }
-              }
-            })
-          }
-        })
-      }
-    })
   },
 
   stopAudioContext() {

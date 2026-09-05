@@ -1,0 +1,1042 @@
+{
+  "startedAt": "2026-08-01T12:31:31.877Z",
+  "phases": [
+    {
+      "action": "audit",
+      "result": {
+        "success": true,
+        "migrationId": "training-permanent-id-1785587495048",
+        "canonicalCount": 966,
+        "cloudControlledCount": 468,
+        "summary": {
+          "create": 965,
+          "update": 0,
+          "deleteLegacy": 467,
+          "deleteDuplicateOrStale": 0,
+          "unchanged": 1,
+          "conflicts": 0,
+          "changeCount": 1432
+        },
+        "conflictCount": 0,
+        "conflicts": [],
+        "legacyCount": 467,
+        "submissionUpdateCount": 183,
+        "submissionMappedCount": 39,
+        "submissionSnapshotOnlyCount": 144
+      }
+    },
+    {
+      "action": "backup",
+      "result": {
+        "success": true,
+        "backup": {
+          "migrationId": "training-permanent-id-1785587497142",
+          "fileID": "cloud://cloud1-d0geb9qt9d29ee6fc.636c-cloud1-d0geb9qt9d29ee6fc-1444235610/training-content-backups/training-permanent-id-1785587497142-pre-migration.json",
+          "cloudPath": "training-content-backups/training-permanent-id-1785587497142-pre-migration.json",
+          "backupHash": "de5526b44f2b124b5321335dfcb2d3d219e83eccb831a941a09323d6aa16cd66",
+          "fileHash": "67f91cd8b4f621569185b061efaa316815bb4884c2f0094c602319bbfef9dd40",
+          "counts": {
+            "contents": 468,
+            "modules": 0,
+            "revisions": 0,
+            "submissions": 347
+          }
+        }
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 1,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 945,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 2,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 925,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 3,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 905,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 4,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 885,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 5,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 865,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 6,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 845,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 7,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 825,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 8,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 805,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 9,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 785,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 10,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 765,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 11,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 745,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 12,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 725,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 13,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 705,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 14,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 685,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 15,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 665,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 16,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 645,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 17,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 625,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 18,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 605,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 19,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 585,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 20,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 565,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 21,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 545,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 22,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 525,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 23,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 505,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 24,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 485,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 25,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 465,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 26,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 445,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 27,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 425,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 28,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 405,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 29,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 385,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 30,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 365,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 31,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 345,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 32,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 325,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 33,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 305,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 34,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 285,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 35,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 265,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 36,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 245,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 37,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 225,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 38,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 205,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 39,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 185,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 40,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 165,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 41,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 145,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 42,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 125,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 43,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 105,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 44,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 85,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 45,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 65,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 46,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 45,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 47,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 25,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 48,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 20,
+        "remaining": 5,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyUpserts",
+      "iteration": 49,
+      "result": {
+        "success": true,
+        "phase": "upserts",
+        "applied": 5,
+        "remaining": 0,
+        "deletionCount": 467,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 1,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 447,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 2,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 427,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 3,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 407,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 4,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 387,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 5,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 367,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 6,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 347,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 7,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 327,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 8,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 307,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 9,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 287,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 10,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 267,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 11,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 247,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 12,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 227,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 13,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 207,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 14,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 187,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 15,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 167,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 16,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 147,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 17,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 127,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 18,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 107,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 19,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 87,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 20,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 67,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 21,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 47,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 22,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 27,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 23,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 20,
+        "remaining": 7,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applyDeletions",
+      "iteration": 24,
+      "result": {
+        "success": true,
+        "phase": "deletions",
+        "applied": 7,
+        "remaining": 0,
+        "conflictCount": 0
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 1,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 163
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 2,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 143
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 3,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 123
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 4,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 103
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 5,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 83
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 6,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 63
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 7,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 43
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 8,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 23
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 9,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 20,
+        "remaining": 3
+      }
+    },
+    {
+      "action": "applySubmissions",
+      "iteration": 10,
+      "result": {
+        "success": true,
+        "phase": "submissions",
+        "applied": 3,
+        "remaining": 0
+      }
+    },
+    {
+      "action": "updateModules",
+      "result": {
+        "success": true,
+        "phase": "modules",
+        "updated": 6
+      }
+    },
+    {
+      "action": "verify",
+      "result": {
+        "success": true,
+        "verification": {
+          "verified": true,
+          "metrics": {
+            "CLOUD_ACTIVE_TOTAL": 966,
+            "CLOUD_PERMANENT_ID_COUNT": 966,
+            "CLOUD_OLD_ID_COUNT": 0,
+            "CLOUD_DUPLICATE_CONTENT_ID": 0,
+            "CLOUD_DUPLICATE_MODULE_DAY": 0,
+            "CLOUD_EMPTY_TITLE": 0,
+            "CLOUD_EMPTY_CONTENT": 0,
+            "CLOUD_CANONICAL_FIELD_MISMATCH": 0,
+            "CLOUD_MISSING_CANONICAL": 0,
+            "moduleCounts": {
+              "topic": 276,
+              "reading": 216,
+              "leaderSpeech": 24,
+              "retell": 257,
+              "speech": 116,
+              "mandarin": 77
+            }
+          },
+          "errors": [],
+          "presenceErrors": []
+        },
+        "SECOND_APPLY_CHANGE_COUNT": 0,
+        "secondApplyConflicts": [],
+        "remainingSubmissionUpdates": 0
+      }
+    }
+  ],
+  "completedAt": "2026-08-01T12:42:55.382Z"
+}

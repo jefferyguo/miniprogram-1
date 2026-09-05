@@ -1,0 +1,33 @@
+{
+  "stage": 1,
+  "title": "统一登录系统最终实现",
+  "generatedAt": "2026-07-28T02:18:52.925Z",
+  "status": "COMPLETE",
+  "changes": {
+    "fixedPhoneAuthorizedAt": "cloudApi/index.js:1520 — phoneAuthorizedAt写入bindPhoneInternal",
+    "fixedPageEntryGates": {
+      "review_js_208": "requirePhoneBound→requireLogin (页面入口浏览)",
+      "myWorks_js_230": "requirePhoneBound→requireLogin (页面入口浏览)",
+      "growth_js_83": "requirePhoneBound→requireLogin (页面入口浏览)",
+      "mine_js_397": "requirePhoneBound→requireLogin (导航前置门控)"
+    },
+    "keptPhoneGates": "录音、录像、AI点评、发布广场、点赞、评论 仍使用requirePhoneBound",
+    "registeredAt": "login/index.js已修复条件写入，cloudApi bindPhoneInternal已添加phoneAuthorizedAt"
+  },
+  "tests": {
+    "jsSyntax": "全部通过 (10 files)",
+    "jsonSyntax": "全部通过 (3 files)",
+    "staleShowPhoneLoginPrompt": "已清除",
+    "circularDependency": "无循环依赖",
+    "loginGateInstances": "13个页面均有login-gate WXML实例",
+    "totalGateCalls": "26处门控调用",
+    "requireLogin": "5处",
+    "requirePhoneBound": "16处",
+    "isPhoneBoundChecks": "5处"
+  },
+  "blockers": {
+    "loginCloudFunction": "MANUAL_BLOCKER: 需右击cloudfunctions/login→上传并部署",
+    "cloudApiCloudFunction": "MANUAL_BLOCKER: 需部署cloudApi(phoneAuthorizedAt修改)",
+    "realDeviceTest": "MANUAL_BLOCKER: 需真机验证"
+  }
+}

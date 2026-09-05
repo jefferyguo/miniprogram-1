@@ -1,0 +1,27 @@
+<view wx:if="{{visible}}" class="voice-mask" catchtouchmove="noop">
+  <view class="voice-panel" catchtap="noop">
+    <view class="voice-icon" aria-hidden="true">
+      <view class="voice-bar voice-bar-short"></view>
+      <view class="voice-bar voice-bar-tall"></view>
+      <view class="voice-bar voice-bar-mid"></view>
+      <view class="voice-bar voice-bar-tall"></view>
+      <view class="voice-bar voice-bar-short"></view>
+    </view>
+
+    <text class="voice-title">声音信息授权</text>
+    <text class="voice-desc">为了完成口才训练、语音识别及训练点评，需要在你主动开始训练时采集并处理你的声音信息。</text>
+
+    <view class="voice-notice">
+      <text class="notice-line">只有你主动点击开始录音或开始录像后才会采集声音。</text>
+      <text class="notice-line">暂不同意将不会启动录制，也不影响浏览等无需录音的功能。</text>
+    </view>
+
+    <view class="agreement-link-row" bindtap="viewAgreement">
+      <text class="agreement-link">查看《声纹授权协议》</text>
+      <text class="agreement-arrow">›</text>
+    </view>
+
+    <button class="voice-primary-btn" bindtap="accept">同意并继续</button>
+    <button class="voice-secondary-btn" bindtap="decline">暂不同意</button>
+  </view>
+</view>

@@ -4,6 +4,7 @@ const {
   loginWithProfile,
   markProfileSkipped
 } = require('../../utils/profile-auth')
+const { isValidNickname, normalizeNickname } = require('../../utils/auth-state')
 
 Component({
   data: {
@@ -86,8 +87,11 @@ Component({
 
     async submitProfile() {
       if (this.data.submitting) return
-      const inputNickname = String(this.data.nickname || '').trim()
-      const nickname = inputNickname || '同学'
+      const nickname = normalizeNickname(this.data.nickname)
+      if (!isValidNickname(nickname)) {
+        wx.showToast({ title: '请设置有效昵称', icon: 'none' })
+        return
+      }
 
       this.setData({ submitting: true })
       wx.showLoading({ title: this.data.mode === 'edit' ? '正在保存' : '正在登录', mask: true })
@@ -95,7 +99,7 @@ Component({
       try {
         const nicknameSource = this.data.mode === 'edit'
           ? 'manual'
-          : (inputNickname ? 'wechat_or_manual' : 'default')
+          : 'wechat_or_manual'
         const avatarSource = this.data.avatarUrl
           ? (this.data.mode === 'edit' ? 'manual' : 'wechat')
           : 'default'

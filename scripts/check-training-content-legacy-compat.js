@@ -1,67 +1,76 @@
 const assert = require('assert')
 const {
-  findLegacyCurrentTrainingRecord,
+  getTrainingDay,
   isCurrentTrainingRecord,
-  isRequestedVersionedTrainingContent,
+  isPermanentTrainingContentId,
+  normalizeCategory,
+  requirePermanentTrainingContentId,
   selectPreferredCurrentTrainingRecords
 } = require('../cloudfunctions/cloudApi/training-content-compat')
 
-const legacy = {
-  contentId: 'reading-day-1',
-  category: 'reading',
+const CONTENT_ID = 'tc_4c646238524a9c643cc1a25cd2b06e96'
+const OTHER_CONTENT_ID = 'tc_8c799ff0226a82073ababbedd5d71ad1'
+const canonical = {
+  contentId: CONTENT_ID,
+  moduleId: 'reading',
   day: 1,
-  content: '旧版完整正文'
-}
-
-assert.strictEqual(isCurrentTrainingRecord(legacy), true, '旧记录缺少状态字段时应视为当前内容')
-assert.strictEqual(isCurrentTrainingRecord({ ...legacy, active: false }), false)
-assert.strictEqual(isCurrentTrainingRecord({ ...legacy, visible: false }), false)
-assert.strictEqual(isCurrentTrainingRecord({ ...legacy, status: 'archived' }), false)
-assert.strictEqual(isCurrentTrainingRecord({ ...legacy, status: 'inactive' }), false)
-assert.strictEqual(isCurrentTrainingRecord({ ...legacy, status: 'deleted' }), false)
-assert.strictEqual(isCurrentTrainingRecord({ ...legacy, status: 'disabled' }), false)
-
-assert.strictEqual(
-  isRequestedVersionedTrainingContent('reading-v4-day-1', 'reading', 1),
-  true
-)
-assert.strictEqual(
-  isRequestedVersionedTrainingContent('reading-v4-day-1', 'retelling', 1),
-  false,
-  '分类不一致时禁止迁移兜底'
-)
-
-const fallback = findLegacyCurrentTrainingRecord([legacy], {
-  requestedContentId: 'reading-v4-day-1',
-  category: 'reading',
-  day: 1
-})
-assert.strictEqual(fallback.contentId, 'reading-day-1')
-
-const noHistoryFallback = findLegacyCurrentTrainingRecord([legacy], {
-  requestedContentId: 'reading-day-404',
-  category: 'reading',
-  day: 1
-})
-assert.strictEqual(noHistoryFallback, null, '非 v4 当前请求不得按同 Day 回退')
-
-const v4 = {
-  ...legacy,
-  contentId: 'reading-v4-day-1',
-  content: 'v4 正文',
-  status: 'published',
+  sortOrder: 1,
+  title: '永久 ID 正文',
+  content: 'canonical 完整正文',
+  status: 'active',
   active: true,
-  visible: true
+  visible: true,
+  contentVersion: 2,
+  updatedAt: '2026-08-01T12:00:00.000Z'
 }
-const selected = selectPreferredCurrentTrainingRecords([
-  legacy,
-  v4,
-  { ...legacy, contentId: 'reading-day-2', day: 2, active: false },
-  { ...legacy, contentId: 'reading-day-3', day: 3, status: 'archived' },
-  { ...legacy, contentId: 'topic-day-1', category: 'topic', day: 1 }
-])
-assert.strictEqual(selected.filter(item => item.category === 'reading').length, 1)
-assert.strictEqual(selected.find(item => item.category === 'reading').contentId, 'reading-v4-day-1')
-assert.strictEqual(selected.find(item => item.category === 'topic').contentId, 'topic-day-1')
 
-console.log('[check-training-content-legacy-compat] PASS')
+assert.equal(isPermanentTrainingContentId(CONTENT_ID), true)
+assert.equal(isPermanentTrainingContentId('reading-day-1'), false)
+assert.equal(isPermanentTrainingContentId('reading-v4-day-1'), false)
+assert.equal(requirePermanentTrainingContentId(CONTENT_ID), CONTENT_ID)
+assert.throws(
+  () => requirePermanentTrainingContentId('reading-day-1'),
+  error => error && error.code === 'INVALID_PERMANENT_CONTENT_ID'
+)
+assert.equal(normalizeCategory('retelling'), 'retell')
+assert.equal(getTrainingDay({ day: 9, sortOrder: 3 }), 3)
+assert.equal(isCurrentTrainingRecord(canonical), true)
+assert.equal(isCurrentTrainingRecord({ ...canonical, status: 'inactive' }), false)
+
+const oldRuntimeRecord = {
+  ...canonical,
+  contentId: 'reading-v4-day-1',
+  contentVersion: 99
+}
+const newerExactRecord = {
+  ...canonical,
+  title: '同一永久 ID 的新版本',
+  content: '同一永久 ID 的新正文',
+  contentVersion: 3,
+  updatedAt: '2026-08-01T13:00:00.000Z'
+}
+const anotherArticleAtSameDay = {
+  ...canonical,
+  contentId: OTHER_CONTENT_ID,
+  title: '同 Day 的另一篇文章',
+  content: '必须保持独立身份。',
+  contentVersion: 1
+}
+
+const selected = selectPreferredCurrentTrainingRecords([
+  oldRuntimeRecord,
+  canonical,
+  newerExactRecord,
+  anotherArticleAtSameDay
+])
+assert.equal(selected.length, 2, '旧 ID 必须过滤，同 Day 的不同永久 ID 必须分别保留')
+assert.equal(selected.find(item => item.contentId === CONTENT_ID).contentVersion, 3)
+assert.equal(selected.find(item => item.contentId === OTHER_CONTENT_ID).title, '同 Day 的另一篇文章')
+assert.equal(selected.some(item => item.contentId === 'reading-v4-day-1'), false)
+
+console.log('[check-training-content-legacy-compat] PASS', {
+  runtimeOldIdRejected: true,
+  exactPermanentIdVersionSelected: true,
+  sameDayDistinctContentPreserved: true,
+  legacyMappingScope: 'migration_only'
+})

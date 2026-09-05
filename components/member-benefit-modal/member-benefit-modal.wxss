@@ -50,7 +50,7 @@
 
 .member-title {
   color: #24324f;
-  font-size: 34rpx;
+  font-size: var(--font-ui-34, 34rpx);
   line-height: 1.25;
   font-weight: 800;
   letter-spacing: 1rpx;
@@ -59,7 +59,7 @@
 .member-subtitle {
   margin-top: 4rpx;
   color: #6b7280;
-  font-size: 24rpx;
+  font-size: var(--font-ui-24, 24rpx);
   line-height: 1.35;
 }
 
@@ -103,7 +103,7 @@
   border-radius: 999rpx;
   color: #9a6d2e;
   background: #fff8ec;
-  font-size: 22rpx;
+  font-size: var(--font-ui-22, 22rpx);
   font-weight: 700;
 }
 
@@ -111,7 +111,7 @@
   display: block;
   margin: 18rpx 0 24rpx;
   color: #6b7280;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.5;
 }
 
@@ -139,7 +139,7 @@
   display: block;
   margin-bottom: 10rpx;
   color: #4b5563;
-  font-size: 24rpx;
+  font-size: var(--font-ui-24, 24rpx);
   line-height: 1.3;
   font-weight: 800;
 }
@@ -173,7 +173,7 @@
 .benefit-label {
   min-width: 0;
   color: #5f6878;
-  font-size: 22rpx;
+  font-size: var(--font-ui-22, 22rpx);
   line-height: 1.35;
 }
 
@@ -206,7 +206,7 @@
   width: 122rpx;
   flex-shrink: 0;
   color: #24324f;
-  font-size: 27rpx;
+  font-size: var(--font-ui-27, 27rpx);
   line-height: 1.35;
   font-weight: 800;
 }
@@ -257,7 +257,7 @@
   margin: 0;
   padding: 0;
   border-radius: 999rpx;
-  font-size: 25rpx;
+  font-size: var(--font-ui-25, 25rpx);
   font-weight: 700;
   box-sizing: border-box;
 }
@@ -302,7 +302,7 @@
   margin-top: 2rpx;
   color: #5f6878;
   text-align: center;
-  font-size: 21rpx;
+  font-size: var(--font-ui-21, 21rpx);
   line-height: 1.35;
 }
 
@@ -310,6 +310,6 @@
   margin-top: 6rpx;
   color: #8a93a3;
   text-align: center;
-  font-size: 22rpx;
+  font-size: var(--font-reading-22, 22rpx);
   line-height: 1.35;
 }

@@ -1,7 +1,16 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
-    <text class="hero-title">隐私协议</text>
-    <text class="hero-desc">以下内容为小程序内简明说明，上线前还需在微信公众平台完善官方用户隐私保护指引。</text>
+    <text class="hero-title">{{pageTitle}}</text>
+    <text class="hero-desc">{{pageDesc}}</text>
+  </view>
+
+  <view wx:if="{{showVoiceAgreement}}" class="voice-agreement-entry" bindtap="openVoiceprintAgreement">
+    <view class="voice-entry-copy">
+      <text class="voice-entry-title">声纹授权协议</text>
+      <text class="voice-entry-desc">查看声音信息的收集目的、处理方式和撤回方法</text>
+    </view>
+    <text class="voice-entry-arrow">›</text>
   </view>
 
   <view class="section-card" wx:for="{{sections}}" wx:key="title">

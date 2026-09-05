@@ -1,22 +1,20 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
-    <text class="hero-title">绑定手机号</text>
+    <text class="hero-title">手机号快捷登录</text>
     <text class="hero-desc">绑定后可保存训练记录、生成 AI 点评，并自动匹配会员权益。</text>
   </view>
 
   <view class="auth-card">
-    <text class="section-title">手机号授权</text>
+    <text class="section-title">账号状态</text>
     <text class="phone-status {{phoneBound ? 'bound-status' : ''}}">{{phoneStatusText}}</text>
     <text class="section-desc">手机号仅用于识别学员身份和会员权益，不会在广场公开展示。</text>
     <button
       class="phone-auth-btn"
-      open-type="getPhoneNumber"
-      bindgetphonenumber="onGetPhoneNumber"
+      bindtap="openLoginGate"
       loading="{{binding}}"
       disabled="{{binding}}"
-    >
-      {{phoneBound ? '重新绑定手机号' : '微信手机号一键绑定'}}
-    </button>
+    >{{phoneBound ? '重新绑定手机号' : '手机号快捷登录'}}</button>
     <button class="skip-btn" disabled="{{binding}}" bindtap="skip">暂不绑定</button>
   </view>
 

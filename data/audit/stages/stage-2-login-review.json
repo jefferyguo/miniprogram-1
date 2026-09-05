@@ -1,0 +1,23 @@
+{
+  "stage": 2,
+  "title": "登录系统独立复审",
+  "generatedAt": "2026-07-28T02:25:51.274Z",
+  "status": "REVIEW_COMPLETE",
+  "reviewFindings": {
+    "blockerCount": 2,
+    "highCount": 3,
+    "mediumCount": 6,
+    "lowCount": 4
+  },
+  "fixedBlockers": {
+    "BLOCKER_1B": "growth.js:84, review.js:209, my-works.js:231 — requireLogin(()=>{},...) 改为 requireLogin(null,...)，修复已认证用户页面被错误拦截",
+    "BLOCKER_2A": "utils/auth.js isAuthenticated() — 移除管理员短路绕过，管理员现在也必须通过完整 isAuthenticated 检查（openid + profile + nickname + source）"
+  },
+  "acknowledgedHigh": {
+    "HIGH_1A": "phoneBound=false用户永久认证 — 这是有意设计，基础登录不需要手机号",
+    "HIGH_3A": "服务端nicknameSource验证缺失 — 接受为已知限制，云函数可信任客户端来源",
+    "HIGH_6A": "extra-training和ai-evaluation导航无门控 — 目标页面有内部操作门控，公开内容浏览允许"
+  },
+  "residualRisk": "客户端 isAdmin 字段仍可被伪造，但所有敏感云操作由服务端 requireAdmin 独立验证，风险已缓解",
+  "postFixSyntax": "全部通过 (4 files)"
+}

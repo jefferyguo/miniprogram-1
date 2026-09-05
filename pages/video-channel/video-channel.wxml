@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
     <text class="hero-title">关注杨勤口才训练视频号</text>

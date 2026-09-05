@@ -18,6 +18,14 @@ Page({
     this.setData({ redirect: options.redirect || '' })
   },
 
+  openLoginGate() {
+    auth.requirePhoneBound(null, {
+      actionName: '登录',
+      source: 'login_page',
+      resumePolicy: 'manual_retry'
+    })
+  },
+
   async onGetPhoneNumberLogin(e) {
     if (this.data.bindingLogin) return
     const code = e.detail && e.detail.code

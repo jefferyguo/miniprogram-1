@@ -1,0 +1,33 @@
+.radar-card {
+  margin-top: 24rpx;
+  padding: 28rpx 20rpx 18rpx;
+  border: 1rpx solid #e5e9ff;
+  border-radius: 22rpx;
+  background: #f8f9ff;
+  box-sizing: border-box;
+}
+
+.radar-header {
+  padding: 0 8rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.radar-title {
+  color: #24315f;
+  font-size: 29rpx;
+  font-weight: 700;
+}
+
+.radar-subtitle {
+  color: #8a92a3;
+  font-size: 22rpx;
+}
+
+.radar-canvas {
+  width: 100%;
+  height: 470rpx;
+  display: block;
+}

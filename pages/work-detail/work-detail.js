@@ -1,8 +1,5 @@
 const {
-  addSquareComment,
-  deleteSquareComment,
   getSquareWorkDetail,
-  listSquareComments,
   toggleSquareLike
 } = require('../../utils/cloud-api')
 const { requirePhoneBound } = require('../../utils/phone-auth')
@@ -12,13 +9,19 @@ const {
   resolveWorkMedia
 } = require('../../utils/work-media')
 const {
+  disableShareMenu,
   enableShareMenu,
   getDefaultShareMessage,
   getDefaultShareTimeline,
   getShareImage
 } = require('../../utils/share-config')
 const { buildWorkShareConfig, getWorkShareImage, getWorkTrainingType } = require('../../utils/work-share')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('../../utils/work-share-policy')
 const { generateWorkShareImage } = require('../../utils/work-share-canvas')
+const { formatShanghaiDateTime: formatShanghaiTime } = require('../../utils/shanghai-time')
 const {
   HISTORY_ORIGINAL_UNAVAILABLE_MESSAGE,
   getTrainingLocator,
@@ -48,10 +51,7 @@ function getDetailShareCandidate(work = {}) {
 function formatDateTime(value) {
   const text = String(value || '')
   if (!text) return '暂无'
-  const date = new Date(text.replace(/-/g, '/'))
-  if (!date.getTime()) return text
-  const pad = number => String(number).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return formatShanghaiTime(text)
 }
 
 function getOriginalTaskTarget(work = {}) {
@@ -104,6 +104,7 @@ function normalizeDetailWork(work = {}) {
     likeCount: Math.max(Number(work.likeCount || 0), 0),
     commentCount: Math.max(Number(work.commentCount || 0), 0),
     likedByMe: work.likedByMe === true,
+    shareAllowed: isWorkShareAllowed(work),
     originalTask,
     canViewOriginal: originalTask.canView
   }
@@ -142,25 +143,23 @@ Page({
     work: null,
     playableSrc: '',
     audioPlayer: getInitialAudioPlayer(),
-    commentsLoading: false,
-    comments: [],
-    commentText: '',
-    commentSubmitting: false,
     likeSubmitting: false,
     generatedShareImage: '',
     generatingShareImage: false,
-    shareImageReady: false
+    shareImageReady: false,
+    videoShareBlocked: false
   },
 
   onLoad(options = {}) {
-    enableShareMenu()
+    disableShareMenu()
     const workId = String(options.squareWorkId || options.workId || '').trim()
     this.setData({ workId })
     this.loadWorkDetail()
   },
 
   onShow() {
-    enableShareMenu()
+    if (this.data.work && isWorkShareAllowed(this.data.work)) enableShareMenu()
+    else disableShareMenu()
   },
 
   async loadWorkDetail() {
@@ -169,10 +168,22 @@ Page({
       return
     }
 
-    this.setData({ loading: true, unavailable: false, errorText: '' })
+    this.setData({ loading: true, unavailable: false, errorText: '', videoShareBlocked: false })
     try {
       const result = await getSquareWorkDetail(this.data.workId)
       const work = normalizeDetailWork(result.data || {})
+      if (!isWorkShareAllowed(work)) {
+        disableShareMenu()
+        this.setData({
+          loading: false,
+          unavailable: true,
+          errorText: VIDEO_SHARE_DISABLED_MESSAGE,
+          work: null,
+          playableSrc: '',
+          videoShareBlocked: true
+        })
+        return
+      }
       if (!work.available) {
         this.setData({ loading: false, unavailable: true, errorText: '该作品暂不可查看' })
         return
@@ -182,30 +193,21 @@ Page({
       let playableSrc = media.src && /^https?:\/\//i.test(media.src) ? media.src : ''
       if (!playableSrc && media.fileID) playableSrc = await getTempFileURL(media.fileID)
       this.setData({ loading: false, work, playableSrc }, () => {
+        enableShareMenu()
         this.prepareWorkShareImage()
       })
-      this.loadComments()
     } catch (error) {
       const code = getCloudErrorCode(error)
-      const unavailable = ['WORK_NOT_AVAILABLE', 'WORK_NOT_FOUND'].includes(code)
+      const videoShareDisabled = code === 'VIDEO_SHARE_DISABLED'
+      const unavailable = videoShareDisabled || ['WORK_NOT_AVAILABLE', 'WORK_NOT_FOUND'].includes(code)
       this.setData({
         loading: false,
         unavailable,
-        errorText: unavailable ? '该作品暂不可查看' : getCloudErrorMessage(error, '作品加载失败，请稍后再试')
+        videoShareBlocked: videoShareDisabled,
+        errorText: videoShareDisabled
+          ? VIDEO_SHARE_DISABLED_MESSAGE
+          : unavailable ? '该作品暂不可查看' : getCloudErrorMessage(error, '作品加载失败，请稍后再试')
       })
-    }
-  },
-
-  async loadComments() {
-    if (!this.data.work) return
-    this.setData({ commentsLoading: true })
-    try {
-      const result = await listSquareComments(this.data.work._id, 1, 50)
-      const comments = result.data || []
-      this.setData({ comments, commentsLoading: false, 'work.commentCount': Math.max(Number(result.total || 0), 0) })
-    } catch (error) {
-      this.setData({ commentsLoading: false })
-      console.warn('[work-detail] load comments failed', getCloudErrorCode(error))
     }
   },
 
@@ -254,78 +256,6 @@ Page({
     }
   },
 
-  onCommentInput(event) {
-    this.setData({ commentText: event.detail.value || '' })
-  },
-
-  onSubmitComment() {
-    if (!requirePhoneBound('发表评论', {
-      page: this,
-      onSuccess: () => this.submitComment()
-    })) return
-    this.submitComment()
-  },
-
-  async submitComment() {
-    if (!this.data.work || this.data.commentSubmitting) return
-    const content = String(this.data.commentText || '').trim()
-    if (!content) {
-      wx.showToast({ title: '评论内容不能为空', icon: 'none' })
-      return
-    }
-    if (Array.from(content).length > 200) {
-      wx.showToast({ title: '评论内容不能超过 200 字', icon: 'none' })
-      return
-    }
-
-    this.setData({ commentSubmitting: true })
-    try {
-      const result = await addSquareComment(this.data.work._id, content)
-      const comments = result.comment ? [result.comment, ...this.data.comments] : this.data.comments
-      this.setData({
-        comments,
-        commentText: '',
-        commentSubmitting: false,
-        'work.commentCount': Math.max(Number(result.commentCount || comments.length), 0)
-      })
-      wx.showToast({ title: '评论已发布', icon: 'success' })
-    } catch (error) {
-      this.setData({ commentSubmitting: false })
-      if (getCloudErrorCode(error) === 'COMMENT_FORBIDDEN_WORD') {
-        wx.showModal({
-          title: '评论未发布',
-          content: '评论包含不适合公开展示的内容，请修改后再发布。',
-          showCancel: false,
-          confirmText: '知道了'
-        })
-        return
-      }
-      wx.showToast({ title: getCloudErrorMessage(error, '评论发布失败，请稍后再试'), icon: 'none' })
-    }
-  },
-
-  onDeleteComment(event) {
-    const commentId = String(event.currentTarget.dataset.id || '')
-    if (!commentId) return
-    wx.showModal({
-      title: '删除评论',
-      content: '确认删除这条评论吗？',
-      confirmColor: '#d85050',
-      success: async result => {
-        if (!result.confirm) return
-        try {
-          const response = await deleteSquareComment(commentId)
-          this.setData({
-            comments: this.data.comments.filter(item => item._id !== commentId && item.id !== commentId),
-            'work.commentCount': Math.max(Number(response.commentCount || 0), 0)
-          })
-        } catch (error) {
-          wx.showToast({ title: getCloudErrorMessage(error, '删除失败，请稍后再试'), icon: 'none' })
-        }
-      }
-    })
-  },
-
   goSquare() {
     wx.switchTab({ url: '/pages/square/square' })
   },
@@ -366,7 +296,7 @@ Page({
   },
 
   async prepareWorkShareImage() {
-    if (!this.data.work || this.data.generatingShareImage) return
+    if (!this.data.work || !isWorkShareAllowed(this.data.work) || this.data.generatingShareImage) return
     if (this.data.shareImageReady && this.data.generatedShareImage) return
     this.setData({ generatingShareImage: true })
     try {
@@ -403,9 +333,19 @@ Page({
   },
 
   onShareAppMessage() {
+    if (this.data.videoShareBlocked) {
+      wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+      return undefined
+    }
+    if (!isWorkShareAllowed(this.data.work || { workType: 'audio' })) {
+      wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+      return undefined
+    }
     if (this.data.work && this.data.work.available) {
+      const shareConfig = buildWorkShareConfig(this.data.work, 'square')
+      if (!shareConfig) return undefined
       return getDefaultShareMessage({
-        ...buildWorkShareConfig(this.data.work, 'square'),
+        ...shareConfig,
         imageUrl: this.getCurrentShareImage()
       })
     }
@@ -417,6 +357,14 @@ Page({
   },
 
   onShareTimeline() {
+    if (this.data.videoShareBlocked) {
+      wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+      return undefined
+    }
+    if (!isWorkShareAllowed(this.data.work || { workType: 'audio' })) {
+      wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+      return undefined
+    }
     const hasWork = Boolean(this.data.workId)
     const shareConfig = this.data.work
       ? buildWorkShareConfig(this.data.work, 'square')

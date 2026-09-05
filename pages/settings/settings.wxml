@@ -1,7 +1,70 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
     <text class="hero-title">设置</text>
-    <text class="hero-desc">管理本机缓存和登录状态</text>
+    <text class="hero-desc">管理阅读字号、声音授权、本机缓存和登录状态</text>
+  </view>
+
+  <view class="section-card font-size-section">
+    <view class="font-size-heading-row">
+      <view class="font-size-heading">
+        <text class="setting-title">字体大小</text>
+        <text class="setting-desc">调整主要阅读文字，拖动后立即生效</text>
+      </view>
+      <text class="font-scale-value">{{fontScalePercent}}%</text>
+    </view>
+
+    <view class="font-slider-area">
+      <view class="font-slider-visual" aria-hidden="true">
+        <text class="font-slider-a font-slider-a-small">A</text>
+        <text class="font-slider-a font-slider-a-large">A</text>
+      </view>
+
+      <slider
+        class="font-scale-slider"
+        min="{{fontScaleMinPercent}}"
+        max="{{fontScaleMaxPercent}}"
+        step="{{fontScaleStepPercent}}"
+        value="{{fontScalePercent}}"
+        activeColor="#07c160"
+        backgroundColor="#dfe4ea"
+        block-color="#07c160"
+        block-size="28"
+        show-value="{{false}}"
+        bindchanging="onFontScaleChanging"
+        bindchange="onFontScaleChange"
+        aria-label="字体缩放百分比，当前 {{fontScalePercent}}%"
+      />
+
+      <view class="font-slider-scale" aria-hidden="true">
+        <text class="font-slider-min">{{fontScaleMinPercent}}%</text>
+        <text class="font-slider-standard" style="left: {{fontScaleStandardOffset}}%;">标准 {{fontScaleStandardPercent}}%</text>
+        <text class="font-slider-max">{{fontScaleMaxPercent}}%</text>
+      </view>
+    </view>
+
+    <view class="font-size-preview">
+      <text class="font-size-preview-label">字体预览</text>
+      <text class="font-size-preview-copy">保持练习，让表达每天进步一点。</text>
+    </view>
+  </view>
+
+  <view class="section-card">
+    <view class="setting-item" bindtap="viewVoiceprintAgreement">
+      <view class="setting-copy">
+        <text class="setting-title">声音信息授权管理</text>
+        <text class="setting-desc">{{voiceConsentStatusText}}</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+
+    <view wx:if="{{voiceConsentAccepted}}" class="setting-item" bindtap="withdrawVoiceAuthorization">
+      <view class="setting-copy">
+        <text class="setting-title danger-title">撤回声音信息授权</text>
+        <text class="setting-desc">撤回后，录制前需要重新单独同意</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
   </view>
 
   <view class="section-card">

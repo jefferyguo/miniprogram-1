@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
     <text class="hero-kicker">杨勤口才训练 KEEP 管理端</text>
@@ -20,7 +21,7 @@
       <view class="section">
         <view class="section-head">
           <text class="section-title">训练模块</text>
-          <text class="section-desc">四类主训练 Day 内容</text>
+          <text class="section-desc">训练内容库</text>
         </view>
         <view class="config-grid">
           <view
@@ -62,6 +63,81 @@
           </view>
         </view>
       </view>
+      <view class="section">
+        <view class="section-head">
+          <text class="section-title">数据中心</text>
+          <text class="section-desc">用户增长与注册分析</text>
+        </view>
+        <view class="daily-list">
+          <view class="daily-card card-blue" bindtap="openReport">
+            <view class="config-icon card-icon-blue">报</view>
+            <view class="config-info">
+              <text class="config-title">新用户报表</text>
+              <text class="config-desc">查看每日/每周新用户注册统计</text>
+            </view>
+            <text class="config-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{mode === 'report'}}">
+      <view class="toolbar-card">
+        <button class="back-btn" bindtap="backHome">返回首页</button>
+        <view class="toolbar-info">
+          <text class="toolbar-title">新用户报表</text>
+          <text class="toolbar-desc">{{reportType === 'daily' ? '日报' : '周报'}} · {{reportType === 'daily' ? reportDate : reportWeekStart}}</text>
+        </view>
+      </view>
+      <view class="tab-switcher">
+        <view class="tab-item {{reportType === 'daily' ? 'tab-active' : ''}}" data-type="daily" bindtap="switchReportType">日报</view>
+        <view class="tab-item {{reportType === 'weekly' ? 'tab-active' : ''}}" data-type="weekly" bindtap="switchReportType">周报</view>
+      </view>
+      <view class="report-date-row">
+        <block wx:if="{{reportType === 'daily'}}">
+          <picker mode="date" value="{{reportDate}}" bindchange="handleReportDateChange">
+            <view class="date-picker-card"><text class="date-label">选择日期</text><text class="date-value">{{reportDate || '请选择'}}</text></view>
+          </picker>
+        </block>
+        <block wx:else>
+          <picker mode="date" value="{{reportWeekDate}}" bindchange="handleReportWeekDateChange">
+            <view class="date-picker-card"><text class="date-label">选择周（周一）</text><text class="date-value">{{reportWeekStart || '请选择'}}</text></view>
+          </picker>
+        </block>
+      </view>
+      <view wx:if="{{reportLoading}}" class="state-card"><text class="state-title">正在加载报表</text></view>
+      <view wx:elif="{{reportError}}" class="hint-card">{{reportError}}</view>
+      <block wx:elif="{{reportData}}">
+        <view class="stats-grid">
+          <view class="stat-card stat-primary"><text class="stat-number">{{reportData.count || 0}}</text><text class="stat-label">新增用户</text></view>
+          <view class="stat-card stat-success"><text class="stat-number">{{reportData.phoneAuthorized || 0}}</text><text class="stat-label">已授权手机号</text></view>
+          <view class="stat-card stat-warning"><text class="stat-number">{{reportData.phoneUnauthorized || 0}}</text><text class="stat-label">未授权手机号</text></view>
+          <view class="stat-card stat-info"><text class="stat-number">{{reportPhoneAuthRate}}%</text><text class="stat-label">授权率</text></view>
+        </view>
+        <view wx:if="{{reportType === 'weekly' && reportData.prevWeekCount !== undefined}}" class="week-compare-card">
+          <text class="compare-label">上周新增：{{reportData.prevWeekCount}} 人</text>
+          <text class="compare-change {{reportData.weekOverWeekChange >= 0 ? 'change-up' : 'change-down'}}">环比 {{reportData.weekOverWeekChange >= 0 ? '+' : ''}}{{reportData.weekOverWeekChange}}%</text>
+        </view>
+        <view class="section"><view class="section-head"><text class="section-title">昵称来源</text></view>
+          <view class="source-breakdown">
+            <view class="source-item source-wechat"><text class="source-name">微信昵称</text><text class="source-count">{{reportData.byNicknameSource.wechat || 0}}</text></view>
+            <view class="source-item source-custom"><text class="source-name">自定义</text><text class="source-count">{{reportData.byNicknameSource.custom || 0}}</text></view>
+            <view class="source-item source-random"><text class="source-name">随机</text><text class="source-count">{{reportData.byNicknameSource.random || 0}}</text></view>
+          </view>
+        </view>
+        <view class="section"><view class="section-head"><text class="section-title">用户列表（共{{reportData.count || 0}}人）</text></view>
+          <view class="search-row"><input class="search-input" value="{{reportSearch}}" placeholder="搜索用户名或手机号后4位" bindinput="handleReportSearchInput"/></view>
+          <scroll-view scroll-x class="user-table-scroll"><view class="user-table">
+            <view class="table-header"><text class="th-cell th-time">注册时间</text><text class="th-cell th-name">用户名</text><text class="th-cell th-src">来源</text><text class="th-cell th-phone">手机号</text><text class="th-cell th-status">状态</text></view>
+            <view class="table-row" wx:for="{{filteredReportUsers}}" wx:key="userId"><text class="td-cell td-time">{{item.registeredAt}}</text><text class="td-cell td-name">{{item.nickname}}</text><text class="td-cell td-src"><text class="src-tag src-{{item.nicknameSource}}">{{item.nicknameSource === 'wechat' ? '微信' : item.nicknameSource === 'custom' ? '自定义' : '随机'}}</text></text><text class="td-cell td-phone">{{item.phoneMasked}}</text><text class="td-cell td-status"><text class="st-tag {{item.hasPhone ? 'st-ok' : 'st-no'}}">{{item.hasPhone ? '已授权' : '未授权'}}</text></text></view>
+          </view></scroll-view>
+        </view>
+        <view class="report-actions">
+          <button class="rpt-btn rpt-refresh" bindtap="refreshReport">刷新</button>
+          <button class="rpt-btn rpt-save" bindtap="handleRegenerateReport">保存快照</button>
+        </view>
+      </block>
+      <block wx:else><view class="state-card"><text class="state-title">暂无数据</text><text class="state-desc">请选择日期后刷新</text></view></block>
     </block>
 
     <block wx:elif="{{mode === 'list'}}">
@@ -71,9 +147,42 @@
           <text class="toolbar-title">{{currentCategory.categoryName}}</text>
           <text class="toolbar-desc">{{listLoading ? '正在读取云端修改...' : '点击条目编辑标题和内容'}}</text>
         </view>
+        <button class="toolbar-add-btn" bindtap="addContent">新增素材</button>
       </view>
 
       <view wx:if="{{listError}}" class="hint-card">{{listError}}</view>
+
+      <view class="list-control-card">
+        <view class="list-search-row">
+          <input
+            class="list-search-input"
+            value="{{listSearch}}"
+            placeholder="搜索标题、作者、正文或内容 ID"
+            confirm-type="search"
+            bindinput="handleListSearchInput"
+          />
+          <button class="list-clear-btn" bindtap="clearListSearch">清空</button>
+        </view>
+        <view class="filter-grid">
+          <picker range="{{moduleFilterOptions}}" range-key="categoryName" value="{{moduleFilterIndex}}" bindchange="handleModuleFilterChange">
+            <view class="filter-pill"><text class="filter-label">模块</text><text class="filter-value">{{currentCategory.categoryName}}</text></view>
+          </picker>
+          <picker range="{{statusFilterOptions}}" range-key="label" value="{{statusFilterIndex}}" bindchange="handleStatusFilterChange">
+            <view class="filter-pill"><text class="filter-label">状态</text><text class="filter-value">{{listStatusLabel}}</text></view>
+          </picker>
+          <picker range="{{sortOptions}}" range-key="label" value="{{sortIndex}}" bindchange="handleSortChange">
+            <view class="filter-pill"><text class="filter-label">排序</text><text class="filter-value">{{listSortLabel}}</text></view>
+          </picker>
+        </view>
+        <view class="pager-row">
+          <text class="pager-summary">{{listSummary}}</text>
+          <view class="pager-actions">
+            <button class="pager-btn {{listPage <= 1 ? 'pager-disabled' : ''}}" bindtap="goPrevPage">上一页</button>
+            <text class="pager-page">{{listPage}} / {{listTotalPages}}</text>
+            <button class="pager-btn {{listPage >= listTotalPages ? 'pager-disabled' : ''}}" bindtap="goNextPage">下一页</button>
+          </view>
+        </view>
+      </view>
 
       <view class="content-list">
         <view class="content-card" wx:for="{{currentItems}}" wx:key="contentId">
@@ -91,12 +200,19 @@
           <text class="content-excerpt">{{item.excerpt || '暂无内容'}}</text>
           <view class="content-actions">
             <button class="edit-btn" data-index="{{index}}" bindtap="editContent">编辑</button>
-            <button class="publish-btn {{item.status === 'disabled' || item.status === 'draft' ? 'publish-on' : 'publish-off'}}" data-index="{{index}}" bindtap="toggleContentStatus">{{item.status === 'disabled' || item.status === 'draft' ? '发布' : '下架'}}</button>
+            <button wx:if="{{item.status === 'active' || item.status === 'published'}}" disabled="{{saving || !item.canMoveUp}}" class="sort-btn {{!item.canMoveUp ? 'action-disabled' : ''}}" data-index="{{index}}" data-direction="up" bindtap="moveContent">上移</button>
+            <button wx:if="{{item.status === 'active' || item.status === 'published'}}" disabled="{{saving || !item.canMoveDown}}" class="sort-btn {{!item.canMoveDown ? 'action-disabled' : ''}}" data-index="{{index}}" data-direction="down" bindtap="moveContent">下移</button>
+            <button class="publish-btn {{item.status === 'disabled' || item.status === 'draft' || item.status === 'archived' || item.status === 'inactive' ? 'publish-on' : 'publish-off'}}" data-index="{{index}}" bindtap="toggleContentStatus">{{item.status === 'disabled' || item.status === 'draft' || item.status === 'archived' || item.status === 'inactive' ? '恢复发布' : '下架'}}</button>
+            <button wx:if="{{item.status !== 'archived'}}" class="archive-btn" data-index="{{index}}" bindtap="archiveContent">归档</button>
             <button class="delete-btn" data-index="{{index}}" bindtap="deleteContent">删除</button>
           </view>
         </view>
+        <view wx:if="{{!currentItems.length}}" class="state-card">
+          <text class="state-title">暂无匹配内容</text>
+          <text class="state-desc">调整搜索或筛选后再试</text>
+        </view>
         <view class="add-content-card" bindtap="addContent">
-          <text class="add-content-plus">+</text>
+          <text class="add-content-icon">+</text>
           <view class="add-content-copy">
             <text class="add-content-title">添加内容</text>
             <text class="add-content-desc">新增内容会保存到云端，并追加到当前分类列表</text>
@@ -136,6 +252,12 @@
         </view>
 
         <view class="form-field">
+          <text class="field-label">排序序号</text>
+          <input wx:if="{{isCreatingContent}}" class="title-input" type="number" value="{{editSortOrder}}" placeholder="新内容默认排在末尾" bindinput="handleSortOrderInput" />
+          <view wx:else class="readonly-field">{{editSortOrder}}（{{currentCategory.group === 'training' ? '主训练结构调整需受控导入' : '请在列表中上移或下移'}}）</view>
+        </view>
+
+        <view class="form-field">
           <text class="field-label">内容权限</text>
           <view class="membership-switch">
             <view
@@ -164,19 +286,67 @@
             <text class="import-file-tip">{{editSourceFileID ? '源文件已上传' : 'DOC/DOCX 会保存为源文件，txt/md 可直接导入正文'}}</text>
           </view>
           <text wx:if="{{editSourceFileID}}" class="source-file-id">{{editSourceFileID}}</text>
-          <textarea
-            class="content-textarea"
-            value="{{editContent}}"
-            placeholder="请输入训练正文、题目或提示内容"
-            maxlength="-1"
-            auto-height="{{false}}"
-            bindinput="handleContentInput"
-            bindselect="handleContentSelect"
-          />
+          <!-- 切换：编辑 / 学员端预览 -->
+          <view class="editor-mode-switch">
+            <view class="mode-tab {{!editorPreviewMode ? 'mode-active' : ''}}" bindtap="switchToEdit">编辑</view>
+            <view class="mode-tab {{editorPreviewMode ? 'mode-active' : ''}}" bindtap="switchToPreview">学员端预览</view>
+          </view>
+          <!-- 编辑模式 -->
+          <view wx:if="{{!editorPreviewMode}}" class="editor-wrap">
+            <editor
+              id="articleEditor"
+              class="article-editor"
+              placeholder="请输入训练正文、题目或提示内容"
+              bindready="onEditorReady"
+              bindinput="onEditorInput"
+              bindstatuschange="onEditorStatusChange"
+              show-img-size="{{false}}"
+              show-img-toolbar="{{false}}"
+              show-img-resize="{{false}}"
+            />
+          </view>
+          <!-- 预览模式 -->
+          <view wx:else class="editor-preview">
+            <view wx:if="{{previewSegments.length}}" class="preview-body">
+              <text wx:for="{{previewSegments}}" wx:key="index" class="preview-seg {{item.className}}">{{item.text}}</text>
+            </view>
+            <text wx:else class="preview-empty">暂无内容</text>
+          </view>
         </view>
 
+        <!-- WYSIWYG 格式工具栏 -->
+        <view wx:if="{{!editorPreviewMode && editorReady}}" class="editor-toolbar">
+          <view class="et-row">
+            <view class="et-btn {{editorFormats.undo ? '' : 'et-disabled'}}" bindtap="editorUndo">↩</view>
+            <view class="et-btn {{editorFormats.redo ? '' : 'et-disabled'}}" bindtap="editorRedo">↪</view>
+            <view class="et-btn {{editorFormats.bold ? 'et-active' : ''}}" bindtap="editorBold"><text class="et-bold">B</text></view>
+            <view class="et-btn {{editorFormats.italic ? 'et-active' : ''}}" bindtap="editorItalic"><text class="et-italic">I</text></view>
+            <view class="et-btn {{editorFormats.underline ? 'et-active' : ''}}" bindtap="editorUnderline"><text class="et-underline">U</text></view>
+            <view class="et-btn" bindtap="editorClearFormat">清除</view>
+          </view>
+          <view class="et-row">
+            <view class="et-btn {{editorFormats.fontSize === 'small' ? 'et-active' : ''}}" data-size="small" bindtap="editorFontSize">小</view>
+            <view class="et-btn {{editorFormats.fontSize === 'normal' || !editorFormats.fontSize ? 'et-active' : ''}}" data-size="normal" bindtap="editorFontSize">标准</view>
+            <view class="et-btn {{editorFormats.fontSize === 'large' ? 'et-active' : ''}}" data-size="large" bindtap="editorFontSize">大</view>
+            <view class="et-btn {{editorFormats.fontSize === 'xlarge' ? 'et-active' : ''}}" data-size="xlarge" bindtap="editorFontSize">超大</view>
+          </view>
+          <view class="et-row">
+            <view class="et-btn et-color {{editorFormats.color === 'default' ? 'et-active' : ''}}" data-color="default" bindtap="editorColor">黑</view>
+            <view class="et-btn et-color {{editorFormats.color === 'green' ? 'et-active' : ''}}" data-color="green" bindtap="editorColor">绿</view>
+            <view class="et-btn et-color {{editorFormats.color === 'red' ? 'et-active' : ''}}" data-color="red" bindtap="editorColor">红</view>
+            <view class="et-btn et-color {{editorFormats.color === 'blue' ? 'et-active' : ''}}" data-color="blue" bindtap="editorColor">蓝</view>
+            <view class="et-btn et-color {{editorFormats.color === 'gold' ? 'et-active' : ''}}" data-color="gold" bindtap="editorColor">金</view>
+          </view>
+          <view class="et-row">
+            <view class="et-btn {{editorFormats.align === 'left' ? 'et-active' : ''}}" data-align="left" bindtap="editorAlign">左</view>
+            <view class="et-btn {{editorFormats.align === 'center' ? 'et-active' : ''}}" data-align="center" bindtap="editorAlign">中</view>
+            <view class="et-btn {{editorFormats.align === 'right' ? 'et-active' : ''}}" data-align="right" bindtap="editorAlign">右</view>
+          </view>
+        </view>
+
+        <!-- 原有全局样式（保留兼容） -->
         <view class="form-field">
-          <text class="field-label">文字样式</text>
+          <text class="field-label">全局样式</text>
           <view class="style-panel">
             <view class="style-group">
               <text class="style-label">字号</text>

@@ -9,7 +9,7 @@ page {
   border-radius: 18rpx;
   color: #557067;
   background: #f4faf7;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.55;
   box-sizing: border-box;
 }
@@ -30,14 +30,14 @@ page {
 
 .historical-unavailable-title {
   color: #202b3c;
-  font-size: 32rpx;
+  font-size: var(--font-ui-32, 32rpx);
   font-weight: 800;
 }
 
 .historical-unavailable-text {
   margin-top: 16rpx;
   color: #7b8494;
-  font-size: 25rpx;
+  font-size: var(--font-ui-25, 25rpx);
   line-height: 1.6;
 }
 
@@ -81,7 +81,7 @@ button::after {
 .module-name {
   display: block;
   color: rgba(255, 255, 255, 0.86);
-  font-size: 28rpx;
+  font-size: var(--font-ui-28, 28rpx);
   font-weight: 500;
 }
 
@@ -102,7 +102,7 @@ button::after {
   display: block;
   margin-top: 28rpx;
   color: #ffffff;
-  font-size: 42rpx;
+  font-size: var(--font-ui-42, 42rpx);
   font-weight: 900;
   line-height: 1.15;
   letter-spacing: 1rpx;
@@ -135,7 +135,7 @@ button::after {
 
 .training-content-message {
   color: #7a8192;
-  font-size: 28rpx;
+  font-size: var(--font-reading-28, 28rpx);
   line-height: 1.6;
 }
 
@@ -163,7 +163,7 @@ button::after {
   border-radius: 999rpx;
   background: #eaf8f0;
   color: #07c160;
-  font-size: 27rpx;
+  font-size: var(--font-ui-27, 27rpx);
   font-weight: 700;
 }
 
@@ -173,7 +173,7 @@ button::after {
 
 .section-title {
   display: block;
-  font-size: 32rpx;
+  font-size: var(--font-ui-32, 32rpx);
   font-weight: 900;
   color: #111111;
   margin-bottom: 16rpx;
@@ -187,7 +187,7 @@ button::after {
 .record-status,
 .empty {
   display: block;
-  font-size: 28rpx;
+  font-size: var(--font-reading-28, 28rpx);
   line-height: 1.65;
   color: #666666;
 }
@@ -201,7 +201,7 @@ button::after {
 
 .material-rich-text {
   color: #333333;
-  font-size: 32rpx;
+  font-size: var(--font-reading-32, 32rpx);
   line-height: 1.72;
   word-break: break-word;
 }
@@ -212,19 +212,19 @@ button::after {
 }
 
 .material-size-small {
-  font-size: 28rpx;
+  font-size: var(--font-reading-28, 28rpx);
 }
 
 .material-size-normal {
-  font-size: 32rpx;
+  font-size: var(--font-reading-32, 32rpx);
 }
 
 .material-size-large {
-  font-size: 36rpx;
+  font-size: var(--font-reading-36, 36rpx);
 }
 
 .material-size-xlarge {
-  font-size: 40rpx;
+  font-size: var(--font-reading-40, 40rpx);
 }
 
 .material-color-default {
@@ -273,7 +273,7 @@ button::after {
 
 .tip-text {
   flex: 1;
-  font-size: 28rpx;
+  font-size: var(--font-reading-28, 28rpx);
   line-height: 1.6;
   color: #666666;
 }
@@ -292,7 +292,7 @@ button::after {
   border-radius: 999rpx;
   margin: 0;
   padding: 0;
-  font-size: 29rpx;
+  font-size: var(--font-ui-29, 29rpx);
   font-weight: 900;
 }
 
@@ -327,7 +327,7 @@ button::after {
   display: block;
   margin-top: 12rpx;
   color: #7f8794;
-  font-size: 26rpx;
+  font-size: var(--font-reading-26, 26rpx);
   line-height: 1.55;
 }
 
@@ -341,7 +341,7 @@ button::after {
   border-radius: 999rpx;
   color: #5568d9;
   background: #eef1ff;
-  font-size: 24rpx;
+  font-size: var(--font-ui-24, 24rpx);
   font-weight: 900;
 }
 
@@ -383,7 +383,7 @@ button::after {
 }
 
 .work-title {
-  font-size: 29rpx;
+  font-size: var(--font-ui-29, 29rpx);
   color: #111111;
   font-weight: 900;
   line-height: 1.35;
@@ -392,7 +392,7 @@ button::after {
 .work-status {
   padding: 6rpx 12rpx;
   border-radius: 999rpx;
-  font-size: 20rpx;
+  font-size: var(--font-ui-20, 20rpx);
   font-weight: 800;
   flex-shrink: 0;
   margin-left: 16rpx;
@@ -415,13 +415,13 @@ button::after {
   border-radius: 999rpx;
   color: #16c784;
   background: #eaf8f0;
-  font-size: 22rpx;
+  font-size: var(--font-ui-22, 22rpx);
   font-weight: 900;
 }
 
 .work-meta {
   display: block;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   color: #8a8f99;
   line-height: 1.55;
 }
@@ -433,11 +433,11 @@ button::after {
 .work-content {
   display: -webkit-box;
   margin-top: 14rpx;
-  font-size: 26rpx;
+  font-size: var(--font-reading-26, 26rpx);
   line-height: 1.55;
   color: #333333;
   overflow: hidden;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
@@ -457,7 +457,7 @@ button::after {
   border-radius: 999rpx;
   margin: 0;
   padding: 0;
-  font-size: 23rpx;
+  font-size: var(--font-ui-23, 23rpx);
   font-weight: 800;
 }
 
@@ -488,7 +488,7 @@ button::after {
   border-radius: 999rpx;
   margin: 0;
   padding: 0;
-  font-size: 24rpx;
+  font-size: var(--font-ui-24, 24rpx);
   font-weight: 800;
 }
 
@@ -558,7 +558,7 @@ button::after {
 .state-pill {
   padding: 7rpx 14rpx;
   border-radius: 999rpx;
-  font-size: 21rpx;
+  font-size: var(--font-ui-21, 21rpx);
   font-weight: 800;
 }
 
@@ -576,7 +576,7 @@ button::after {
   display: block;
   margin: 12rpx 0 0;
   color: #5568d9;
-  font-size: 24rpx;
+  font-size: var(--font-reading-24, 24rpx);
   line-height: 1.45;
 }
 
@@ -672,7 +672,7 @@ button::after {
 
 .ai-feedback-title {
   color: #111827;
-  font-size: 34rpx;
+  font-size: var(--font-reading-34, 34rpx);
   font-weight: 900;
 }
 
@@ -710,7 +710,7 @@ button::after {
   margin: 0 0 24rpx;
   padding: 18rpx 22rpx;
   border-radius: 22rpx;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.5;
 }
 
@@ -736,14 +736,14 @@ button::after {
 .ai-section-title {
   margin-bottom: 10rpx;
   color: #24315f;
-  font-size: 27rpx;
+  font-size: var(--font-ui-27, 27rpx);
   font-weight: 900;
 }
 
 .ai-section-text,
 .ai-list-item {
   color: #3f4654;
-  font-size: 27rpx;
+  font-size: var(--font-reading-27, 27rpx);
   line-height: 1.65;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -774,7 +774,7 @@ button::after {
 
 .ai-dimension-name {
   color: #24315f;
-  font-size: 26rpx;
+  font-size: var(--font-ui-26, 26rpx);
   font-weight: 800;
 }
 
@@ -791,7 +791,7 @@ button::after {
   border-radius: 22rpx;
   background: #fff7e6;
   color: #9a6400;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.55;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -799,7 +799,7 @@ button::after {
 
 .ai-tone-tip {
   color: #5568d9;
-  font-size: 25rpx;
+  font-size: var(--font-reading-25, 25rpx);
   line-height: 1.55;
   overflow-wrap: break-word;
   word-break: break-word;

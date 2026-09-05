@@ -4,15 +4,11 @@ const {
   createAudioPlayer,
   getInitialAudioPlayer,
   getWorkType,
-  previewVideoByPath,
   resolveWorkMedia
 } = require('../../utils/work-media')
 const {
-  addSquareComment,
   deleteMySquareWork,
-  deleteSquareComment,
   getSquareWorks,
-  listSquareComments,
   toggleSquareLike
 } = require('../../utils/cloud-api')
 const { requirePhoneBound } = require('../../utils/phone-auth')
@@ -23,11 +19,21 @@ const {
   getShareImage
 } = require('../../utils/share-config')
 const { buildWorkShareConfig, getWorkPublicId } = require('../../utils/work-share')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('../../utils/work-share-policy')
+const {
+  formatShanghaiDateTime,
+  isShanghaiToday,
+  parseTimeValue
+} = require('../../utils/shanghai-time')
 
 const STORAGE_KEYS = {
   trainingSubmissions: 'trainingSubmissions',
   extraTrainingSubmissions: 'extraTrainingSubmissions'
 }
+const SQUARE_PAGE_SIZE = 20
 
 const MEDIA_DEBUG_FIELDS = [
   'audioUrl', 'audioURL', 'audioFileUrl', 'audioFileURL',
@@ -209,7 +215,6 @@ function getMediaFailureMessage(reason, mediaType = 'audio') {
 const FILTERS = [
   { id: 'all', title: '全部' },
   { id: 'audio', title: '音频' },
-  { id: 'video', title: '视频' },
   { id: 'reading', title: '朗读' },
   { id: 'retell', title: '复述' },
   { id: 'topic', title: '话题' },
@@ -242,21 +247,8 @@ function markLocalSquareWorkDeleted(workId) {
   })
 }
 
-function getTimeValue(timeText) {
-  if (!timeText) return 0
-  const date = new Date(String(timeText).replace(/-/g, '/'))
-  return date.getTime() || 0
-}
-
 function isToday(timeText) {
-  if (!timeText) return false
-  const date = new Date(String(timeText).replace(/-/g, '/'))
-  if (!date.getTime()) return false
-
-  const now = new Date()
-  return date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
+  return isShanghaiToday(timeText, Date.now(), { naiveTimeZone: 'Asia/Shanghai' })
 }
 
 function getAvatarText(nickname) {
@@ -297,7 +289,7 @@ function getCategoryText(item, workType) {
   return item.extraTitle || '加练'
 }
 
-function normalizeWork(item, sourceType, index) {
+function normalizeWork(item, sourceType, index, naiveTimeZone = 'Asia/Shanghai') {
   const workType = getWorkType(item)
   const publicNickname = item.publicNickname || item.studentName || '同学'
   const timeText = item.publicAt || item.submittedAt || item.createdAt || ''
@@ -309,6 +301,7 @@ function normalizeWork(item, sourceType, index) {
     sourceType,
     interactionId: getInteractionId(item, sourceType),
     workType,
+    shareAllowed: isWorkShareAllowed(item),
     publicNickname,
     publicAvatarText: item.publicAvatarText || getAvatarText(publicNickname),
     moduleText: item.moduleTitle
@@ -319,8 +312,14 @@ function normalizeWork(item, sourceType, index) {
     titleText: normalizeWorkTitle(item),
     typeText: workType === 'video' ? '录像作品' : '录音作品',
     durationText: getDurationText(item),
-    publicTimeText: timeText || '暂无',
-    sortTime: getTimeValue(timeText),
+    publicTimeText: timeText
+      ? formatShanghaiDateTime(timeText, {
+        naiveTimeZone
+      })
+      : '暂无',
+    sortTime: parseTimeValue(timeText, {
+      naiveTimeZone
+    }) || 0,
     isMine: Boolean(item.isMine),
     likeCount: Math.max(Number(item.likeCount || 0), 0),
     commentCount: Math.max(Number(item.commentCount || 0), 0),
@@ -330,10 +329,10 @@ function normalizeWork(item, sourceType, index) {
 
 function getLocalPublicWorks() {
   const mainWorks = getStorageList(STORAGE_KEYS.trainingSubmissions)
-    .filter(item => item.isPublic === true)
+    .filter(item => item.isPublic === true && isWorkShareAllowed(item))
     .map((item, index) => normalizeWork(item, 'main', index))
   const extraWorks = getStorageList(STORAGE_KEYS.extraTrainingSubmissions)
-    .filter(item => item.isPublic === true)
+    .filter(item => item.isPublic === true && isWorkShareAllowed(item))
     .map((item, index) => normalizeWork(item, 'extra', index))
 
   return mainWorks.concat(extraWorks)
@@ -342,7 +341,6 @@ function getLocalPublicWorks() {
 function matchFilter(item, filterId) {
   if (filterId === 'all') return true
   if (filterId === 'audio') return item.workType === 'audio'
-  if (filterId === 'video') return item.workType === 'video'
   if (filterId === 'reading') return item.moduleId === 'reading' || String(item.moduleTitle || '').indexOf('朗读') > -1
   if (filterId === 'retell') return item.moduleId === 'retell'
   if (filterId === 'topic') return item.moduleId === 'topic'
@@ -350,6 +348,20 @@ function matchFilter(item, filterId) {
   if (filterId === 'randomTopic') return item.extraType === 'randomTopic'
   if (filterId === 'tongueTwister') return item.extraType === 'tongueTwister'
   return true
+}
+
+function getSquareUniqueId(work = {}) {
+  return String(work.cloudId || work._id || work.submissionId || work.workId || work.id || work.key || '')
+}
+
+function dedupeSquareWorks(works = []) {
+  const seen = new Set()
+  return works.filter(work => {
+    const id = getSquareUniqueId(work)
+    if (!id || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
 }
 
 Page({
@@ -362,13 +374,11 @@ Page({
     todayCount: 0,
     myPublicCount: 0,
     hasWorks: false,
+    loading: false,
+    loadingMore: false,
+    hasMore: true,
+    nextCursor: '',
     audioPlayer: getInitialAudioPlayer(),
-    commentsVisible: false,
-    commentsLoading: false,
-    commentSubmitting: false,
-    currentWork: null,
-    comments: [],
-    commentText: '',
     currentShareWorkId: ''
   },
 
@@ -385,29 +395,74 @@ Page({
         autoplay: true
       })
     }
-    this.loadPublicWorks()
+    this.loadPublicWorks({ reset: true })
   },
 
-  async loadPublicWorks() {
+  async onPullDownRefresh() {
     try {
-      const cloudRes = await getSquareWorks('all', 50)
-      this.applyCloudWorks(cloudRes.works || [])
+      await this.loadPublicWorks({ reset: true })
+    } finally {
+      wx.stopPullDownRefresh()
+    }
+  },
+
+  onReachBottom() {
+    if (this.data.loading || this.data.loadingMore || !this.data.hasMore) return
+    this.loadPublicWorks({ reset: false })
+  },
+
+  async loadPublicWorks({ reset = true } = {}) {
+    if (!reset && (this.data.loading || this.data.loadingMore || !this.data.hasMore)) return
+    if (reset) this.squareLoadGeneration = Number(this.squareLoadGeneration || 0) + 1
+    const generation = Number(this.squareLoadGeneration || 0)
+    const cursor = reset ? '' : this.data.nextCursor
+    this.setData(reset
+      ? { loading: true, loadingMore: false, hasMore: true, nextCursor: '' }
+      : { loadingMore: true })
+    try {
+      const cloudRes = await getSquareWorks('all', { pageSize: SQUARE_PAGE_SIZE, cursor })
+      if (generation !== this.squareLoadGeneration) return
+      this.applyCloudWorks(cloudRes.works || [], cloudRes.stats || {}, { append: !reset })
+      this.setData({
+        hasMore: Boolean(cloudRes.hasMore),
+        nextCursor: String(cloudRes.nextCursor || '')
+      })
       return
     } catch (err) {
       console.warn('[ square ] 使用本地 fallback。云端读取失败:', err)
+      if (!reset) {
+        if (generation === this.squareLoadGeneration) {
+          wx.showToast({ title: '加载失败，请重试', icon: 'none' })
+        }
+        return
+      }
+    } finally {
+      if (generation === this.squareLoadGeneration) {
+        this.setData({ loading: false, loadingMore: false })
+      }
     }
 
+    if (generation !== this.squareLoadGeneration) return
     this.loadLocalPublicWorks()
   },
 
-  applyCloudWorks(cloudWorks) {
+  applyCloudWorks(cloudWorks, stats = {}, { append = false } = {}) {
     const userInfo = getUserInfo() || {}
     const currentOpenid = userInfo.openid || ''
     const currentNickname = userInfo.nickname || userInfo.nickName || ''
-    const cloudList = cloudWorks.map((item, index) => normalizeWork(item, item.sourceType || 'cloud', index))
-    const cloudIds = cloudList.map(item => item.cloudId || item._id || item.id).filter(Boolean)
-    const localOnlyWorks = getLocalPublicWorks().filter(item => !item.cloudId || !cloudIds.includes(item.cloudId))
-    const allWorks = cloudList.concat(localOnlyWorks)
+    const cloudList = cloudWorks
+      .filter(item => isWorkShareAllowed(item))
+      .map((item, index) => normalizeWork(
+        item,
+        item.sourceType || 'cloud',
+        index,
+        'UTC'
+      ))
+    const existingWorks = append ? this.data.allWorks : []
+    const combinedCloudWorks = dedupeSquareWorks(existingWorks.concat(cloudList))
+    const cloudIds = combinedCloudWorks.map(getSquareUniqueId).filter(Boolean)
+    const localOnlyWorks = getLocalPublicWorks().filter(item => !item.cloudId || !cloudIds.includes(String(item.cloudId)))
+    const allWorks = dedupeSquareWorks(combinedCloudWorks.concat(localOnlyWorks))
       .map(item => ({
         ...item,
         isMine: item.isMine || (currentOpenid
@@ -418,9 +473,9 @@ Page({
 
     this.setData({
       allWorks,
-      publicCount: allWorks.length,
-      todayCount: allWorks.filter(item => isToday(item.publicTimeText)).length,
-      myPublicCount: allWorks.filter(item => item.isMine).length
+      publicCount: Number.isFinite(Number(stats.publicCount)) ? Number(stats.publicCount) : allWorks.length,
+      todayCount: Number.isFinite(Number(stats.todayCount)) ? Number(stats.todayCount) : allWorks.filter(item => isToday(item.publicTimeText)).length,
+      myPublicCount: Number.isFinite(Number(stats.myPublicCount)) ? Number(stats.myPublicCount) : allWorks.filter(item => item.isMine).length
     })
     this.applyFilter()
   },
@@ -440,6 +495,8 @@ Page({
 
     this.setData({
       allWorks,
+      hasMore: false,
+      nextCursor: '',
       publicCount: allWorks.length,
       todayCount: allWorks.filter(item => isToday(item.publicTimeText)).length,
       myPublicCount: allWorks.filter(item => item.isMine).length
@@ -493,14 +550,7 @@ Page({
           await deleteMySquareWork(workId)
           wx.hideLoading()
           markLocalSquareWorkDeleted(workId)
-          const allWorks = this.data.allWorks.filter(item => item.interactionId !== workId)
-          this.setData({
-            allWorks,
-            publicCount: allWorks.length,
-            todayCount: allWorks.filter(item => isToday(item.publicTimeText)).length,
-            myPublicCount: allWorks.filter(item => item.isMine).length
-          })
-          this.applyFilter()
+          await this.loadPublicWorks({ reset: true })
           wx.showToast({ title: '已删除', icon: 'success' })
         } catch (error) {
           wx.hideLoading()
@@ -543,126 +593,8 @@ Page({
     }
   },
 
-  onOpenComments(e) {
-    const workId = String(e.currentTarget.dataset.id || '')
-    const currentWork = this.data.works.find(item => item.interactionId === workId)
-    if (!workId || !currentWork) {
-      wx.showToast({ title: '作品尚未同步云端', icon: 'none' })
-      return
-    }
-    this.setData({
-      commentsVisible: true,
-      commentsLoading: true,
-      currentWork,
-      comments: [],
-      commentText: ''
-    })
-    this.loadComments(workId)
-  },
-
-  async loadComments(workId) {
-    try {
-      const result = await listSquareComments(workId, 1, 50)
-      if (!this.data.currentWork || this.data.currentWork.interactionId !== workId) return
-      const commentCount = Math.max(Number(result.total || 0), 0)
-      this.setData({ comments: result.data || [], commentsLoading: false })
-      this.patchWorkInteraction(workId, { commentCount })
-    } catch (error) {
-      if (!this.data.currentWork || this.data.currentWork.interactionId !== workId) return
-      this.setData({ commentsLoading: false })
-      wx.showToast({ title: getCloudErrorMessage(error, '评论加载失败，请稍后重试。'), icon: 'none' })
-    }
-  },
-
-  closeComments() {
-    this.setData({
-      commentsVisible: false,
-      commentsLoading: false,
-      commentSubmitting: false,
-      currentWork: null,
-      comments: [],
-      commentText: ''
-    })
-  },
-
   noop() {},
 
-  onCommentInput(e) {
-    this.setData({ commentText: e.detail.value || '' })
-  },
-
-  onSubmitComment() {
-    if (!requirePhoneBound('发表评论', {
-      page: this,
-      onSuccess: () => this.submitCurrentComment()
-    })) return
-    this.submitCurrentComment()
-  },
-
-  async submitCurrentComment() {
-    if (this.data.commentSubmitting || !this.data.currentWork) return
-    const content = String(this.data.commentText || '').trim()
-    if (!content) {
-      wx.showToast({ title: '评论内容不能为空', icon: 'none' })
-      return
-    }
-    if (Array.from(content).length > 200) {
-      wx.showToast({ title: '评论内容不能超过 200 字', icon: 'none' })
-      return
-    }
-    const workId = this.data.currentWork.interactionId
-    this.setData({ commentSubmitting: true })
-    try {
-      const result = await addSquareComment(workId, content)
-      const comments = result.comment ? [result.comment, ...this.data.comments] : this.data.comments
-      this.setData({ comments, commentText: '', commentSubmitting: false })
-      this.patchWorkInteraction(workId, {
-        commentCount: Math.max(Number(result.commentCount || comments.length), 0)
-      })
-      wx.showToast({ title: '评论已发布', icon: 'success' })
-    } catch (error) {
-      this.setData({ commentSubmitting: false })
-      const code = getCloudErrorCode(error)
-      if (code === 'COMMENT_FORBIDDEN_WORD') {
-        wx.showModal({
-          title: '评论未发布',
-          content: '评论包含不适合公开展示的内容，请修改后再发布。',
-          showCancel: false,
-          confirmText: '知道了'
-        })
-        return
-      }
-      wx.showToast({
-        title: getCloudErrorMessage(error, '评论发布失败，请稍后重试。'),
-        icon: 'none',
-        duration: 2600
-      })
-    }
-  },
-
-  onDeleteComment(e) {
-    const commentId = String(e.currentTarget.dataset.id || '')
-    if (!commentId || !this.data.currentWork) return
-    wx.showModal({
-      title: '删除评论',
-      content: '确认删除这条评论吗？',
-      confirmColor: '#d85050',
-      success: async result => {
-        if (!result.confirm || !this.data.currentWork) return
-        const workId = this.data.currentWork.interactionId
-        try {
-          const response = await deleteSquareComment(commentId)
-          this.setData({ comments: this.data.comments.filter(item => item._id !== commentId && item.id !== commentId) })
-          this.patchWorkInteraction(workId, {
-            commentCount: Math.max(Number(response.commentCount || 0), 0)
-          })
-          wx.showToast({ title: '评论已删除', icon: 'success' })
-        } catch (error) {
-          wx.showToast({ title: getCloudErrorMessage(error, '删除失败，请稍后重试。'), icon: 'none' })
-        }
-      }
-    })
-  },
 
   async getPlayableMediaUrl(media, workId) {
     if (media.src) {
@@ -778,59 +710,6 @@ Page({
     this.audioPlayer.seek(e.detail.value)
   },
 
-  async previewVideoWork(e) {
-    const target = this.data.works.find(item => item.key === e.currentTarget.dataset.key)
-    const workId = getWorkDebugId(target)
-
-    if (!target) {
-      console.warn('[square-play] video work not found', { workId })
-      wx.showToast({ title: '作品不存在', icon: 'none' })
-      return
-    }
-
-    console.log('[square-play] click video', {
-      workId,
-      _id: String(target._id || ''),
-      id: String(target.id || ''),
-      title: target.title || '',
-      taskTitle: target.taskTitle || '',
-      type: target.type || '',
-      submitType: target.submitType || '',
-      mediaType: target.mediaType || ''
-    })
-
-    const media = debugSquareWorkMedia(target)
-    let playable = { src: '', reason: 'GET_TEMP_URL_FAILED' }
-    try {
-      playable = await this.getPlayableMediaUrl(media, workId)
-    } catch (error) {
-      console.warn('[square-play] resolve playable video url error', {
-        workId,
-        errCode: error && error.errCode,
-        errMsg: error && error.errMsg
-      })
-    }
-    const videoPath = playable.src
-
-    console.log('[square-play] final playable src exists', {
-      workId,
-      mediaType: 'video',
-      exists: Boolean(videoPath),
-      srcType: getSourceType(videoPath),
-      failureStep: playable.reason || ''
-    })
-
-    if (!videoPath) {
-      wx.showToast({
-        title: getMediaFailureMessage(playable.reason, 'video'),
-        icon: 'none'
-      })
-      return
-    }
-
-    previewVideoByPath(videoPath, target.titleText || '广场录像')
-  },
-
   goTraining() {
     wx.switchTab({
       url: '/pages/training/training'
@@ -858,10 +737,15 @@ Page({
     if (res.from === 'button' && (workId || hasWorkIndex)) {
       const work = this.data.works.find(item => getWorkPublicId(item) === workId) ||
         (Number.isInteger(workIndex) ? this.data.works[workIndex] : null)
+      if (work && !isWorkShareAllowed(work)) {
+        wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+        return undefined
+      }
       if (work) {
         const shareWorkId = getWorkPublicId(work)
         this.setData({ currentShareWorkId: shareWorkId })
-        return getDefaultShareMessage(buildWorkShareConfig(work, 'square'))
+        const shareConfig = buildWorkShareConfig(work, 'square')
+        return shareConfig ? getDefaultShareMessage(shareConfig) : undefined
       }
     }
 

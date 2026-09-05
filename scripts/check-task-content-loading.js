@@ -5,28 +5,50 @@ const accessControlPath = require.resolve('../utils/access-control')
 const trainingDataPath = require.resolve('../utils/training-data')
 const remoteTrainingPath = require.resolve('../utils/remote-training')
 
-let listRequestCount = 0
-let resolveListRequest
+const IDS = {
+  retell1: 'tc_e80818d80ebb3b007a0e39a80f1c3edf',
+  reading1: 'tc_4c646238524a9c643cc1a25cd2b06e96',
+  reading2: 'tc_8c799ff0226a82073ababbedd5d71ad1',
+  speech1: 'tc_65a5e1283bb2068c669fdfde84aa7e8e'
+}
+
+const storage = new Map()
+const cachedCatalogs = new Map()
+let catalogRequestCount = 0
+let resolveCatalogRequest = null
 let detailRequestCount = 0
 let detailHandler = null
-let lastDetailOptions = null
-const cachedContents = []
+let lastDetailRequest = null
+
+global.wx = {
+  getStorageSync(key) { return storage.get(key) },
+  setStorageSync(key, value) { storage.set(key, value) },
+  removeStorageSync(key) { storage.delete(key) }
+}
+
+function normalizeContentId(value) {
+  const contentId = String(value || '').trim()
+  return /^tc_[0-9a-f]{32}$/.test(contentId) ? contentId : ''
+}
 
 require.cache[cloudApiPath] = {
   id: cloudApiPath,
   filename: cloudApiPath,
   loaded: true,
   exports: {
-    getTrainingContentById(contentId, category, options) {
+    getTrainingCatalogByModule(moduleId) {
+      catalogRequestCount += 1
+      return new Promise(resolve => {
+        resolveCatalogRequest = result => resolve({ ...result, moduleId })
+      })
+    },
+    getTrainingContentById(contentId) {
       detailRequestCount += 1
-      lastDetailOptions = options
-      return detailHandler(contentId, category, options)
+      lastDetailRequest = { contentId }
+      return detailHandler(contentId)
     },
     getTrainingContents() {
-      listRequestCount += 1
-      return new Promise(resolve => {
-        resolveListRequest = resolve
-      })
+      throw new Error('主训练目录不得回退到旧 getTrainingContents 接口')
     }
   }
 }
@@ -36,9 +58,7 @@ require.cache[accessControlPath] = {
   filename: accessControlPath,
   loaded: true,
   exports: {
-    getCurrentAccessStatus() {
-      return { membershipType: 'free' }
-    }
+    syncCloudTrainingAccess() { return true }
   }
 }
 
@@ -47,233 +67,161 @@ require.cache[trainingDataPath] = {
   filename: trainingDataPath,
   loaded: true,
   exports: {
-    clearCloudTrainingContents() {
-      cachedContents.length = 0
+    clearCloudTrainingContents(moduleId = '') {
+      if (moduleId) cachedCatalogs.delete(moduleId === 'retelling' ? 'retell' : moduleId)
+      else cachedCatalogs.clear()
     },
-    formatContentTitle(item = {}) {
-      return item.title || ''
+    formatContentTitle(item = {}) { return item.title || '' },
+    normalizeTrainingContentId: normalizeContentId,
+    setCloudTrainingContents(contents = [], options = {}) {
+      const moduleId = options.moduleId === 'retelling' ? 'retell' : options.moduleId
+      cachedCatalogs.set(moduleId, contents.slice())
+      return true
     },
-    getTaskByModuleAndContentId(moduleId, contentId) {
-      return cachedContents.find(item => item.contentId === contentId) || null
-    },
-    isTrainingContentComplete(item = {}) {
-      if (!item) return false
-      const content = String(item.content || item.material || '').trim()
-      return Boolean(content && content !== '内容正在加载，请稍后重试。')
-    },
-    setCloudTrainingContents(contents = []) {
-      cachedContents.length = 0
-      cachedContents.push(...contents)
-    },
-    splitTitleAndAuthor(title = '') {
-      return { title, author: '' }
-    },
-    upsertCloudTrainingContent(item) {
-      cachedContents.push(item)
-    }
+    splitTitleAndAuthor(title = '') { return { title, author: '' } }
   }
 }
 
 delete require.cache[remoteTrainingPath]
-const { ensureTrainingContentById, loadRemoteTrainingContent, refreshRemoteTrainingContents } = require(remoteTrainingPath)
+const {
+  ensureTrainingContentById,
+  loadRemoteTrainingContent,
+  refreshRemoteTrainingContents
+} = require(remoteTrainingPath)
 
-async function main() {
-  const first = refreshRemoteTrainingContents({ force: true, category: 'retelling' })
-  const second = refreshRemoteTrainingContents({ force: true, category: 'retelling' })
-
-  assert.strictEqual(
-    listRequestCount,
-    1,
-    '同一分类已有加载请求时，后续 force 请求必须复用在途 Promise，避免旧结果覆盖新缓存'
-  )
-
-  resolveListRequest({
-    success: true,
-    source: 'cloud',
-    contents: [{ contentId: 'retelling-v4-day-1', title: '测试正文', content: '完整正文' }],
-    hasMore: false
-  })
-
-  await Promise.all([first, second])
-
-  cachedContents.length = 0
-  let resolveDetailRequest
-  detailHandler = () => new Promise(resolve => {
-    resolveDetailRequest = resolve
-  })
-  const firstDetail = loadRemoteTrainingContent({
-    contentId: 'retelling-v4-day-1',
-    category: 'retelling'
-  })
-  const secondDetail = loadRemoteTrainingContent({
-    contentId: 'retelling-v4-day-1',
-    category: 'retelling'
-  })
-  assert.strictEqual(detailRequestCount, 1, '同一 contentId 的详情请求必须复用在途 Promise')
-  resolveDetailRequest({
+function cloudContent(contentId, moduleId = 'retell', content = '完整训练正文。', extra = {}) {
+  return {
     success: true,
     source: 'cloud',
     found: true,
-    archived: false,
-    content: {
-      contentId: 'retelling-v4-day-1',
-      title: '测试正文',
-      content: '这是完整训练正文。'
-    }
-  })
-  const [firstDetailResult, secondDetailResult] = await Promise.all([firstDetail, secondDetail])
-  assert.strictEqual(firstDetailResult.status, 'ready')
-  assert.strictEqual(secondDetailResult.status, 'ready')
-  assert.strictEqual(cachedContents.length, 1, '成功详情必须按 contentId 回填共享缓存')
-
-  const cached = await ensureTrainingContentById({
-    contentId: 'retelling-v4-day-1',
-    category: 'retelling',
-    expectedActive: true
-  })
-  assert.strictEqual(cached.status, 'ready')
-  assert.strictEqual(cached.source, 'cache')
-  assert.strictEqual(detailRequestCount, 1, '完整 contentId 缓存命中后不能重复请求')
-
-  cachedContents.length = 0
-  detailHandler = contentId => Promise.resolve({
-    success: true,
-    source: 'cloud',
-    found: true,
-    archived: false,
-    legacyFallback: true,
-    sourceContentId: 'reading-day-2',
     content: {
       contentId,
-      requestedContentId: contentId,
-      sourceContentId: 'reading-day-2',
-      legacyFallback: true,
-      category: 'reading',
-      day: 2,
-      title: '旧版云端标题',
-      content: '迁移期间读取到的旧版完整正文。'
+      moduleId,
+      day: 1,
+      sortOrder: 1,
+      title: '测试训练',
+      content,
+      contentVersion: 1,
+      status: 'active',
+      ...extra
     }
+  }
+}
+
+async function testCatalogRequestDeduplication() {
+  const first = refreshRemoteTrainingContents({ force: true, category: 'retelling' })
+  const second = refreshRemoteTrainingContents({ force: true, category: 'retell' })
+  assert.equal(catalogRequestCount, 1, 'retell/retelling 必须复用同一模块在途目录请求')
+
+  resolveCatalogRequest({
+    success: true,
+    source: 'cloud',
+    moduleVersion: 'retell-catalog-v1',
+    contents: [{
+      contentId: IDS.retell1,
+      moduleId: 'retell',
+      day: 1,
+      sortOrder: 1,
+      title: '复述测试',
+      contentVersion: 1,
+      status: 'active'
+    }]
   })
-  const legacyReady = await ensureTrainingContentById({
-    contentId: 'reading-v4-day-2',
-    category: 'reading',
-    day: 2,
-    expectedActive: true
-  })
-  assert.strictEqual(legacyReady.status, 'ready', '当前训练必须允许同分类同 Day 的旧云记录迁移回退')
-  assert.strictEqual(legacyReady.content.contentId, 'reading-v4-day-2', '旧云正文必须缓存到请求的 v4 contentId')
-  assert.strictEqual(legacyReady.content.sourceContentId, 'reading-day-2')
-  assert.strictEqual(legacyReady.content.legacyFallback, true)
-  assert.strictEqual(lastDetailOptions.day, 2, '详情请求必须把 Day 传给迁移兼容查询')
-  assert.strictEqual(lastDetailOptions.allowLegacyCurrentFallback, true, '普通训练必须显式允许迁移兼容查询')
+
+  const results = await Promise.all([first, second])
+  assert.ok(results.every(result => result.source === 'cloud'))
+  assert.equal(cachedCatalogs.get('retell').length, 1)
+  assert.equal(cachedCatalogs.get('retell')[0].content, undefined, '轻量目录不得包含完整正文')
+}
+
+async function testPermanentIdDetailAndCache() {
+  let resolveDetail
+  detailHandler = () => new Promise(resolve => { resolveDetail = resolve })
+  const first = loadRemoteTrainingContent({ contentId: IDS.retell1 })
+  const second = loadRemoteTrainingContent({ contentId: IDS.retell1 })
+  assert.equal(detailRequestCount, 1, '同一永久 contentId 必须复用在途详情请求')
+  assert.equal(lastDetailRequest.contentId, IDS.retell1)
+  resolveDetail(cloudContent(IDS.retell1))
+
+  const results = await Promise.all([first, second])
+  assert.ok(results.every(result => result.status === 'ready'))
+
+  detailHandler = () => Promise.reject(Object.assign(new Error('offline'), { code: 'NETWORK_ERROR' }))
+  const cached = await ensureTrainingContentById({ contentId: IDS.retell1 })
+  assert.equal(cached.status, 'ready')
+  assert.equal(cached.source, 'content_cache')
+  assert.equal(cached.content.content, '完整训练正文。')
+  assert.equal(detailRequestCount, 2, '有效缓存仍需在线复核，网络失败时才回退缓存')
+
+  const oldId = await ensureTrainingContentById({ contentId: 'retell-day-1' })
+  assert.equal(oldId.status, 'notFound')
+  assert.equal(oldId.code, 'INVALID_PERMANENT_CONTENT_ID')
+  assert.equal(detailRequestCount, 2, '旧 day 型 ID 不得发往云端')
+}
+
+async function testResponseValidationAndErrors() {
+  detailHandler = () => Promise.resolve(cloudContent(IDS.reading2, 'reading'))
+  const mismatch = await ensureTrainingContentById({ contentId: IDS.reading1 })
+  assert.equal(mismatch.status, 'error')
+  assert.equal(mismatch.code, 'TRAINING_CONTENT_ID_MISMATCH')
 
   detailHandler = () => Promise.resolve({
     success: true,
     source: 'cloud',
     found: false,
-    content: null
+    content: null,
+    message: '内容同步中或暂时无法获取。'
   })
-  const missing = await loadRemoteTrainingContent({
-    contentId: 'retelling-v4-day-404',
-    category: 'retelling'
-  })
-  assert.strictEqual(missing.status, 'notFound', '只有云端明确 found=false 才能判定不存在')
+  const missing = await ensureTrainingContentById({ contentId: IDS.reading2 })
+  assert.equal(missing.status, 'notFound')
+  assert.notEqual(missing.message, '该训练内容已下架。')
 
+  const networkId = 'tc_11111111111111111111111111111111'
+  detailHandler = () => Promise.reject(Object.assign(new Error('network unavailable'), { code: 'NETWORK_ERROR' }))
+  const failed = await ensureTrainingContentById({ contentId: networkId })
+  assert.equal(failed.status, 'networkError')
+  assert.equal(failed.code, 'NETWORK_ERROR')
+  assert.notEqual(failed.message, '该训练内容已下架。')
+}
+
+async function testLastSuccessfulContentCache() {
+  detailHandler = () => Promise.resolve(cloudContent(
+    IDS.speech1,
+    'speech',
+    '需要保留的上次成功正文。'
+  ))
+  const first = await ensureTrainingContentById({ contentId: IDS.speech1, contentVersion: 1 })
+  assert.equal(first.status, 'ready')
+
+  const requestsAfterSuccess = detailRequestCount
   detailHandler = () => Promise.reject(new Error('network unavailable'))
-  const failed = await loadRemoteTrainingContent({
-    contentId: 'retelling-v4-day-500',
-    category: 'retelling'
-  })
-  assert.strictEqual(failed.status, 'error', '网络错误必须进入可重试状态')
+  const cached = await ensureTrainingContentById({ contentId: IDS.speech1, contentVersion: 1 })
+  assert.equal(cached.status, 'ready')
+  assert.equal(cached.source, 'content_cache')
+  assert.equal(cached.content.content, '需要保留的上次成功正文。')
+  assert.equal(detailRequestCount, requestsAfterSuccess + 1, '命中缓存后仍应在线复核')
 
   detailHandler = () => Promise.resolve({
     success: true,
     source: 'cloud',
     found: true,
-    content: {
-      contentId: 'reading-day-1',
-      title: '旧版同 Day 正文',
-      content: '旧版正文不能冒充 v4 内容。'
-    }
+    code: 'content_inactive',
+    content: null,
+    message: '该训练内容已下架。'
   })
-  const wrongContent = await ensureTrainingContentById({
-    contentId: 'reading-v4-day-1',
-    category: 'reading',
-    expectedActive: true
-  })
-  assert.strictEqual(wrongContent.status, 'error', '详情接口返回不同 contentId 时必须拒绝写入缓存')
-  assert.strictEqual(wrongContent.code, 'TRAINING_CONTENT_ID_MISMATCH')
+  const inactive = await ensureTrainingContentById({ contentId: IDS.speech1, contentVersion: 1 })
+  assert.equal(inactive.status, 'inactive', '云端明确下架必须覆盖旧缓存')
 
-  const unknownActionError = new Error('unknown action: getTrainingContentById')
-  unknownActionError.code = 'UNKNOWN_ACTION'
-  detailHandler = () => Promise.reject(unknownActionError)
-  const unknownAction = await ensureTrainingContentById({
-    contentId: 'reading-v4-day-214',
-    category: 'reading',
-    expectedActive: true
-  })
-  assert.strictEqual(unknownAction.status, 'error', '旧云函数 unknown action 必须作为可重试接口错误')
-  assert.strictEqual(unknownAction.code, 'UNKNOWN_ACTION')
+  detailHandler = () => Promise.reject(new Error('network unavailable'))
+  const afterInvalidation = await ensureTrainingContentById({ contentId: IDS.speech1, contentVersion: 1 })
+  assert.equal(afterInvalidation.status, 'networkError', '下架后必须移除旧正文缓存')
+}
 
-  detailHandler = () => Promise.resolve({
-    success: true,
-    source: 'cloud',
-    found: false,
-    content: null
-  })
-  const mismatch = await ensureTrainingContentById({
-    contentId: 'reading-v4-day-214',
-    category: 'reading',
-    day: 214,
-    expectedActive: true
-  })
-  assert.strictEqual(mismatch.status, 'error', '本地 active v4 索引存在但云端缺失时不能误报下架')
-  assert.strictEqual(mismatch.code, 'TRAINING_CONTENT_VERSION_MISMATCH')
-
-  detailHandler = () => Promise.resolve({
-    success: true,
-    source: 'cloud',
-    found: false,
-    legacyFallbackAttempted: true,
-    content: null
-  })
-  const confirmedMissing = await ensureTrainingContentById({
-    contentId: 'reading-v4-day-213',
-    category: 'reading',
-    day: 213,
-    expectedActive: true
-  })
-  assert.strictEqual(confirmedMissing.status, 'notFound', '精确查询和合法迁移回退都未命中后才可确认不存在')
-
-  cachedContents.length = 0
-  const categoryLoad = refreshRemoteTrainingContents({ force: true, category: 'speech' })
-  detailHandler = () => Promise.resolve({
-    success: true,
-    source: 'cloud',
-    found: false,
-    content: null
-  })
-  const ensureDuringCategoryLoad = ensureTrainingContentById({
-    contentId: 'speech-v4-day-1',
-    category: 'speech',
-    expectedActive: true
-  })
-  resolveListRequest({
-    success: true,
-    source: 'cloud',
-    contents: [{
-      contentId: 'speech-v4-day-1',
-      category: 'speech',
-      day: 1,
-      title: '演讲 Day 1',
-      content: '分类请求返回的完整演讲正文。'
-    }],
-    hasMore: false
-  })
-  await categoryLoad
-  const ensuredFromCategory = await ensureDuringCategoryLoad
-  assert.strictEqual(ensuredFromCategory.status, 'ready', '精确查询暂未命中时必须等待已有分类 in-flight 请求')
-  assert.strictEqual(ensuredFromCategory.source, 'category-cache')
+async function main() {
+  await testCatalogRequestDeduplication()
+  await testPermanentIdDetailAndCache()
+  await testResponseValidationAndErrors()
+  await testLastSuccessfulContentCache()
   console.log('[check-task-content-loading] PASS')
 }
 

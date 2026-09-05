@@ -1,5 +1,5 @@
 const { getActiveMemberAccess, getCurrentUser, isPhoneBound } = require('./access-control')
-const { showPhoneLoginPrompt } = require('./phone-auth')
+const { requirePhoneBound } = require('./auth')
 const {
   checkAiUsage: cloudCheckAiUsage,
   recordAiUsage: cloudRecordAiUsage
@@ -269,7 +269,7 @@ async function recordAiUsage(type, extra = {}) {
 
 function showAiLimitModal(usage) {
   if (usage && usage.reason === 'phone_required') {
-    showPhoneLoginPrompt('生成 AI 点评')
+    requirePhoneBound(null, { actionName: '生成 AI 点评' })
     return
   }
 

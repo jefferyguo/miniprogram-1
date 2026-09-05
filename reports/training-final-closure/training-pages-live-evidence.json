@@ -1,0 +1,799 @@
+{
+  "startedAt": "2026-08-01T13:47:45.892Z",
+  "modulePages": {
+    "topic": {
+      "totalDays": 276,
+      "visibleCount": 276,
+      "firstContentId": "tc_2357735d852da01fe24b07a7e7493fd8",
+      "lastContentId": "tc_adb216b88f26af0f266aa6ecb8d9b3b4",
+      "allPermanentIds": true,
+      "passed": true
+    },
+    "reading": {
+      "totalDays": 216,
+      "visibleCount": 216,
+      "firstContentId": "tc_4c646238524a9c643cc1a25cd2b06e96",
+      "lastContentId": "tc_8e232a028b7f7b5b399348e299ec6a03",
+      "allPermanentIds": true,
+      "passed": true
+    },
+    "leaderSpeech": {
+      "totalDays": 24,
+      "visibleCount": 24,
+      "firstContentId": "tc_6ae67894dedbf22112aa33c04479cb44",
+      "lastContentId": "tc_1c1e286745070aca8fba90fc3361cdcb",
+      "allPermanentIds": true,
+      "passed": true
+    },
+    "retell": {
+      "totalDays": 257,
+      "visibleCount": 257,
+      "firstContentId": "tc_e80818d80ebb3b007a0e39a80f1c3edf",
+      "lastContentId": "tc_5a40f74b664404ad240e02c597f4e81f",
+      "allPermanentIds": true,
+      "passed": true
+    },
+    "speech": {
+      "totalDays": 116,
+      "visibleCount": 116,
+      "firstContentId": "tc_65a5e1283bb2068c669fdfde84aa7e8e",
+      "lastContentId": "tc_74ed2cc79050c5ad582ef34680f44993",
+      "allPermanentIds": true,
+      "passed": true
+    },
+    "mandarin": {
+      "totalDays": 77,
+      "visibleCount": 77,
+      "firstContentId": "tc_127506b7602a88c405607381d6d3e303",
+      "lastContentId": "tc_b801f27c3a3dfccb4baafb81b60e20c7",
+      "allPermanentIds": true,
+      "passed": true
+    }
+  },
+  "readingDay5": {
+    "route": "/pages/task-detail/task-detail?moduleId=reading&category=reading&day=5&contentId=tc_ffba14dfb5c975ea867db08fdc6bdc5c",
+    "contentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c",
+    "contentLoadState": "CONTENT_READY",
+    "contentReady": true,
+    "renderedTitle": "每日练嘴：别让“我不配”，拖垮你的人生",
+    "taskTitle": "每日练嘴：别让“我不配”，拖垮你的人生",
+    "taskMaterialLength": 727,
+    "idMatch": true,
+    "titleMatch": true,
+    "contentMatch": true,
+    "renderedMaterialContainsBody": true,
+    "falseDelistedMessageCount": 0,
+    "screenshot": "/tmp/yangqin-reading-day5.png"
+  },
+  "logs": [
+    {
+      "type": "warn",
+      "args": [
+        "[cloud-api] fail:",
+        "getAppContentConfigs",
+        {
+          "code": "server_error",
+          "result": {
+            "success": false,
+            "code": "server_error",
+            "message": "云函数执行失败，请稍后重试。"
+          }
+        }
+      ]
+    },
+    {
+      "type": "warn",
+      "args": [
+        "[training] 首页文字配置读取失败，继续使用本地文案:",
+        "云函数执行失败，请稍后重试。"
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] call:",
+        "getMe",
+        {}
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] result:",
+        "getMe",
+        {
+          "success": true,
+          "user": {
+            "_id": "[hidden]",
+            "serverUserId": "a2d31a4c6a44f0e3001cd02740225131",
+            "nickname": "Jeffery",
+            "nicknameSource": "manual",
+            "avatarUrl": "",
+            "avatarSource": "default",
+            "avatarText": "J",
+            "profileCompleted": true,
+            "isLogin": true,
+            "phone": "159****7617",
+            "phoneMasked": "159****7617",
+            "phoneBound": "",
+            "phoneBoundAt": "202****5011",
+            "phoneAuthorizedAt": "202****0956",
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "2026-07-04 10:52:10",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          },
+          "access": {
+            "openid": "[hidden]",
+            "phone": "159****7617",
+            "user": {
+              "_id": "[hidden]",
+              "openid": "[hidden]",
+              "nickname": "Jeffery",
+              "nicknameSource": "manual",
+              "avatarUrl": "",
+              "avatarText": "J",
+              "phone": "159****7617",
+              "phoneMasked": "159****7617",
+              "phoneBound": "",
+              "phoneBoundAt": "202****5011",
+              "profileCompleted": true,
+              "isLogin": true,
+              "membershipType": "admin",
+              "membershipStatus": "active",
+              "membershipStartAt": "2026-07-04 10:52:10",
+              "membershipEndAt": null,
+              "role": "admin",
+              "isAdmin": true,
+              "aiDailyLimit": -1,
+              "aiMonthlyLimit": -1,
+              "status": "active",
+              "lastLoginAt": "2026-07-31 07:09:56",
+              "updatedAt": "2026-07-31 07:09:56",
+              "firstLoginAt": "2026-07-01 10:50:11",
+              "loginCount": 108,
+              "createdAt": "2026-07-01 10:50:11",
+              "avatarSource": "default",
+              "loginAt": "2026-07-29 05:59:23",
+              "skippedProfileAuth": false,
+              "phoneAuthorizedAt": "202****0956",
+              "nicknameUpdatedAt": "2026-07-29 05:59:23",
+              "registeredAt": "2026-07-01 10:50:11",
+              "registrationBackfilled": true,
+              "phoneNormalized": "159****7617"
+            },
+            "student": null,
+            "entitlements": [],
+            "packages": [],
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "adminSource": "admins_collection",
+            "phoneBound": "",
+            "hasAdvancedAccess": true,
+            "aiLimit": -1,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] call:",
+        "getMe",
+        {}
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] result:",
+        "getMe",
+        {
+          "success": true,
+          "user": {
+            "_id": "[hidden]",
+            "serverUserId": "a2d31a4c6a44f0e3001cd02740225131",
+            "nickname": "Jeffery",
+            "nicknameSource": "manual",
+            "avatarUrl": "",
+            "avatarSource": "default",
+            "avatarText": "J",
+            "profileCompleted": true,
+            "isLogin": true,
+            "phone": "159****7617",
+            "phoneMasked": "159****7617",
+            "phoneBound": "",
+            "phoneBoundAt": "202****5011",
+            "phoneAuthorizedAt": "202****0956",
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "2026-07-04 10:52:10",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          },
+          "access": {
+            "openid": "[hidden]",
+            "phone": "159****7617",
+            "user": {
+              "_id": "[hidden]",
+              "openid": "[hidden]",
+              "nickname": "Jeffery",
+              "nicknameSource": "manual",
+              "avatarUrl": "",
+              "avatarText": "J",
+              "phone": "159****7617",
+              "phoneMasked": "159****7617",
+              "phoneBound": "",
+              "phoneBoundAt": "202****5011",
+              "profileCompleted": true,
+              "isLogin": true,
+              "membershipType": "admin",
+              "membershipStatus": "active",
+              "membershipStartAt": "2026-07-04 10:52:10",
+              "membershipEndAt": null,
+              "role": "admin",
+              "isAdmin": true,
+              "aiDailyLimit": -1,
+              "aiMonthlyLimit": -1,
+              "status": "active",
+              "lastLoginAt": "2026-07-31 07:09:56",
+              "updatedAt": "2026-07-31 07:09:56",
+              "firstLoginAt": "2026-07-01 10:50:11",
+              "loginCount": 108,
+              "createdAt": "2026-07-01 10:50:11",
+              "avatarSource": "default",
+              "loginAt": "2026-07-29 05:59:23",
+              "skippedProfileAuth": false,
+              "phoneAuthorizedAt": "202****0956",
+              "nicknameUpdatedAt": "2026-07-29 05:59:23",
+              "registeredAt": "2026-07-01 10:50:11",
+              "registrationBackfilled": true,
+              "phoneNormalized": "159****7617"
+            },
+            "student": null,
+            "entitlements": [],
+            "packages": [],
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "adminSource": "admins_collection",
+            "phoneBound": "",
+            "hasAdvancedAccess": true,
+            "aiLimit": -1,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] call:",
+        "getMe",
+        {}
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] result:",
+        "getMe",
+        {
+          "success": true,
+          "user": {
+            "_id": "[hidden]",
+            "serverUserId": "a2d31a4c6a44f0e3001cd02740225131",
+            "nickname": "Jeffery",
+            "nicknameSource": "manual",
+            "avatarUrl": "",
+            "avatarSource": "default",
+            "avatarText": "J",
+            "profileCompleted": true,
+            "isLogin": true,
+            "phone": "159****7617",
+            "phoneMasked": "159****7617",
+            "phoneBound": "",
+            "phoneBoundAt": "202****5011",
+            "phoneAuthorizedAt": "202****0956",
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "2026-07-04 10:52:10",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          },
+          "access": {
+            "openid": "[hidden]",
+            "phone": "159****7617",
+            "user": {
+              "_id": "[hidden]",
+              "openid": "[hidden]",
+              "nickname": "Jeffery",
+              "nicknameSource": "manual",
+              "avatarUrl": "",
+              "avatarText": "J",
+              "phone": "159****7617",
+              "phoneMasked": "159****7617",
+              "phoneBound": "",
+              "phoneBoundAt": "202****5011",
+              "profileCompleted": true,
+              "isLogin": true,
+              "membershipType": "admin",
+              "membershipStatus": "active",
+              "membershipStartAt": "2026-07-04 10:52:10",
+              "membershipEndAt": null,
+              "role": "admin",
+              "isAdmin": true,
+              "aiDailyLimit": -1,
+              "aiMonthlyLimit": -1,
+              "status": "active",
+              "lastLoginAt": "2026-07-31 07:09:56",
+              "updatedAt": "2026-07-31 07:09:56",
+              "firstLoginAt": "2026-07-01 10:50:11",
+              "loginCount": 108,
+              "createdAt": "2026-07-01 10:50:11",
+              "avatarSource": "default",
+              "loginAt": "2026-07-29 05:59:23",
+              "skippedProfileAuth": false,
+              "phoneAuthorizedAt": "202****0956",
+              "nicknameUpdatedAt": "2026-07-29 05:59:23",
+              "registeredAt": "2026-07-01 10:50:11",
+              "registrationBackfilled": true,
+              "phoneNormalized": "159****7617"
+            },
+            "student": null,
+            "entitlements": [],
+            "packages": [],
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "adminSource": "admins_collection",
+            "phoneBound": "",
+            "hasAdvancedAccess": true,
+            "aiLimit": -1,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] call:",
+        "getMe",
+        {}
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] result:",
+        "getMe",
+        {
+          "success": true,
+          "user": {
+            "_id": "[hidden]",
+            "serverUserId": "a2d31a4c6a44f0e3001cd02740225131",
+            "nickname": "Jeffery",
+            "nicknameSource": "manual",
+            "avatarUrl": "",
+            "avatarSource": "default",
+            "avatarText": "J",
+            "profileCompleted": true,
+            "isLogin": true,
+            "phone": "159****7617",
+            "phoneMasked": "159****7617",
+            "phoneBound": "",
+            "phoneBoundAt": "202****5011",
+            "phoneAuthorizedAt": "202****0956",
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "2026-07-04 10:52:10",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          },
+          "access": {
+            "openid": "[hidden]",
+            "phone": "159****7617",
+            "user": {
+              "_id": "[hidden]",
+              "openid": "[hidden]",
+              "nickname": "Jeffery",
+              "nicknameSource": "manual",
+              "avatarUrl": "",
+              "avatarText": "J",
+              "phone": "159****7617",
+              "phoneMasked": "159****7617",
+              "phoneBound": "",
+              "phoneBoundAt": "202****5011",
+              "profileCompleted": true,
+              "isLogin": true,
+              "membershipType": "admin",
+              "membershipStatus": "active",
+              "membershipStartAt": "2026-07-04 10:52:10",
+              "membershipEndAt": null,
+              "role": "admin",
+              "isAdmin": true,
+              "aiDailyLimit": -1,
+              "aiMonthlyLimit": -1,
+              "status": "active",
+              "lastLoginAt": "2026-07-31 07:09:56",
+              "updatedAt": "2026-07-31 07:09:56",
+              "firstLoginAt": "2026-07-01 10:50:11",
+              "loginCount": 108,
+              "createdAt": "2026-07-01 10:50:11",
+              "avatarSource": "default",
+              "loginAt": "2026-07-29 05:59:23",
+              "skippedProfileAuth": false,
+              "phoneAuthorizedAt": "202****0956",
+              "nicknameUpdatedAt": "2026-07-29 05:59:23",
+              "registeredAt": "2026-07-01 10:50:11",
+              "registrationBackfilled": true,
+              "phoneNormalized": "159****7617"
+            },
+            "student": null,
+            "entitlements": [],
+            "packages": [],
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "adminSource": "admins_collection",
+            "phoneBound": "",
+            "hasAdvancedAccess": true,
+            "aiLimit": -1,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] call:",
+        "getMe",
+        {}
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] result:",
+        "getMe",
+        {
+          "success": true,
+          "user": {
+            "_id": "[hidden]",
+            "serverUserId": "a2d31a4c6a44f0e3001cd02740225131",
+            "nickname": "Jeffery",
+            "nicknameSource": "manual",
+            "avatarUrl": "",
+            "avatarSource": "default",
+            "avatarText": "J",
+            "profileCompleted": true,
+            "isLogin": true,
+            "phone": "159****7617",
+            "phoneMasked": "159****7617",
+            "phoneBound": "",
+            "phoneBoundAt": "202****5011",
+            "phoneAuthorizedAt": "202****0956",
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "2026-07-04 10:52:10",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          },
+          "access": {
+            "openid": "[hidden]",
+            "phone": "159****7617",
+            "user": {
+              "_id": "[hidden]",
+              "openid": "[hidden]",
+              "nickname": "Jeffery",
+              "nicknameSource": "manual",
+              "avatarUrl": "",
+              "avatarText": "J",
+              "phone": "159****7617",
+              "phoneMasked": "159****7617",
+              "phoneBound": "",
+              "phoneBoundAt": "202****5011",
+              "profileCompleted": true,
+              "isLogin": true,
+              "membershipType": "admin",
+              "membershipStatus": "active",
+              "membershipStartAt": "2026-07-04 10:52:10",
+              "membershipEndAt": null,
+              "role": "admin",
+              "isAdmin": true,
+              "aiDailyLimit": -1,
+              "aiMonthlyLimit": -1,
+              "status": "active",
+              "lastLoginAt": "2026-07-31 07:09:56",
+              "updatedAt": "2026-07-31 07:09:56",
+              "firstLoginAt": "2026-07-01 10:50:11",
+              "loginCount": 108,
+              "createdAt": "2026-07-01 10:50:11",
+              "avatarSource": "default",
+              "loginAt": "2026-07-29 05:59:23",
+              "skippedProfileAuth": false,
+              "phoneAuthorizedAt": "202****0956",
+              "nicknameUpdatedAt": "2026-07-29 05:59:23",
+              "registeredAt": "2026-07-01 10:50:11",
+              "registrationBackfilled": true,
+              "phoneNormalized": "159****7617"
+            },
+            "student": null,
+            "entitlements": [],
+            "packages": [],
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "adminSource": "admins_collection",
+            "phoneBound": "",
+            "hasAdvancedAccess": true,
+            "aiLimit": -1,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] call:",
+        "getMe",
+        {}
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api] result:",
+        "getMe",
+        {
+          "success": true,
+          "user": {
+            "_id": "[hidden]",
+            "serverUserId": "a2d31a4c6a44f0e3001cd02740225131",
+            "nickname": "Jeffery",
+            "nicknameSource": "manual",
+            "avatarUrl": "",
+            "avatarSource": "default",
+            "avatarText": "J",
+            "profileCompleted": true,
+            "isLogin": true,
+            "phone": "159****7617",
+            "phoneMasked": "159****7617",
+            "phoneBound": "",
+            "phoneBoundAt": "202****5011",
+            "phoneAuthorizedAt": "202****0956",
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "2026-07-04 10:52:10",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          },
+          "access": {
+            "openid": "[hidden]",
+            "phone": "159****7617",
+            "user": {
+              "_id": "[hidden]",
+              "openid": "[hidden]",
+              "nickname": "Jeffery",
+              "nicknameSource": "manual",
+              "avatarUrl": "",
+              "avatarText": "J",
+              "phone": "159****7617",
+              "phoneMasked": "159****7617",
+              "phoneBound": "",
+              "phoneBoundAt": "202****5011",
+              "profileCompleted": true,
+              "isLogin": true,
+              "membershipType": "admin",
+              "membershipStatus": "active",
+              "membershipStartAt": "2026-07-04 10:52:10",
+              "membershipEndAt": null,
+              "role": "admin",
+              "isAdmin": true,
+              "aiDailyLimit": -1,
+              "aiMonthlyLimit": -1,
+              "status": "active",
+              "lastLoginAt": "2026-07-31 07:09:56",
+              "updatedAt": "2026-07-31 07:09:56",
+              "firstLoginAt": "2026-07-01 10:50:11",
+              "loginCount": 108,
+              "createdAt": "2026-07-01 10:50:11",
+              "avatarSource": "default",
+              "loginAt": "2026-07-29 05:59:23",
+              "skippedProfileAuth": false,
+              "phoneAuthorizedAt": "202****0956",
+              "nicknameUpdatedAt": "2026-07-29 05:59:23",
+              "registeredAt": "2026-07-01 10:50:11",
+              "registrationBackfilled": true,
+              "phoneNormalized": "159****7617"
+            },
+            "student": null,
+            "entitlements": [],
+            "packages": [],
+            "membershipType": "admin",
+            "membershipStatus": "active",
+            "membershipStartAt": "",
+            "membershipEndAt": null,
+            "role": "admin",
+            "isAdmin": true,
+            "adminSource": "admins_collection",
+            "phoneBound": "",
+            "hasAdvancedAccess": true,
+            "aiLimit": -1,
+            "aiDailyLimit": -1,
+            "aiMonthlyLimit": -1
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[task-detail][initialize] route:",
+        {
+          "rawOptions": {
+            "moduleId": "reading",
+            "category": "reading",
+            "day": "5",
+            "contentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c"
+          },
+          "moduleId": "reading",
+          "category": "reading",
+          "day": 5,
+          "contentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c",
+          "revision": 1,
+          "localHit": true,
+          "localComplete": false,
+          "remoteState": {
+            "categoryLoading": false,
+            "contentLoading": false,
+            "cacheHit": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[task-detail] 当前 Day:",
+        5,
+        "access:",
+        {
+          "allowed": true,
+          "reason": "admin_bypass",
+          "requiresMembership": true,
+          "isAdminBypass": true,
+          "membershipLevel": "member",
+          "policyPosition": 4,
+          "accessPolicyVersion": 1,
+          "isFreeAccess": false,
+          "isMemberAccess": true,
+          "packages": []
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[task-detail] 当前任务标题：",
+        "每日练嘴：别让“我不配”，拖垮你的人生",
+        "每日练嘴：别让“我不配”，拖垮你的人生"
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[remote-training][ensure-by-id] request:",
+        {
+          "contentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c",
+          "expectedVersion": 1
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api][training-content-by-id] request:",
+        {
+          "action": "getTrainingContentById",
+          "contentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c"
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[cloud-api][training-content-by-id] result:",
+        {
+          "success": true,
+          "code": "",
+          "found": true,
+          "returnedContentId": "tc_ffba14dfb5c975ea867db08fdc6bdc5c",
+          "contentLength": 727,
+          "source": "cloud"
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[task-detail] 当前 Day:",
+        5,
+        "access:",
+        {
+          "allowed": true,
+          "reason": "admin_bypass",
+          "requiresMembership": true,
+          "isAdminBypass": true,
+          "membershipLevel": "member",
+          "policyPosition": 4,
+          "accessPolicyVersion": 1,
+          "isFreeAccess": false,
+          "isMemberAccess": true,
+          "packages": []
+        }
+      ]
+    },
+    {
+      "type": "log",
+      "args": [
+        "[task-detail] 当前任务标题：",
+        "每日练嘴：别让“我不配”，拖垮你的人生",
+        "每日练嘴：别让“我不配”，拖垮你的人生"
+      ]
+    }
+  ],
+  "exceptions": [],
+  "accessSetup": {
+    "success": true,
+    "phoneBound": true,
+    "membershipType": "admin",
+    "isAdmin": true
+  },
+  "success": true,
+  "completedAt": "2026-08-01T13:48:27.411Z"
+}

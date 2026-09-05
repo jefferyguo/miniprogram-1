@@ -1,0 +1,174 @@
+{
+  "startedAt": "2026-08-08T14:10:38.696Z",
+  "environment": "cloud1-d0geb9qt9d29ee6fc",
+  "admin": {
+    "isAdmin": true,
+    "role": "admin",
+    "source": "admins_collection"
+  },
+  "crud": {
+    "create": {
+      "pass": true,
+      "affectedCount": 1,
+      "contentVersion": 1
+    },
+    "edit": {
+      "pass": true,
+      "affectedCount": 1,
+      "contentVersion": 2
+    },
+    "moveUp": {
+      "pass": true,
+      "affectedCount": 2,
+      "attempts": 3
+    },
+    "moveDown": {
+      "pass": true,
+      "affectedCount": 2,
+      "attempts": 1
+    },
+    "archive": {
+      "pass": true,
+      "affectedCount": 1
+    },
+    "restore": {
+      "pass": true,
+      "affectedCount": 1
+    },
+    "delete": {
+      "pass": true,
+      "semantics": "deleted_tombstone",
+      "affectedCount": 1
+    }
+  },
+  "ordering": {
+    "module": "reading",
+    "recordsBefore": 216,
+    "pages": 3,
+    "moves": [
+      {
+        "affectedCount": 2,
+        "from": 220,
+        "to": 216
+      },
+      {
+        "affectedCount": 2,
+        "from": 216,
+        "to": 215
+      },
+      {
+        "affectedCount": 2,
+        "from": 215,
+        "to": 214
+      },
+      {
+        "affectedCount": 2,
+        "from": 214,
+        "to": 215
+      },
+      {
+        "affectedCount": 2,
+        "from": 215,
+        "to": 216
+      },
+      {
+        "affectedCount": 2,
+        "from": 216,
+        "to": 220
+      }
+    ],
+    "maxAffectedPerReorder": 2,
+    "lastHasNoNext": true
+  },
+  "publicCatalog": {
+    "source": "cloud",
+    "records": 50,
+    "denseDays": true,
+    "deletedTestHidden": true
+  },
+  "registrationReports": {
+    "daily:2026-08-08": {
+      "success": true,
+      "total": 0,
+      "phoneAuthorized": 0,
+      "phoneUnauthorized": 0,
+      "listCount": 0,
+      "listTruncated": false,
+      "dailyTrendTotal": null,
+      "code": ""
+    },
+    "daily:2026-05-12": {
+      "success": true,
+      "total": 0,
+      "phoneAuthorized": 0,
+      "phoneUnauthorized": 0,
+      "listCount": 0,
+      "listTruncated": false,
+      "dailyTrendTotal": null,
+      "code": ""
+    },
+    "daily:2000-01-01": {
+      "success": true,
+      "total": 0,
+      "phoneAuthorized": 0,
+      "phoneUnauthorized": 0,
+      "listCount": 0,
+      "listTruncated": false,
+      "dailyTrendTotal": null,
+      "code": ""
+    },
+    "weekly:2026-08-03": {
+      "success": true,
+      "total": 13,
+      "phoneAuthorized": 13,
+      "phoneUnauthorized": 0,
+      "listCount": 13,
+      "listTruncated": false,
+      "dailyTrendTotal": 13,
+      "code": ""
+    },
+    "weekly:2026-05-11": {
+      "success": true,
+      "total": 0,
+      "phoneAuthorized": 0,
+      "phoneUnauthorized": 0,
+      "listCount": 0,
+      "listTruncated": false,
+      "dailyTrendTotal": 0,
+      "code": ""
+    },
+    "weekly:2000-01-03": {
+      "success": true,
+      "total": 0,
+      "phoneAuthorized": 0,
+      "phoneUnauthorized": 0,
+      "listCount": 0,
+      "listTruncated": false,
+      "dailyTrendTotal": 0,
+      "code": ""
+    },
+    "timezone": "Asia/Shanghai (+08:00)"
+  },
+  "userMembership": {
+    "phoneEntitlementsResponse": "pass",
+    "records": 19,
+    "nullSafe": true
+  },
+  "authentication": {
+    "adminWebReadWithoutToken": "DASHBOARD_TOKEN_NOT_CONFIGURED",
+    "adminWebWriteWithoutToken": "DASHBOARD_TOKEN_NOT_CONFIGURED",
+    "failClosed": true
+  },
+  "cleanup": {
+    "activeTestRecords": 0,
+    "tombstoneRetainedByDeleteSemantics": true,
+    "originalOrderRestored": true,
+    "originalStoredPositionsRestored": true
+  },
+  "console": {
+    "exceptionCount": 0,
+    "unexpectedErrorCount": 0
+  },
+  "completedAt": "2026-08-08T14:13:16.788Z",
+  "status": "CLOUDBASE_MINIPROGRAM_SIDE_PASS"
+}

@@ -1,0 +1,50 @@
+{
+  "status": "CLOUDBASE_READBACK_CROSSCHECK_PASS",
+  "completedAt": "2026-08-08T14:15:15.100Z",
+  "environment": "cloud1-d0geb9qt9d29ee6fc",
+  "trainingCatalog": {
+    "module": "reading",
+    "adminActiveRecords": 216,
+    "adminPages": 3,
+    "activeAutoE2ERecords": 0,
+    "publicRecords": 216,
+    "publicPages": 3,
+    "denseDayRange": "1..216"
+  },
+  "registration": {
+    "weekStart": "2026-08-03",
+    "weekEnd": "2026-08-09",
+    "weeklyTotal": 13,
+    "dailyTrendTotal": 13,
+    "dailyCrosschecks": [
+      {
+        "date": "2026-08-03",
+        "count": 3,
+        "matched": true
+      },
+      {
+        "date": "2026-08-04",
+        "count": 3,
+        "matched": true
+      },
+      {
+        "date": "2026-08-05",
+        "count": 4,
+        "matched": true
+      },
+      {
+        "date": "2026-08-06",
+        "count": 2,
+        "matched": true
+      },
+      {
+        "date": "2026-08-07",
+        "count": 1,
+        "matched": true
+      }
+    ],
+    "noDataDate": "2000-01-01",
+    "noDataTotal": 0,
+    "timezone": "Asia/Shanghai (+08:00)"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "create": {
+    "success": false,
+    "code": "TRAINING_CONTENT_INITIAL_IMPORT_REQUIRED"
+  },
+  "remove": {
+    "success": false,
+    "code": "TRAINING_CONTENT_STRUCTURE_CHANGE_REQUIRES_IMPORT"
+  },
+  "reorder": {
+    "success": false,
+    "code": "TRAINING_CONTENT_STRUCTURE_CHANGE_REQUIRES_IMPORT"
+  },
+  "readingCount": 216
+}

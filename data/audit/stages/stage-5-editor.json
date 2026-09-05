@@ -1,0 +1,16 @@
+{
+  "stage": 5,
+  "title": "手机端所见即所得文章编辑器",
+  "generatedAt": "2026-07-28T02:40:04.971Z",
+  "status": "CODE_COMPLETE",
+  "changes": {
+    "wxml": "替换textarea为原生<editor>组件 + 格式工具栏 + 编辑/预览切换",
+    "js": "编辑方法(onEditorReady/Bold/Italic/Underline/FontSize/Color/Align/Undo/Redo)",
+    "data": "richContentHtml + richContentVersion + editorState",
+    "cloudApi": "buildTrainingConfigInput + sanitizeTrainingConfigItem 添加richContentHtml/VERSION",
+    "saveEdit": "payload包含richContentHtml + richContentVersion"
+  },
+  "pending": {
+    "adminUITest": "待真机测试原生editor选区行为"
+  }
+}

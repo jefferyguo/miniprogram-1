@@ -1,0 +1,18 @@
+{
+  "stage": 1,
+  "title": "源数据真实性审查",
+  "generatedAt": "2026-07-28T03:39:38.400Z",
+  "status": "COMPLETE",
+  "sourceDocx": "即兴讲话0728（定稿，未上传）.docx (130KB)",
+  "parsedItems": 276,
+  "dayRange": "1-276连续",
+  "emptyTitle": 0,
+  "emptyContent": 0,
+  "dayInTitle": 0,
+  "dayInContent": 0,
+  "titleContentCrossed": 0,
+  "richTextPlainTextDiff": 0,
+  "duplicatesPreserved": true,
+  "item1Title": "【必看】即兴讲话 | 训练技巧 + 实用框架 (titleLen:22, contentLen:1708)",
+  "item276Title": "科技让生活更快，但更好了吗 (titleLen:14, contentLen:184)"
+}

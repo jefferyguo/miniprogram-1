@@ -27,11 +27,7 @@
     "pages/join-class/join-class",
     "pages/settings/settings",
     "pages/privacy/privacy",
-    "pages/teacher-login/teacher-login",
-    "pages/teacher-home/teacher-home",
-    "pages/teacher-classes/teacher-classes",
-    "pages/teacher-review/teacher-review",
-    "pages/teacher-favorites/teacher-favorites",
+    "pages/voiceprint-agreement/voiceprint-agreement",
     "pages/review/review",
     "pages/square/square",
     "pages/growth/growth",
@@ -45,7 +41,9 @@
   },
   "usingComponents": {
     "member-benefit-modal": "/components/member-benefit-modal/member-benefit-modal",
-    "profile-login-modal": "/components/profile-login-modal/profile-login-modal"
+    "profile-login-modal": "/components/profile-login-modal/profile-login-modal",
+    "login-gate": "/components/login-gate/login-gate",
+    "voice-consent-modal": "/components/voice-consent-modal/voice-consent-modal"
   },
   "tabBar": {
     "color": "#8a8f99",

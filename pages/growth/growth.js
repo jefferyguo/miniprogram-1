@@ -5,6 +5,7 @@ const {
   getTrainingModules,
   getExtraTraining
 } = require('../../utils/training-data')
+const { requireLogin } = require('../../utils/auth')
 const { requirePhoneBound } = require('../../utils/phone-auth')
 
 function getRecords() {
@@ -80,9 +81,8 @@ Page({
   },
 
   onShow() {
-    if (!requirePhoneBound('查看成长记录', {
-      page: this
-    })) {
+    if (!requireLogin(null, { actionName: '查看成长记录' })) return
+    {
       this.setData({
         totalSubmissions: 0,
         weekDone: 0,
@@ -102,11 +102,12 @@ Page({
     const modules = getTrainingModules()
     const extraTrainings = getExtraTraining()
     const moduleProgress = modules.map(module => {
-      const completedDays = records
+      const moduleContentIds = new Set(module.days.map(item => String(item.contentId || '').trim()).filter(Boolean))
+      const completedContentIds = records
         .filter(record => record.moduleId === module.id)
-        .map(record => Number(record.day))
-        .filter(day => day > 0)
-      const done = Array.from(new Set(completedDays)).length
+        .map(record => String(record.contentId || '').trim())
+        .filter(contentId => contentId && moduleContentIds.has(contentId))
+      const done = new Set(completedContentIds).size
 
       return {
         id: module.id,

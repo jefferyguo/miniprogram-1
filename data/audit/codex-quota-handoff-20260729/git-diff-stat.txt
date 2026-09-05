@@ -1,0 +1,71 @@
+ .DS_Store                                          |  Bin 8196 -> 8196 bytes
+ AUDIT_CHECKLIST.md                                 |    2 +-
+ app.js                                             |  114 +-
+ app.json                                           |    3 +-
+ cloudfunctions/cloudApi/index.js                   | 1552 +++++++++++++++-----
+ cloudfunctions/cloudApi/training-content-compat.js |  107 +-
+ cloudfunctions/generateTrainingFeedback/index.js   |   63 +-
+ cloudfunctions/login/index.js                      |  162 +-
+ .../member-benefit-modal/member-benefit-modal.wxml |    2 +-
+ .../profile-login-modal/profile-login-modal.js     |   10 +-
+ pages/admin-mini-config/admin-mini-config.js       |  764 ++++++++--
+ pages/admin-mini-config/admin-mini-config.wxml     |  193 ++-
+ pages/admin-mini-config/admin-mini-config.wxss     |  534 +++++++
+ pages/ai-evaluation/ai-evaluation.js               |    6 +-
+ pages/ai-evaluation/ai-evaluation.wxml             |    1 +
+ pages/extra-training/extra-training.js             |   31 +-
+ pages/extra-training/extra-training.json           |    5 +-
+ pages/extra-training/extra-training.wxml           |    2 +
+ pages/growth/growth.js                             |    6 +-
+ pages/growth/growth.wxml                           |    1 +
+ pages/member-center/member-center.js               |    2 +-
+ pages/member-center/member-center.wxml             |    3 +-
+ pages/mine/mine.js                                 |   91 +-
+ pages/mine/mine.wxml                               |    6 +-
+ pages/module-detail/module-detail.js               |   27 +-
+ pages/module-detail/module-detail.wxml             |    9 +-
+ pages/my-works/my-works.js                         |   88 +-
+ pages/my-works/my-works.json                       |    5 +-
+ pages/my-works/my-works.wxml                       |    2 +
+ pages/review/review.js                             |    7 +-
+ pages/review/review.json                           |    5 +-
+ pages/review/review.wxml                           |    2 +
+ pages/square/square.wxml                           |    1 +
+ pages/task-detail/task-detail.js                   |  113 +-
+ pages/task-detail/task-detail.json                 |    5 +-
+ pages/task-detail/task-detail.wxml                 |    7 +-
+ pages/training/training.js                         |    9 +-
+ pages/training/training.wxml                       |    1 +
+ pages/video-record/video-record.wxml               |    1 +
+ pages/work-detail/work-detail.wxml                 |    1 +
+ project.config.json                                |   35 +-
+ scripts/__pycache__/parse_docx.cpython-314.pyc     |  Bin 26077 -> 988 bytes
+ scripts/build-training-data.js                     |  373 +----
+ scripts/check-task-content-loading.js              |  336 ++---
+ scripts/check-task-detail-first-load.js            |   54 +-
+ scripts/check-training-content-id-consistency.js   |   72 +-
+ scripts/check-training-content-legacy-compat.js    |   90 +-
+ scripts/check-training-history.js                  |   66 +-
+ scripts/import-reading-retelling-to-cloud.js       |  459 +-----
+ scripts/parse_docx.py                              |  532 +------
+ scripts/sync-training-local-data.js                |  166 +--
+ utils/access-control.js                            |  134 +-
+ utils/ai-feedback.js                               |   19 +
+ utils/ai-usage.js                                  |    4 +-
+ utils/auth.js                                      |  301 +++-
+ utils/cloud-api.js                                 |   91 +-
+ utils/cloud-upload.js                              |   15 +-
+ utils/cloud-user.js                                |   12 +-
+ utils/cloudbase-module.js                          |   25 +-
+ utils/extended-training-data.js                    |   12 -
+ utils/generated-training-data.js                   |   14 +-
+ utils/membership-config.js                         |    2 +-
+ utils/phone-auth.js                                |   88 +-
+ utils/profile-auth.js                              |  112 +-
+ utils/remote-training.js                           |  365 ++++-
+ utils/training-data.js                             |  976 ++++--------
+ utils/virtual-payment.js                           |    9 +-
+ ...7\350\257\265\350\256\255\347\273\2030720.docx" |  Bin 131950 -> 0 bytes
+ ...4\215\350\277\260\347\273\203\345\230\264.docx" |  Bin 274698 -> 0 bytes
+ "\346\274\224\350\256\2620720.docx"                |  Bin 193419 -> 0 bytes
+ 70 files changed, 4733 insertions(+), 3572 deletions(-)

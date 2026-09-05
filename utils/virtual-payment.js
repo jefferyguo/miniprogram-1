@@ -6,9 +6,9 @@ const {
 const { getMembershipProduct } = require('./membership-products')
 const {
   isPhoneBound,
-  refreshPhoneMembership,
-  showPhoneLoginPrompt
+  refreshPhoneMembership
 } = require('./phone-auth')
+const { requirePhoneBound } = require('./auth')
 
 const PENDING_ORDER_KEY = 'virtualPaymentPendingOrderNo'
 const PAYMENT_CONFIGURING_TEXT = '会员支付能力配置中，请稍后再试。'
@@ -346,10 +346,7 @@ async function purchaseMembership(productId, options = {}) {
   }
   if (!isPhoneBound()) {
     debugWarn('phone not bound', { productId, code: 'PHONE_REQUIRED' })
-    showPhoneLoginPrompt('开通会员', {
-      page: options.page,
-      message: '请先登录并绑定手机号，便于支付成功后自动匹配会员权益。'
-    })
+    requirePhoneBound(null, { actionName: '开通会员' })
     return { success: false, code: 'PHONE_REQUIRED' }
   }
   if (!isVirtualPaymentSupported()) {

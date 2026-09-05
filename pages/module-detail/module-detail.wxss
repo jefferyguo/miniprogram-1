@@ -248,18 +248,18 @@ button::after {
 
 .module-title {
   display: block;
-  font-size: 44rpx;
+  font-size: var(--font-ui-44, 44rpx);
   font-weight: 900;
   margin-bottom: 16rpx;
 }
 
 .module-reading .module-title {
-  font-size: 40rpx;
+  font-size: var(--font-ui-40, 40rpx);
 }
 
 .module-desc {
   display: block;
-  font-size: 28rpx;
+  font-size: var(--font-reading-28, 28rpx);
   line-height: 1.55;
   opacity: 0.92;
   margin-bottom: 26rpx;
@@ -361,7 +361,7 @@ button::after {
 
 .day-title {
   display: block;
-  font-size: 30rpx;
+  font-size: var(--font-ui-30, 30rpx);
   line-height: 1.3;
   color: #111827;
   font-weight: 600;

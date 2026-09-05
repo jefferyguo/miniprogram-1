@@ -24,10 +24,13 @@ function getCurrentOpenId() {
         res.result?.result?.result?.openid ||
         ''
 
-      console.log('[cloud-user] openId 获取成功：', openId, res)
+      console.log('[cloud-user] openId 获取成功：', { hasOpenId: Boolean(openId) })
       resolve(openId)
     }).catch(err => {
-      console.warn('[cloud-user] openId 获取失败：', err)
+      console.warn('[cloud-user] openId 获取失败：', {
+        code: err && (err.code || err.errCode) || '',
+        message: err && (err.message || err.errMsg) || 'unknown'
+      })
       resolve('')
     })
   })
@@ -58,7 +61,10 @@ function getPhoneNumberByCode(code) {
       console.log('[cloud-user] 手机号获取结果：', phoneNumber ? `${phoneNumber.slice(0, 3)}****${phoneNumber.slice(-4)}` : 'empty')
       resolve(phoneNumber)
     }).catch(err => {
-      console.warn('[cloud-user] 手机号获取失败：', err)
+      console.warn('[cloud-user] 手机号获取失败：', {
+        code: err && (err.code || err.errCode) || '',
+        message: err && (err.message || err.errMsg) || 'unknown'
+      })
       resolve('')
     })
   })

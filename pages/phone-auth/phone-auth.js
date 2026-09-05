@@ -1,5 +1,6 @@
 const { getCurrentUser, isPhoneBound } = require('../../utils/access-control')
 const { bindPhoneWithCode } = require('../../utils/phone-auth')
+const auth = require('../../utils/auth')
 
 Page({
   data: {
@@ -30,6 +31,14 @@ Page({
       phoneStatusText: phoneBound
         ? `已绑定：${user.phoneMasked || '手机号已脱敏'}`
         : '未绑定手机号'
+    })
+  },
+
+  openLoginGate() {
+    auth.requirePhoneBound(null, {
+      actionName: '绑定手机号',
+      source: 'phone_auth_page',
+      resumePolicy: 'manual_retry'
     })
   },
 

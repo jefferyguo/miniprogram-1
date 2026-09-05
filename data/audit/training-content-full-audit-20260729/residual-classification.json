@@ -1,0 +1,20 @@
+{
+  "runtimeRemoved": [
+    "utils/extended-training-data.js"
+  ],
+  "deprecatedBlocked": [
+    "scripts/migrate-impromptu-0728.js"
+  ],
+  "compatibilityForwarders": [
+    "scripts/build-training-data.js",
+    "scripts/sync-training-local-data.js",
+    "scripts/audit-training-source-sync.js",
+    "scripts/import-reading-retelling-to-cloud.js",
+    "scripts/parse_docx.py"
+  ],
+  "intentionalReadAliases": [
+    "*-v4-day-N",
+    "retelling-day-N"
+  ],
+  "productionDataResiduals": "NOT_QUERIED_NO_PRODUCTION_CREDENTIALS"
+}

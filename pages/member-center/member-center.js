@@ -69,7 +69,7 @@ Page({
   data: {
     accessStatus: null,
     accessLabel: '游客',
-    accessDesc: '你可以使用四大训练营前 21 天内容，每天可使用 1 次 AI 测评/反馈。',
+    accessDesc: '你可以使用四大训练营前 3 天内容，每天可使用 1 次 AI 测评/反馈。',
     membershipExpireText: '尚未开通',
     phoneMask: '未验证',
     packages: [],

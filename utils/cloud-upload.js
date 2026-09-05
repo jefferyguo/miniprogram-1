@@ -1,3 +1,5 @@
+const { normalizeError, toError } = require('./error-normalizer')
+
 function getExt(filePath, fallback = 'dat') {
   const clean = String(filePath || '').split('?')[0]
   const parts = clean.split('.')
@@ -30,7 +32,32 @@ function createUploadError(code, message, cause) {
   return error
 }
 
-function uploadFileToCloud(filePath, cloudPath, workType) {
+function ensureCloudReady() {
+  if (typeof getApp !== 'function') return Promise.resolve(true)
+  const app = getApp()
+  return app && typeof app.ensureCloudReady === 'function'
+    ? app.ensureCloudReady()
+    : Promise.resolve(true)
+}
+
+function getLocalFileSize(filePath) {
+  try {
+    if (!wx.getFileSystemManager) return null
+    const stat = wx.getFileSystemManager().statSync(filePath)
+    const size = Number(stat && stat.size)
+    return Number.isFinite(size) ? size : null
+  } catch (error) {
+    console.warn('[cloud-upload] local file stat unavailable:', {
+      errMsg: error && (error.errMsg || error.message) || ''
+    })
+    return null
+  }
+}
+
+async function uploadFileToCloud(filePath, cloudPath, workType, options = {}) {
+  await ensureCloudReady()
+  const fileSize = getLocalFileSize(filePath)
+  const traceId = String(options.traceId || '')
   return new Promise((resolve, reject) => {
     if (!filePath) {
       reject(new Error('文件路径为空'))
@@ -43,31 +70,45 @@ function uploadFileToCloud(filePath, cloudPath, workType) {
 
     console.log('[cloud-upload] upload start:', {
       workType,
-      hasFilePath: true
+      hasFilePath: true,
+      fileSize
     })
+    if (workType === 'video' && traceId) {
+      console.log(`[VIDEO_ASR][${traceId}][upload]`, {
+        event: 'start', fileSize, extension: getExt(filePath, 'mp4'), mimeType: options.mimeType || 'video/mp4'
+      })
+    }
     wx.cloud.uploadFile({
       cloudPath,
       filePath,
       success: res => {
-        console.log('[cloud-upload] success:', { hasFileID: Boolean(res.fileID) })
-        resolve({ fileID: res.fileID, cloudPath })
+        console.log('[cloud-upload] success:', { hasFileID: Boolean(res.fileID), fileSize })
+        if (workType === 'video' && traceId) {
+          console.log(`[VIDEO_ASR][${traceId}][upload]`, {
+            event: 'success', fileSize, hasCloudFileID: Boolean(res.fileID)
+          })
+        }
+        resolve({ fileID: res.fileID, cloudPath, fileSize })
       },
       fail: err => {
-        console.warn('[cloud-upload] fail:', {
-          errCode: err && err.errCode,
-          errMsg: err && err.errMsg
-        })
-        reject(err)
+        const normalized = normalizeError(err, '文件上传失败')
+        console.warn('[cloud-upload] fail:', normalized)
+        if (workType === 'video' && traceId) {
+          console.error(`[VIDEO_ASR][${traceId}][upload]`, {
+            event: 'failed', code: normalized.code || normalized.errCode, message: normalized.message
+          })
+        }
+        reject(toError(err, normalized.message))
       }
     })
   })
 }
 
-function uploadWorkFile(filePath, workType = 'audio') {
+function uploadWorkFile(filePath, workType = 'audio', options = {}) {
   const userInfo = wx.getStorageSync('userInfo') || {}
   const openid = userInfo.openid || userInfo.openId || ''
   const cloudPath = getCloudPathByType(filePath, workType, openid)
-  return uploadFileToCloud(filePath, cloudPath, workType)
+  return uploadFileToCloud(filePath, cloudPath, workType, options)
 }
 
 function uploadSquareMediaFile(filePath, workType = 'audio') {
@@ -77,7 +118,7 @@ function uploadSquareMediaFile(filePath, workType = 'audio') {
 /**
  * 安全上传广场媒体：入口和返回值都做硬校验，绝不把空 filePath 交给微信 SDK。
  */
-function uploadMediaToCloud(localPath, workType = 'audio') {
+async function uploadMediaToCloud(localPath, workType = 'audio') {
   const filePath = typeof localPath === 'string' ? localPath.trim() : ''
   const mediaType = workType === 'video' ? 'video' : 'audio'
 
@@ -87,6 +128,8 @@ function uploadMediaToCloud(localPath, workType = 'audio') {
       '该作品缺少本地文件，暂时无法发布。'
     ))
   }
+
+  await ensureCloudReady()
 
   if (!wx.cloud || typeof wx.cloud.uploadFile !== 'function') {
     return Promise.reject(createUploadError(

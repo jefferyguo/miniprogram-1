@@ -1,115 +1,66 @@
-const INACTIVE_TRAINING_STATUSES = new Set([
-  'archived',
-  'inactive',
-  'deleted',
-  'disabled',
-  'draft'
-])
+const PERMANENT_CONTENT_ID_RE = /^tc_[0-9a-f]{32}$/
+const ACTIVE_TRAINING_STATUSES = new Set(['active', 'published'])
 
 function normalizeCategory(value) {
   const category = String(value || '').trim()
-  return category === 'retell' ? 'retelling' : category
+  return category === 'retelling' ? 'retell' : category
+}
+
+function isPermanentTrainingContentId(value) {
+  return PERMANENT_CONTENT_ID_RE.test(String(value || '').trim())
+}
+
+function requirePermanentTrainingContentId(value) {
+  const contentId = String(value || '').trim()
+  if (!isPermanentTrainingContentId(contentId)) {
+    const error = new Error('contentId 必须是 tc_<32位十六进制> 永久 ID')
+    error.code = 'INVALID_PERMANENT_CONTENT_ID'
+    throw error
+  }
+  return contentId
 }
 
 function getTrainingDay(record = {}) {
-  return Number(record.day || record.dayNumber || 0)
+  return Number(record.sortOrder || record.day || 0)
 }
 
 function hasTrainingBody(record = {}) {
-  return Boolean(String(record.content || record.material || record.promptText || '').trim())
+  return Boolean(String(record.content || '').trim())
 }
 
-function isCurrentTrainingRecord(record) {
+function isCurrentTrainingRecord(record = {}) {
   if (!record || record.active === false || record.visible === false) return false
-  const status = String(record.status || '').trim().toLowerCase()
-  return !INACTIVE_TRAINING_STATUSES.has(status)
-}
-
-function parseVersionedTrainingContentId(contentId = '') {
-  const match = String(contentId || '').trim().match(/^(.+)-v(\d+)-day-(\d+)$/i)
-  if (!match) return null
-  return {
-    category: normalizeCategory(match[1]),
-    version: Number(match[2]),
-    day: Number(match[3])
-  }
-}
-
-function isRequestedVersionedTrainingContent(contentId, category, day) {
-  const parsed = parseVersionedTrainingContentId(contentId)
-  if (!parsed) return false
-  const requestedCategory = normalizeCategory(category)
-  const requestedDay = Number(day || 0)
-  return Boolean(
-    requestedCategory &&
-    requestedDay > 0 &&
-    parsed.category === requestedCategory &&
-    parsed.day === requestedDay
-  )
-}
-
-function getTrainingRecordPriority(record = {}) {
-  const contentId = String(record.contentId || '').trim()
-  const parsed = parseVersionedTrainingContentId(contentId)
-  if (parsed) return 300000 + parsed.version
-  if (/-v\d+-/i.test(contentId)) return 200000
-  return 100000
+  return ACTIVE_TRAINING_STATUSES.has(String(record.status || '').trim().toLowerCase())
 }
 
 function compareCurrentTrainingRecords(left = {}, right = {}) {
-  const priorityDiff = getTrainingRecordPriority(right) - getTrainingRecordPriority(left)
-  if (priorityDiff) return priorityDiff
-  return String(right.updatedAt || right.createdAt || '').localeCompare(
-    String(left.updatedAt || left.createdAt || '')
-  )
-}
-
-function getTrainingRecordKey(record = {}, index = 0) {
-  const category = normalizeCategory(record.category)
-  const day = getTrainingDay(record)
-  if (category && day > 0) return `${category}:day:${day}`
-  return `${category || 'unknown'}:id:${record.contentId || record._id || index}`
+  const versionDiff = Number(right.contentVersion || 0) - Number(left.contentVersion || 0)
+  if (versionDiff) return versionDiff
+  return String(right.updatedAt || '').localeCompare(String(left.updatedAt || ''))
 }
 
 function selectPreferredCurrentTrainingRecords(records = []) {
   const selected = new Map()
-  records
-    .filter(record => isCurrentTrainingRecord(record) && hasTrainingBody(record))
-    .forEach((record, index) => {
-      const key = getTrainingRecordKey(record, index)
-      const current = selected.get(key)
-      if (!current || compareCurrentTrainingRecords(record, current) < 0) {
-        selected.set(key, record)
-      }
-    })
+  records.forEach(record => {
+    if (!isPermanentTrainingContentId(record && record.contentId)) return
+    if (!isCurrentTrainingRecord(record) || !hasTrainingBody(record)) return
+    const contentId = String(record.contentId).trim()
+    const current = selected.get(contentId)
+    if (!current || compareCurrentTrainingRecords(record, current) < 0) {
+      selected.set(contentId, record)
+    }
+  })
   return Array.from(selected.values())
 }
 
-function findLegacyCurrentTrainingRecord(records = [], options = {}) {
-  const requestedContentId = String(options.requestedContentId || '').trim()
-  const category = normalizeCategory(options.category)
-  const day = Number(options.day || 0)
-  if (!isRequestedVersionedTrainingContent(requestedContentId, category, day)) return null
-
-  return records
-    .filter(record => (
-      normalizeCategory(record.category) === category &&
-      getTrainingDay(record) === day &&
-      String(record.contentId || '').trim() !== requestedContentId &&
-      isCurrentTrainingRecord(record) &&
-      hasTrainingBody(record)
-    ))
-    .sort(compareCurrentTrainingRecords)[0] || null
-}
-
 module.exports = {
+  PERMANENT_CONTENT_ID_RE,
   compareCurrentTrainingRecords,
-  findLegacyCurrentTrainingRecord,
   getTrainingDay,
   hasTrainingBody,
   isCurrentTrainingRecord,
-  isRequestedVersionedTrainingContent,
+  isPermanentTrainingContentId,
   normalizeCategory,
-  parseVersionedTrainingContentId,
+  requirePermanentTrainingContentId,
   selectPreferredCurrentTrainingRecords
 }

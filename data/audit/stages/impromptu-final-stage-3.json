@@ -1,0 +1,11 @@
+{
+  "stage": 3,
+  "title": "Day隐藏和样式渲染",
+  "generatedAt": "2026-07-28T03:39:38.400Z",
+  "status": "COMPLETE",
+  "taskDetailDay": "wx:if moduleId!==topic → hidden",
+  "moduleDetailDay": "wx:if moduleId!==topic → 序号N",
+  "titleRed": "task-detail.wxml style binding + task-detail.js preset mapping",
+  "bodyStyle": "contentStylePreset→{fontSize:small,color:green,bold:true}",
+  "titleStyleInWxml": "style=\"{{task.titleStyle ? 'color:' + task.titleStyle.color + ';' : ''}}\""
+}

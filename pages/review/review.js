@@ -26,6 +26,7 @@ const {
 } = require('../../utils/work-media')
 const { publishWorkToSquare, unpublishWorkFromSquare } = require('../../utils/work-public')
 const { deleteMyWork } = require('../../utils/cloud-api')
+const { requireLogin } = require('../../utils/auth')
 const { requirePhoneBound } = require('../../utils/phone-auth')
 const {
   enableShareMenu,
@@ -34,6 +35,10 @@ const {
   getShareImage
 } = require('../../utils/share-config')
 const { buildWorkShareConfig, getWorkPublicId } = require('../../utils/work-share')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('../../utils/work-share-policy')
 
 const STORAGE_KEYS = {
   mainDrafts: 'trainingDrafts',
@@ -96,6 +101,7 @@ function buildDisplayWork(item) {
     shareId: getWorkShareId({ ...item, key }),
     audioKey: key,
     workType,
+    shareAllowed: isWorkShareAllowed(item),
     displaySubtitle: item.displaySubtitle || (item.sourceType === 'main'
       ? (item.taskTitle || '训练任务')
       : getShortText(item.content)),
@@ -205,10 +211,8 @@ Page({
     if (!this.audioPlayer) {
       this.audioPlayer = createAudioPlayer(this)
     }
-    if (!requirePhoneBound('查看训练记录', {
-      page: this,
-      onSuccess: () => this.loadReviewData()
-    })) {
+    if (!requireLogin(null, { actionName: '查看训练记录' })) return
+    {
       this.setData({
         works: [],
         filteredWorks: [],
@@ -436,6 +440,11 @@ Page({
     const target = this.findWorkByKey(key)
 
     if (!target) return
+
+    if (!isWorkShareAllowed(target)) {
+      wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+      return
+    }
 
     if (!requirePhoneBound('发布广场', {
       page: this,
@@ -714,7 +723,7 @@ Page({
     const canRetry = res.canRetry === true
     wx.showModal({
       title: '未识别到有效语音',
-      content: '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
+      content: res.message || '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
       confirmText: canRetry ? '重新识别' : '我知道了',
       cancelText: canRetry ? '我知道了' : '',
       showCancel: canRetry,
@@ -821,10 +830,16 @@ Page({
       const work = this.data.filteredWorks.find(item => getWorkShareId(item) === workId) ||
         (Number.isInteger(workIndex) ? this.data.filteredWorks[workIndex] : null)
 
+      if (work && !isWorkShareAllowed(work)) {
+        wx.showToast({ title: VIDEO_SHARE_DISABLED_MESSAGE, icon: 'none' })
+        return undefined
+      }
+
       if (work && work.isPublic) {
         const shareWorkId = getWorkPublicId(work)
         this.setData({ currentShareWorkId: shareWorkId })
-        return getDefaultShareMessage(buildWorkShareConfig(work, 'mine'))
+        const shareConfig = buildWorkShareConfig(work, 'mine')
+        return shareConfig ? getDefaultShareMessage(shareConfig) : undefined
       }
     }
 

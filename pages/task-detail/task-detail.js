@@ -4,7 +4,6 @@ const {
   formatContentTitle,
   getModuleById,
   getTaskByModuleAndContentId,
-  getTaskByModuleAndDay,
   isTrainingContentComplete
 } = require('../../utils/training-data')
 const {
@@ -34,10 +33,16 @@ const {
   previewVideoByPath
 } = require('../../utils/work-media')
 const { publishWorkToSquare, unpublishWorkFromSquare } = require('../../utils/work-public')
+const {
+  VIDEO_SHARE_DISABLED_MESSAGE,
+  isWorkShareAllowed
+} = require('../../utils/work-share-policy')
 const { canAccessTask } = require('../../utils/access-control')
+const { resolveSingleItemPolicy } = require('../../utils/training-access-policy')
 const { uploadWorkFile } = require('../../utils/cloud-upload')
-const { getTrainingContentById, submitWorkRecord } = require('../../utils/cloud-api')
+const { submitWorkRecord } = require('../../utils/cloud-api')
 const { requirePhoneBound } = require('../../utils/phone-auth')
+const { ensureVoiceConsentAndMicPermission } = require('../../utils/voice-consent')
 const {
   ensureTrainingContentById,
   getRemoteTrainingDebugState,
@@ -48,6 +53,10 @@ const {
   createTrainingSnapshot,
   normalizeModuleId: normalizeOriginalModuleId
 } = require('../../utils/training-original')
+const {
+  CONTENT_STATE,
+  getTrainingContentStateView
+} = require('../../utils/training-content-state')
 const {
   enableShareMenu,
   getDefaultShareMessage,
@@ -188,6 +197,7 @@ function buildDisplayDraft(draft) {
 
   return {
     ...draft,
+    shareAllowed: isWorkShareAllowed(draft),
     icon: draft.type === 'audio' ? '🎤' : '🎥',
     audioKey: `main-${draft.id}`,
     typeTitle: draft.type === 'audio' ? '录音作品' : '录像作品',
@@ -342,6 +352,9 @@ function buildSavedSubmission(pageData, draft) {
     tempFilePath: draft.tempFilePath || draft.filePath || '',
     thumbPath: draft.thumbPath || '',
     fileSize: draft.fileSize || 0,
+    mimeType: draft.mimeType || '',
+    traceId: draft.traceId || '',
+    mediaInfo: draft.mediaInfo || null,
     isPublic: false,
     publicPermissionConfirmed: false,
     aiFeedbackStatus: '',
@@ -358,7 +371,7 @@ Page({
     moduleId: '',
     day: 1,
     contentId: '',
-    contentLoadState: 'loading',
+    contentLoadState: CONTENT_STATE.LOADING,
     contentReady: false,
     contentError: false,
     contentNotFound: false,
@@ -402,6 +415,7 @@ Page({
   },
 
   async loadHistoricalOriginal(options = {}) {
+    const revision = ++this._contentLoadRevision
     const contentId = decodeRouteValue(options.contentId)
     const snapshotKey = decodeRouteValue(options.snapshotKey)
     let snapshot = null
@@ -420,24 +434,27 @@ Page({
     )
 
     if (snapshot && String(snapshot.content || snapshot.material || '').trim()) {
+      if (this._isUnloaded || revision !== this._contentLoadRevision) return
       this.applyHistoricalOriginal(snapshot, routeModuleId, contentId)
       return
     }
 
     if (!contentId) {
+      if (this._isUnloaded || revision !== this._contentLoadRevision) return
       this.showHistoricalOriginalUnavailable()
       return
     }
 
     const localExact = getTaskByModuleAndContentId(routeModuleId, contentId)
     try {
-      const category = routeModuleId === 'retell' ? 'retelling' : routeModuleId
-      const result = await getTrainingContentById(contentId, category, { includeArchived: true })
-      if (result && result.success && result.content) {
+      const result = await ensureTrainingContentById({ contentId })
+      if (this._isUnloaded || revision !== this._contentLoadRevision) return
+      if (result && result.status === 'ready' && result.content) {
         this.applyHistoricalOriginal(result.content, routeModuleId, contentId)
         return
       }
     } catch (error) {
+      if (this._isUnloaded || revision !== this._contentLoadRevision) return
       console.warn('[task-detail] 历史原文精确查询失败:', {
         contentId,
         code: error && (error.code || error.errCode) || '',
@@ -446,6 +463,7 @@ Page({
     }
 
     // 云端不可用时，只允许使用 contentId 完全相同且正文已落地的本地内容。
+    if (this._isUnloaded || revision !== this._contentLoadRevision) return
     if (localExact && localExact.contentId === contentId && isTrainingContentComplete(localExact)) {
       this.applyHistoricalOriginal(localExact, routeModuleId, contentId)
       return
@@ -455,6 +473,7 @@ Page({
   },
 
   applyHistoricalOriginal(source = {}, fallbackModuleId = 'reading', requestedContentId = '') {
+    if (this._isUnloaded) return
     const moduleId = normalizeRouteModuleId(source.moduleId || source.category || fallbackModuleId)
     const moduleInfo = getModuleById(moduleId)
     const material = String(source.content || source.material || source.promptText || '').trim()
@@ -463,30 +482,18 @@ Page({
       ...source,
       contentId: source.contentId || requestedContentId,
       day,
+      displayIndex: Number(source.displayIndex || source.sortOrder || day || 0),
       title: source.title || source.contentTitle || '历史训练内容',
       contentTitle: source.contentTitle || source.title || '历史训练内容',
       material,
       content: material,
       promptText: material,
       tips: Array.isArray(source.tips) ? source.tips : [],
-      membershipLevel: source.membershipLevel || (day > 21 ? 'member' : 'free')
+      membershipLevel: source.membershipLevel || resolveSingleItemPolicy(source).effectiveMembershipLevel
     }
 
     if (!moduleInfo || !material) {
       this.showHistoricalOriginalUnavailable()
-      return
-    }
-
-    const accessResult = canAccessTask(moduleId, task)
-    if (!accessResult.allowed) {
-      if (accessResult.reason === 'need_phone') {
-        requirePhoneBound('查看历史训练内容', {
-          page: this,
-          onSuccess: () => this.applyHistoricalOriginal(source, fallbackModuleId, requestedContentId)
-        })
-      } else {
-        this.showMemberModal()
-      }
       return
     }
 
@@ -505,7 +512,7 @@ Page({
       task: displayTask,
       isHistoricalOriginal: true,
       historicalOriginalUnavailable: false,
-      contentLoadState: 'ready',
+      contentLoadState: CONTENT_STATE.READY,
       contentReady: true,
       contentError: false,
       contentNotFound: false,
@@ -519,12 +526,13 @@ Page({
   },
 
   showHistoricalOriginalUnavailable() {
+    if (this._isUnloaded) return
     this.setData({
       moduleInfo: null,
       task: null,
       isHistoricalOriginal: true,
       historicalOriginalUnavailable: true,
-      contentLoadState: 'notFound',
+      contentLoadState: CONTENT_STATE.NOT_FOUND,
       contentReady: false,
       contentError: false,
       contentNotFound: true,
@@ -539,32 +547,15 @@ Page({
     const contentId = decodeRouteValue(options.contentId)
     const day = Number(options.day || 1)
     const moduleInfo = getModuleById(moduleId)
-    // URL 已携带 contentId 时只允许精确命中，禁止退回同 Day 的新内容。
-    const task = contentId
-      ? getTaskByModuleAndContentId(moduleId, contentId)
-      : getTaskByModuleAndDay(moduleId, day)
+    // 正文身份只允许永久 contentId；day 仅用于页面展示。
+    const task = contentId ? getTaskByModuleAndContentId(moduleId, contentId) : null
 
     return { moduleId, contentId, day, moduleInfo, task }
   },
 
   setContentLoadState(state, message = '') {
     if (this._isUnloaded) return
-    const isLoading = state === 'loading'
-    this.setData({
-      contentLoadState: state,
-      contentReady: state === 'ready',
-      contentError: state === 'error',
-      contentNotFound: state === 'notFound',
-      trainingContentLoading: isLoading,
-      trainingContentUnavailable: state !== 'ready',
-      trainingContentMessage: message || (
-        isLoading
-          ? '正在加载完整训练内容...'
-          : state === 'notFound'
-            ? '该训练内容暂不存在或已下架。'
-            : '完整训练内容加载失败，请检查网络后重新加载。'
-      )
-    })
+    this.setData(getTrainingContentStateView(state, message))
   },
 
   applyTaskToPage(resolved, state) {
@@ -589,13 +580,23 @@ Page({
       return false
     }
 
+    // Apply contentStylePreset if no explicit contentStyle exists
+    const presetStyles = {
+      'small-green-bold': { fontSize: 'small', color: 'green', bold: true }
+    }
+    const effectiveContentStyle = task.contentStyle && task.contentStyle.fontSize
+      ? task.contentStyle
+      : (task.contentStylePreset ? presetStyles[task.contentStylePreset] : undefined) || task.contentStyle || {}
     const displayTask = {
       ...task,
-      displayTitle: getTaskDisplayTitle(task)
+      displayIndex: Number(task.displayIndex || task.sortOrder || task.day || day || 0),
+      displayTitle: getTaskDisplayTitle(task),
+      contentStyle: effectiveContentStyle,
+      titleStyle: task.titleStyle || undefined
     }
-    const materialStyleClass = getMaterialStyleClass(displayTask.contentStyle)
-    const materialSegments = state === 'ready'
-      ? buildMaterialSegments(displayTask.material, displayTask.contentStyle, displayTask.contentRichStyle)
+    const materialStyleClass = getMaterialStyleClass(effectiveContentStyle)
+    const materialSegments = state === CONTENT_STATE.READY
+      ? buildMaterialSegments(displayTask.material, effectiveContentStyle, displayTask.contentRichStyle)
       : []
 
     console.log('[task-detail] 当前任务标题：', displayTask.displayTitle, displayTask.title)
@@ -612,7 +613,7 @@ Page({
     })
     this.setContentLoadState(state)
 
-    if (state !== 'ready') return true
+    if (state !== CONTENT_STATE.READY) return true
     if (!this.audioPlayer) {
       this.audioPlayer = createAudioPlayer(this)
     }
@@ -625,12 +626,13 @@ Page({
   },
 
   async initializeTask(options = {}) {
-    const resolved = this.resolveTaskRoute(options)
+    let resolved = this.resolveTaskRoute(options)
     const revision = ++this._contentLoadRevision
     this._taskRouteOptions = {
       moduleId: resolved.moduleId,
       day: resolved.day,
-      contentId: resolved.contentId
+      contentId: resolved.contentId,
+      contentVersion: resolved.task && (resolved.task.contentVersion || resolved.task.version) || options.contentVersion || ''
     }
     const localComplete = isTrainingContentComplete(resolved.task)
     const category = resolved.moduleId === 'retell' ? 'retelling' : resolved.moduleId
@@ -660,6 +662,7 @@ Page({
         const placeholderTask = {
           day: resolved.day,
           contentId: resolved.contentId,
+          contentVersion: options.contentVersion || '',
           title: '训练内容',
           contentTitle: '训练内容',
           material: '',
@@ -674,9 +677,9 @@ Page({
           materialSegments: [],
           hasMaterialSegments: false
         })
-        this.setContentLoadState('loading')
+        this.setContentLoadState(CONTENT_STATE.LOADING)
       } else {
-        this.setContentLoadState('loading')
+        this.setContentLoadState(CONTENT_STATE.LOADING)
       }
       await this.loadCurrentTrainingContent(this._taskRouteOptions, {
         revision,
@@ -685,8 +688,18 @@ Page({
       return
     }
 
-    const applied = this.applyTaskToPage(resolved, localComplete ? 'ready' : 'loading')
-    if (!applied || localComplete) return
+    const initialAccess = canAccessTask(resolved.moduleId, resolved.task)
+    if (!initialAccess.allowed) {
+      await refreshRemoteTrainingContents({ force: true, category })
+      if (this._isUnloaded || revision !== this._contentLoadRevision) return
+      resolved = this.resolveTaskRoute(options)
+    }
+
+    const applied = this.applyTaskToPage(
+      resolved,
+      isTrainingContentComplete(resolved.task) ? CONTENT_STATE.READY : CONTENT_STATE.LOADING
+    )
+    if (!applied || isTrainingContentComplete(resolved.task)) return
     await this.loadCurrentTrainingContent(this._taskRouteOptions, {
       revision,
       expectedActive: true
@@ -698,12 +711,11 @@ Page({
     const isRetry = settings.retry === true
     const resolvedBeforeLoad = this.resolveTaskRoute(options)
     const contentId = resolvedBeforeLoad.contentId || resolvedBeforeLoad.task && resolvedBeforeLoad.task.contentId || ''
+    const contentVersion = resolvedBeforeLoad.task && (resolvedBeforeLoad.task.contentVersion || resolvedBeforeLoad.task.version) || options.contentVersion || ''
     const category = resolvedBeforeLoad.moduleId === 'retell' ? 'retelling' : resolvedBeforeLoad.moduleId
-    const expectedActive = settings.expectedActive === true || Boolean(resolvedBeforeLoad.task)
-
     if (!this._isUnloaded) {
       this.setData({ retrying: isRetry })
-      this.setContentLoadState('loading', isRetry
+      this.setContentLoadState(CONTENT_STATE.LOADING, isRetry
         ? '正在重新加载完整训练内容...'
         : '正在加载完整训练内容...')
     }
@@ -712,30 +724,41 @@ Page({
     if (contentId) {
       result = await ensureTrainingContentById({
         contentId,
-        category,
-        day: resolvedBeforeLoad.day,
-        expectedActive
+        contentVersion
       })
     } else {
-      const listResult = await refreshRemoteTrainingContents({ force: true, category })
-      const resolvedAfterList = this.resolveTaskRoute(options)
-      result = isTrainingContentComplete(resolvedAfterList.task)
-        ? { status: 'ready', source: listResult.source }
-        : listResult.source === 'cloud'
-          ? { status: 'notFound', source: 'cloud' }
-          : { status: 'error', source: listResult.source, message: listResult.message }
+      result = {
+        status: 'notFound',
+        source: 'route',
+        code: 'INVALID_PERMANENT_CONTENT_ID',
+        message: '内容同步中或暂时无法获取。'
+      }
     }
 
     if (this._isUnloaded || revision !== this._contentLoadRevision) return
     this.setData({ retrying: false })
 
     if (result.status === 'ready') {
-      const resolved = this.resolveTaskRoute({ ...options, contentId })
-      if (resolved.task && isTrainingContentComplete(resolved.task)) {
-        this.applyTaskToPage(resolved, 'ready')
+      const indexResolved = this.resolveTaskRoute({ ...options, contentId })
+      const remoteTask = result.content
+      if (remoteTask && isTrainingContentComplete(remoteTask)) {
+        const task = {
+          ...(indexResolved.task || {}),
+          ...remoteTask,
+          contentId,
+          day: Number(remoteTask.day || indexResolved.task && indexResolved.task.day || options.day || 0),
+          material: String(remoteTask.content || '').trim(),
+          content: String(remoteTask.content || '').trim()
+        }
+        this.applyTaskToPage({
+          ...indexResolved,
+          moduleInfo: indexResolved.moduleInfo || getModuleById(normalizeRouteModuleId(remoteTask.moduleId || remoteTask.category)),
+          task,
+          day: task.day
+        }, CONTENT_STATE.READY)
         return
       }
-      this.setContentLoadState('error')
+      this.setContentLoadState(CONTENT_STATE.NETWORK_ERROR)
       return
     }
 
@@ -749,7 +772,18 @@ Page({
         revision,
         remoteState: getRemoteTrainingDebugState({ category, contentId })
       })
-      this.setContentLoadState('notFound')
+      this.setContentLoadState(CONTENT_STATE.NOT_FOUND, result.message)
+      return
+    }
+
+    if (result.status === 'accessDenied' || result.code === 'membership_required') {
+      this.setContentLoadState(CONTENT_STATE.ACCESS_DENIED, '该训练为会员内容，开通会员后即可练习。')
+      this.showMemberModal()
+      return
+    }
+
+    if (result.status === 'inactive' || result.code === 'content_inactive') {
+      this.setContentLoadState(CONTENT_STATE.INACTIVE, '该训练内容已下架。')
       return
     }
 
@@ -760,7 +794,7 @@ Page({
       code: result.code || '',
       message: result.message || ''
     })
-    this.setContentLoadState('error')
+    this.setContentLoadState(CONTENT_STATE.NETWORK_ERROR, result.message)
   },
 
   retryTrainingContent() {
@@ -824,20 +858,49 @@ Page({
   },
 
   ensureTrainingContentReady() {
-    if (this.data.contentReady) return true
-    wx.showToast({
-      title: this.data.contentLoadState === 'loading'
-        ? '训练内容正在加载，请稍候'
-        : '请先重新加载完整训练内容',
-      icon: 'none'
-    })
-    return false
+    if (!this.data.contentReady) {
+      wx.showToast({
+        title: this.data.contentLoadState === CONTENT_STATE.LOADING
+          ? '训练内容正在加载，请稍候'
+          : '请先重新加载完整训练内容',
+        icon: 'none'
+      })
+      return false
+    }
+    // 防止占位正文进入录音、AI点评和作品保存
+    if (!isTrainingContentComplete(this.data.task)) {
+      wx.showToast({ title: '训练内容尚未加载完成，请重试', icon: 'none' })
+      return false
+    }
+    return true
   },
 
   onShow() {
     if (this.data.moduleId) {
       this.loadDrafts()
       this.loadFeedbackSummary()
+      if (!this.data.isHistoricalOriginal) {
+        this.refreshTaskOnShow()
+      }
+    }
+  },
+
+  async refreshTaskOnShow() {
+    if (this.data.trainingContentLoading || this.data.isAudioRecording || this.data.isVideoRecording) return
+    const route = this._taskRouteOptions || {
+      moduleId: this.data.moduleId,
+      day: this.data.day,
+      contentId: this.data.contentId,
+      contentVersion: this.data.task && (this.data.task.contentVersion || this.data.task.version) || ''
+    }
+    const resolved = this.resolveTaskRoute(route)
+    const category = resolved.moduleId === 'retell' ? 'retelling' : resolved.moduleId
+
+    try {
+      await refreshRemoteTrainingContents({ force: true, category })
+      if (!this._isUnloaded) await this.initializeTask(route)
+    } catch (error) {
+      console.warn('[task-detail] onShow 训练内容刷新失败，继续使用当前内容:', error)
     }
   },
 
@@ -883,13 +946,10 @@ Page({
     const saved = ensureSavedWorks('main')
     const currentMap = {}
     const currentContentId = this.data.contentId || (this.data.task && this.data.task.contentId) || ''
-    const isCurrentTaskWork = item => (
+    const isCurrentTaskWork = item => Boolean(
+      currentContentId &&
       item.moduleId === this.data.moduleId &&
-      (
-        currentContentId
-          ? (String(item.contentId || '') === String(currentContentId) || (!item.contentId && Number(item.day) === Number(this.data.day)))
-          : Number(item.day) === Number(this.data.day)
-      )
+      String(item.contentId || '') === String(currentContentId)
     )
 
     saved.drafts
@@ -917,13 +977,10 @@ Page({
 
   loadFeedbackSummary() {
     const currentContentId = this.data.contentId || (this.data.task && this.data.task.contentId) || ''
-    const taskSubmissions = ensureSavedWorks('main').submissions.filter(item => (
+    const taskSubmissions = ensureSavedWorks('main').submissions.filter(item => Boolean(
+      currentContentId &&
       item.moduleId === this.data.moduleId &&
-      (
-        currentContentId
-          ? (String(item.contentId || '') === String(currentContentId) || (!item.contentId && Number(item.day) === Number(this.data.day)))
-          : Number(item.day) === Number(this.data.day)
-      )
+      String(item.contentId || '') === String(currentContentId)
     ))
     const feedbackCount = taskSubmissions.filter(item => (
       item.aiFeedbackStatus === 'done' && item.aiFeedback
@@ -939,7 +996,7 @@ Page({
     })
   },
 
-  toggleAudioRecord() {
+  async toggleAudioRecord() {
     if (!this.ensureTaskAccess()) return
 
     if (this.data.isVideoRecording) {
@@ -955,14 +1012,21 @@ Page({
       return
     }
 
+    if (this._audioStartPending) return
+
     if (!requirePhoneBound('提交训练作品', {
       page: this,
       onSuccess: () => this.toggleAudioRecord()
     })) return
 
-    this.ensureRecordPermission(() => {
+    this._audioStartPending = true
+    try {
+      const allowed = await ensureVoiceConsentAndMicPermission(this)
+      if (!allowed || this.data.isAudioRecording || this.data.isVideoRecording) return
       this.startAudioRecord()
-    })
+    } finally {
+      this._audioStartPending = false
+    }
   },
 
   startAudioRecord() {
@@ -1023,7 +1087,7 @@ Page({
           contentTitle: displayTitle,
           moduleTitle: this.data.moduleInfo.title,
           day: this.data.task.day,
-          subtitle: `${this.data.moduleInfo.title} Day ${this.data.task.day}`,
+          subtitle: `${this.data.moduleInfo.title} 序号 ${this.data.task.displayIndex || this.data.task.day}`,
           material: this.data.task.material || '',
           promptText: this.data.task.promptText || this.data.task.material || '',
           requirement: this.data.task.requirement || '',
@@ -1120,6 +1184,10 @@ Page({
       teacherFeedbackStatus: '',
       teacherFeedback: null,
       filePath: data.filePath || '',
+      fileSize: data.fileSize || 0,
+      mimeType: data.mimeType || 'video/mp4',
+      traceId: data.traceId || '',
+      mediaInfo: data.mediaInfo || null,
       thumbPath: data.thumbPath || '',
       promptText: '',
       recordTitle: data.recordTitle || '',
@@ -1196,34 +1264,6 @@ Page({
     }
 
     previewVideoByPath(videoPath, item.taskTitle || '训练录像')
-  },
-
-  ensureRecordPermission(callback) {
-    wx.getSetting({
-      success: setting => {
-        if (setting.authSetting['scope.record']) {
-          callback()
-          return
-        }
-
-        wx.authorize({
-          scope: 'scope.record',
-          success: callback,
-          fail: () => {
-            wx.showModal({
-              title: '需要录音权限',
-              content: '需要开启录音权限后才能使用该功能。',
-              confirmText: '去设置',
-              success: res => {
-                if (res.confirm) {
-                  wx.openSetting()
-                }
-              }
-            })
-          }
-        })
-      }
-    })
   },
 
   findMergedDraft(id) {
@@ -1329,7 +1369,7 @@ Page({
       }
 
       if (res.status === 'empty_transcript') {
-        this.showEmptyTranscriptModal(res)
+        this.showEmptyTranscriptModal(res, feedbackInput)
         return
       }
 
@@ -1403,17 +1443,24 @@ Page({
     })
   },
 
-  showEmptyTranscriptModal(res = {}) {
+  showEmptyTranscriptModal(res = {}, retryTarget = null) {
     const canRetry = res.canRetry === true
+    console.error('[task-detail][ai-feedback] ASR returned no transcript:', {
+      debugCode: res.debugCode || '',
+      asrStatus: res.asrStatus || '',
+      asrErrorMessage: res.asrErrorMessage || '',
+      providerCode: res.providerCode || '',
+      requestId: res.requestId || ''
+    })
     wx.showModal({
       title: '未识别到有效语音',
-      content: '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
+      content: res.message || '暂未识别到有效语音内容，请确认录音声音清晰后重试。',
       confirmText: canRetry ? '重新识别' : '我知道了',
       cancelText: canRetry ? '我知道了' : '',
       showCancel: canRetry,
       success: modalRes => {
         if (modalRes.confirm && canRetry) {
-          const currentTarget = this.findMergedDraft(this.data.aiGeneratingWorkId)
+          const currentTarget = retryTarget || this.findMergedDraft(this.data.aiGeneratingWorkId)
           if (currentTarget) {
             this.generateAiFeedback(currentTarget)
           }
@@ -1497,13 +1544,18 @@ Page({
 
     try {
       if (localFilePath) {
-        const uploadRes = await uploadWorkFile(localFilePath, submission.workType || submission.type || 'audio')
+        const uploadRes = await uploadWorkFile(localFilePath, submission.workType || submission.type || 'audio', {
+          traceId: submission.traceId || '',
+          mimeType: submission.mimeType || ''
+        })
         fileID = uploadRes.fileID || ''
+        if (uploadRes.fileSize !== null && uploadRes.fileSize !== undefined) submission.fileSize = uploadRes.fileSize
       }
 
       const cloudRes = await submitWorkRecord({
         ...submission,
         fileID,
+        fileSize: submission.fileSize,
         filePath: '',
         localFilePath
       })
@@ -1511,6 +1563,7 @@ Page({
         cloudId: cloudRes.submission && cloudRes.submission._id,
         cloudFileID: fileID,
         fileID,
+        fileSize: submission.fileSize,
         cloudUploaded: true,
         cloudError: ''
       }
@@ -1555,6 +1608,15 @@ Page({
 
   publishDraftToSquare(e) {
     const id = e.currentTarget.dataset.id
+    const target = this.findMergedDraft(id)
+
+    if (!target || !isWorkShareAllowed(target)) {
+      wx.showToast({
+        title: target ? VIDEO_SHARE_DISABLED_MESSAGE : '作品不存在',
+        icon: 'none'
+      })
+      return
+    }
 
     if (!requirePhoneBound('发布广场', {
       page: this,

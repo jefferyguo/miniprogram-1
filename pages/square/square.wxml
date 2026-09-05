@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
     <text class="hero-title">表达广场</text>
@@ -60,12 +61,6 @@
             data-key="{{item.key}}"
             bindtap="playAudioWork"
           >{{audioPlayer.activeKey === item.audioKey ? (audioPlayer.isPlaying ? '暂停' : (audioPlayer.isPaused ? '继续' : '播放')) : '播放'}}</button>
-          <button
-            wx:else
-            class="play-btn video-play-btn"
-            data-key="{{item.key}}"
-            bindtap="previewVideoWork"
-          >查看</button>
         </view>
       </view>
 
@@ -98,14 +93,6 @@
           <text class="action-count">{{item.likeCount || 0}}</text>
         </button>
         <button
-          class="action-btn comment-action"
-          data-id="{{item.interactionId}}"
-          bindtap="onOpenComments"
-        >
-          <text>评论</text>
-          <text class="action-count">{{item.commentCount || 0}}</text>
-        </button>
-        <button
           class="action-btn share-action"
           open-type="share"
           bindtap="showTimelineShareHint"
@@ -124,63 +111,14 @@
       </view>
     </view>
   </view>
+  <view class="page-loading-more" wx:if="{{hasWorks && loadingMore}}">正在加载更多作品…</view>
+  <view class="page-no-more" wx:if="{{hasWorks && !loadingMore && !hasMore}}">已显示全部作品</view>
 
-  <view class="empty-card" wx:else>
+  <view class="empty-card" wx:if="{{!hasWorks && !loading}}">
     <text class="empty-title">暂无公开作品</text>
     <text class="empty-desc">提交训练作品时，可以选择发布到广场。公开后，其他学员也能看到你的练习成果。</text>
     <button class="empty-btn" bindtap="goTraining">去训练</button>
   </view>
 </view>
 
-<view class="comment-mask" wx:if="{{commentsVisible}}" bindtap="closeComments">
-  <view class="comment-panel" catchtap="noop">
-    <view class="comment-header">
-      <view class="comment-heading">
-        <text class="comment-title">作品评论</text>
-        <text class="comment-work-title">{{currentWork.titleText || '训练作品'}}</text>
-      </view>
-      <button class="comment-close" bindtap="closeComments">×</button>
-    </view>
-
-    <scroll-view class="comment-list" scroll-y="true" show-scrollbar="false">
-      <view class="comment-loading" wx:if="{{commentsLoading}}">正在加载评论…</view>
-      <view class="comment-empty" wx:elif="{{comments.length === 0}}">还没有评论，来发表第一条吧</view>
-      <block wx:else>
-        <view class="comment-item" wx:for="{{comments}}" wx:key="_id">
-          <view class="comment-avatar">{{item.avatarText}}</view>
-          <view class="comment-body">
-            <view class="comment-meta">
-              <text class="comment-nickname">{{item.nickname}}</text>
-              <text class="comment-time">{{item.createdAt}}</text>
-            </view>
-            <text class="comment-content">{{item.content}}</text>
-            <button
-              class="comment-delete"
-              wx:if="{{item.isMine}}"
-              data-id="{{item._id || item.id}}"
-              bindtap="onDeleteComment"
-            >删除</button>
-          </view>
-        </view>
-      </block>
-    </scroll-view>
-
-    <view class="comment-composer">
-      <textarea
-        class="comment-input"
-        value="{{commentText}}"
-        maxlength="200"
-        placeholder="友善评论，分享你的鼓励"
-        placeholder-class="comment-placeholder"
-        bindinput="onCommentInput"
-        fixed="true"
-      />
-      <button
-        class="comment-submit"
-        loading="{{commentSubmitting}}"
-        disabled="{{commentSubmitting}}"
-        bindtap="onSubmitComment"
-      >发送</button>
-    </view>
-  </view>
-</view>
+<view wx:if="{{false}}"></view>

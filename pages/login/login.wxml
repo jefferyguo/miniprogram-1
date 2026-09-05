@@ -1,3 +1,4 @@
+<page-meta page-style="{{fontSizePageStyle}}"></page-meta>
 <view class="page">
   <view class="hero-card">
     <text class="hero-title">登录杨勤口才训练KEEP</text>
@@ -22,11 +23,10 @@
 
   <button
     class="login-btn {{bindingLogin ? 'disabled-btn' : ''}}"
-    open-type="getPhoneNumber"
-    bindgetphonenumber="onGetPhoneNumberLogin"
+    bindtap="openLoginGate"
     loading="{{bindingLogin}}"
     disabled="{{bindingLogin}}"
-  >登录</button>
+  >手机号快捷登录</button>
 
   <text class="login-tip">手机号仅用于身份和会员权益识别，不会在广场公开展示。</text>
   <button class="skip-btn" bindtap="skipLogin">暂不登录</button>

@@ -1,0 +1,17 @@
+{
+  "status": "READY_FOR_CLOUD_DRY_RUN",
+  "targetEnv": "cloud1-d0geb9qt9d29ee6fc",
+  "canonical": {
+    "total": 966,
+    "counts": {
+      "topic": 276,
+      "reading": 216,
+      "leaderSpeech": 24,
+      "retell": 257,
+      "speech": 116,
+      "mandarin": 77
+    },
+    "permanentIds": 966
+  },
+  "note": "本地预检通过；尚未连接或写入 CloudBase。"
+}

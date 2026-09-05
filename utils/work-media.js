@@ -364,9 +364,27 @@ function previewVideoByPath(videoPath, title = '视频预览') {
     return
   }
 
+  const previewKey = `videoPreview:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`
+  try {
+    wx.setStorageSync(previewKey, {
+      src: String(videoPath),
+      title: String(title || '视频预览'),
+      createdAt: Date.now()
+    })
+  } catch (error) {
+    console.error('save video preview session failed', error)
+    wx.showToast({ title: '视频文件暂时无法查看', icon: 'none' })
+    return
+  }
+
   wx.navigateTo({
-    url: `/pages/video-preview/video-preview?src=${encodeURIComponent(videoPath)}&title=${encodeURIComponent(title || '视频预览')}`,
+    url: `/pages/video-preview/video-preview?previewKey=${encodeURIComponent(previewKey)}`,
     fail: error => {
+      try {
+        wx.removeStorageSync(previewKey)
+      } catch (removeError) {
+        console.warn('remove video preview session failed', removeError)
+      }
       console.error('open video preview failed', error)
       wx.showToast({
         title: '视频文件暂时无法查看',

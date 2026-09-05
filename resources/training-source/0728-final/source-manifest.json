@@ -1,0 +1,62 @@
+{
+  "manifestVersion": 1,
+  "sourceRevision": "0728-final-r2-source-faithful",
+  "generatedAtPolicy": "deterministic-no-runtime-timestamp",
+  "notes": [
+    "六份文件均与项目根目录候选副本逐字节比对；同名副本 SHA-256 相同。",
+    "朗诵源文档实际包含 Day 1 至 Day 216 共 216 个物理文章块。任务说明中的 213 篇/缺 Day 16-18 与锁定文件不一致，生成器按源文档保留三篇完整文章，并通过旧 canonical 指纹保留既有 contentId。",
+    "Day 仅用于识别源文件边界，用户端和管理端使用 sourceIndex/sortOrder，不展示 Day。"
+  ],
+  "modules": [
+    {
+      "moduleId": "topic",
+      "category": "topic",
+      "file": "即兴讲话0728（定稿，未上传）(1).docx",
+      "sha256": "1d5ad68db8a39cc91de5914d2e31a2bbe16c5ad95a7dc12329621e4839f7feb2",
+      "physicalCount": 276,
+      "firstTitle": "【必看】即兴讲话 | 训练技巧 + 实用框架"
+    },
+    {
+      "moduleId": "reading",
+      "category": "reading",
+      "file": "朗诵训练0728（已定稿，未上传）.docx",
+      "sha256": "9dacda651e107f40e9e6e8620d175a5511de0814faa3dd8c17de0441de4a4f60",
+      "physicalCount": 216,
+      "declaredBaselineCount": 213,
+      "baselineConflict": "锁定 DOCX 中 Day 16、17、18 均有独立标题和完整正文；不得为凑 213 篇而合并或删除。",
+      "firstTitle": "【必看】朗诵训练｜实用技巧"
+    },
+    {
+      "moduleId": "leaderSpeech",
+      "category": "leaderSpeech",
+      "file": "领导发言0728（定稿，未上传）.docx",
+      "sha256": "1e0b97efbc527915490802bfcf7d8e48674292609663762389c5186859ef12ad",
+      "physicalCount": 24,
+      "firstTitle": "【必看】领导发言｜实用训练技巧"
+    },
+    {
+      "moduleId": "retell",
+      "category": "retell",
+      "file": "每日复述练嘴0728（定稿，未上传）.docx",
+      "sha256": "6ec50337b013ed7b99bbbbed831189749b671948670306c0e7e0b44cfb3d7e83",
+      "physicalCount": 257,
+      "firstTitle": "【必看】复述训练｜实用训练技巧"
+    },
+    {
+      "moduleId": "speech",
+      "category": "speech",
+      "file": "演讲训练0728（定稿，未上传）.docx",
+      "sha256": "458937b2a3048a82e50e76ef7a41a420c7d752f96f3cafe73452103669e8ce90",
+      "physicalCount": 116,
+      "firstTitle": "【必看】公众演讲｜实用训练技巧"
+    },
+    {
+      "moduleId": "mandarin",
+      "category": "mandarin",
+      "file": "主持、普通话声音训练0728（定稿，未上传）.docx",
+      "sha256": "044707f0f745a0306535053b42eba4b88411fa7285f0aab67254053386d146c1",
+      "physicalCount": 77,
+      "firstTitle": "【必看】主持、普通话声音训练｜实用训练技巧"
+    }
+  ]
+}

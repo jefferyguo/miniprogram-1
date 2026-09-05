@@ -1,0 +1,18 @@
+{
+  "stage": 1,
+  "title": "DOCX确定性解析",
+  "status": "COMPLETE",
+  "sourceFile": "即兴讲话0728（定稿，未上传）.docx",
+  "itemCount": 276,
+  "dayRange": "1-276",
+  "dayContinuous": true,
+  "emptyTitles": 0,
+  "emptyContent": 0,
+  "dayInTitle": 0,
+  "dayInContent": 0,
+  "firstTitle": "【必看】即兴讲话 | 训练技巧 + 实用框架",
+  "lastTitle": "科技让生活更快，但更好了吗",
+  "titlePrefixRemoved": "\"即兴话题：\"前缀已从全部276条标题移除",
+  "outputFile": "data/import/impromptu_0728_parsed.json",
+  "generatedAt": "2026-07-28T02:59:32.280Z"
+}

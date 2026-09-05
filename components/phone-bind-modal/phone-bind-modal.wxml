@@ -10,13 +10,10 @@
 
     <button
       class="phone-primary"
-      open-type="getPhoneNumber"
-      bindgetphonenumber="onGetPhoneNumberLogin"
+      bindtap="openLoginGate"
       loading="{{binding}}"
       disabled="{{binding}}"
-    >
-      登录
-    </button>
+    >登录</button>
     <button class="phone-secondary" disabled="{{binding}}" bindtap="skip">暂不登录</button>
   </view>
 </view>

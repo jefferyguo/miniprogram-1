@@ -17,7 +17,7 @@ const DIMENSIONS = [
     profileDesc: '你具备主动开口和持续表达的潜力，适合通过更多真实场景练习建立稳定的表达状态。',
     strengthText: '你在开口意愿和表达主动性上有基础，遇到表达任务时更容易进入状态。',
     suggestionText: '可以从短时话题表达开始，每天完成一次 60 秒表达，逐步降低紧张感。',
-    recommendedTraining: '话题训练'
+    recommendedTraining: '即兴讲话'
   },
   {
     key: 'structure',
@@ -57,7 +57,7 @@ const DIMENSIONS = [
     profileDesc: '你比较关注听众感受和沟通氛围，适合在观点表达中加入更清楚的结构和行动建议。',
     strengthText: '你能注意到对方的感受，表达更容易让人愿意听下去。',
     suggestionText: '建议练习先回应对方，再表达观点，让共情和清晰表达同时出现。',
-    recommendedTraining: '随机话题 / 话题训练'
+    recommendedTraining: '随机话题 / 即兴讲话'
   },
   {
     key: 'adaptability',
@@ -67,7 +67,7 @@ const DIMENSIONS = [
     profileDesc: '你具备根据场景调整表达的意识，适合继续训练即兴表达和临场回应能力。',
     strengthText: '你会观察对象和场景，并尝试调整表达方式，现场适应力有潜力。',
     suggestionText: '可以多练随机话题和临场提问，训练快速组织观点的能力。',
-    recommendedTraining: '随机话题 / 话题训练'
+    recommendedTraining: '随机话题 / 即兴讲话'
   }
 ]
 

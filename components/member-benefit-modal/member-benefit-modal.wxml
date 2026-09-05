@@ -20,7 +20,7 @@
           <text class="benefit-column-title">普通用户</text>
           <view class="benefit-row">
             <text class="benefit-dot">·</text>
-            <text class="benefit-label">前 21 天训练</text>
+            <text class="benefit-label">前 3 天训练</text>
           </view>
           <view class="benefit-row">
             <text class="benefit-dot">·</text>

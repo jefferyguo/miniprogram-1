@@ -1,7 +1,9 @@
 const auth = require('./auth')
-const { saveCurrentUser, getCurrentUser } = require('./access-control')
+const { saveCurrentUser, getCurrentUser, maskPhone } = require('./access-control')
 const { saveUserInfo } = require('./local-data')
 const { upsertStudentUser } = require('./user-registry')
+const { isValidNickname, normalizeNickname } = require('./auth-state')
+const { updateMyProfile } = require('./cloud-api')
 
 const PROFILE_PROMPTED_KEY = 'profileLoginPrompted'
 const PROFILE_SKIPPED_KEY = 'profileAuthSkipped'
@@ -63,15 +65,6 @@ function markProfileSkipped() {
   }
 }
 
-function wxLogin() {
-  return new Promise((resolve, reject) => {
-    wx.login({
-      success: res => res.code ? resolve(res.code) : reject(new Error('微信登录未返回 code')),
-      fail: reject
-    })
-  })
-}
-
 function getFileExtension(path) {
   const match = String(path || '').split('?')[0].match(/\.([a-zA-Z0-9]+)$/)
   return match ? match[1].toLowerCase() : 'jpg'
@@ -80,6 +73,11 @@ function getFileExtension(path) {
 async function uploadAvatar(avatarUrl) {
   const path = String(avatarUrl || '')
   if (!path || /^https?:\/\//.test(path) || path.indexOf('cloud://') === 0) return path
+
+  if (typeof getApp === 'function') {
+    const app = getApp()
+    if (app && typeof app.ensureCloudReady === 'function') await app.ensureCloudReady()
+  }
   if (!wx.cloud || !wx.cloud.uploadFile) return path
 
   const cloudPath = `profile-avatars/avatar_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${getFileExtension(path)}`
@@ -87,35 +85,29 @@ async function uploadAvatar(avatarUrl) {
   return res.fileID || path
 }
 
-async function callLoginFunction(code, profile) {
-  if (!wx.cloud || !wx.cloud.callFunction) {
-    throw new Error('当前微信版本不支持云端登录')
-  }
-
-  const res = await wx.cloud.callFunction({
-    name: 'login',
-    data: { code, profile }
-  })
-  const result = res.result || {}
-  if (!result.success || !result.user) throw new Error(result.message || '云端登录失败')
-  return result.user
-}
-
 function mergeUserInfo(cloudUser = {}, profile = {}) {
   const oldUser = getCurrentUser() || {}
+  const oldServerUserId = String(oldUser._id || oldUser.userId || oldUser.serverUserId || '')
+  const cloudServerUserId = String(cloudUser._id || cloudUser.userId || cloudUser.serverUserId || '')
+  const sameServerIdentity = Boolean(
+    oldServerUserId && cloudServerUserId && oldServerUserId === cloudServerUserId
+  )
+  // 只有同一服务端用户才能保留本地展示偏好；认证、手机号、会员和管理员字段始终以云端为准。
+  const trustedOldUser = sameServerIdentity ? oldUser : {}
   const incomingNickname = String(profile.nickname || cloudUser.nickname || '').trim()
-  const keepManualNickname = oldUser.nicknameSource === 'manual' && profile.nicknameSource !== 'manual'
+  const keepManualNickname = trustedOldUser.nicknameSource === 'manual' && profile.nicknameSource !== 'manual'
   const nickname = keepManualNickname
-    ? oldUser.nickname
-    : (incomingNickname || oldUser.nickname || '同学')
-  const keepManualAvatar = oldUser.avatarSource === 'manual' && profile.avatarSource !== 'manual'
+    ? trustedOldUser.nickname
+    : (incomingNickname || trustedOldUser.nickname || '同学')
+  const keepManualAvatar = trustedOldUser.avatarSource === 'manual' && profile.avatarSource !== 'manual'
   const avatarUrl = keepManualAvatar
-    ? oldUser.avatarUrl
-    : (profile.avatarUrl || cloudUser.avatarUrl || oldUser.avatarUrl || '')
+    ? trustedOldUser.avatarUrl
+    : (profile.avatarUrl || cloudUser.avatarUrl || trustedOldUser.avatarUrl || '')
   const loginAt = Date.now()
-  const phoneBound = cloudUser.phoneBound === true || oldUser.phoneBound === true
+  const cloudPhone = String(cloudUser.phone || '').replace(/\D/g, '')
+  const phoneBound = cloudUser.phoneBound === true && /^1\d{10}$/.test(cloudPhone)
   const nextUser = {
-    ...oldUser,
+    ...trustedOldUser,
     ...cloudUser,
     nickname,
     nicknameSource: keepManualNickname
@@ -126,12 +118,26 @@ function mergeUserInfo(cloudUser = {}, profile = {}) {
       ? 'manual'
       : (profile.avatarSource || cloudUser.avatarSource || (avatarUrl ? 'wechat' : 'default')),
     avatarText: getAvatarText(nickname),
-    role: cloudUser.role || oldUser.role || 'user',
+    phone: phoneBound ? cloudPhone : '',
+    phoneMasked: phoneBound ? (cloudUser.phoneMasked || maskPhone(cloudPhone)) : '',
+    phoneBound,
+    phoneBoundAt: phoneBound ? (cloudUser.phoneBoundAt || '') : '',
+    phoneAuthorizedAt: phoneBound ? (cloudUser.phoneAuthorizedAt || '') : '',
+    membershipType: cloudUser.membershipType || 'free',
+    membershipStatus: cloudUser.membershipStatus || 'active',
+    membershipStartAt: cloudUser.membershipStartAt || '',
+    membershipEndAt: cloudUser.membershipEndAt == null ? null : cloudUser.membershipEndAt,
+    role: cloudUser.role || 'user',
+    isAdmin: cloudUser.isAdmin === true,
+    hasAdvancedAccess: cloudUser.hasAdvancedAccess === true,
+    accessPackages: Array.isArray(cloudUser.accessPackages) ? cloudUser.accessPackages : [],
+    aiDailyLimit: cloudUser.aiDailyLimit,
+    aiMonthlyLimit: cloudUser.aiMonthlyLimit,
     status: 'active',
     isLogin: phoneBound,
     isLoggedIn: phoneBound,
     loginAt,
-    firstLoginAt: cloudUser.firstLoginAt || oldUser.firstLoginAt || loginAt,
+    firstLoginAt: cloudUser.firstLoginAt || trustedOldUser.firstLoginAt || loginAt,
     profileCompleted: true,
     skippedProfileAuth: false
   }
@@ -139,6 +145,26 @@ function mergeUserInfo(cloudUser = {}, profile = {}) {
   auth.setUserInfo(nextUser)
   const saved = saveCurrentUser(nextUser)
   saveUserInfo(saved)
+  const hasActivePaidMembership = saved.membershipStatus === 'active' &&
+    ['monthly', 'yearly', 'admin'].includes(saved.membershipType)
+  const memberProfile = {
+    isMember: saved.isAdmin === true || (
+      phoneBound && (
+        hasActivePaidMembership ||
+        saved.hasAdvancedAccess === true
+      )
+    ),
+    isAdmin: saved.isAdmin === true,
+    membershipType: saved.isAdmin === true ? 'admin' : (saved.membershipType || 'free'),
+    memberType: saved.isAdmin === true ? 'admin' : (saved.membershipType || 'free'),
+    membershipStatus: saved.membershipStatus || 'active',
+    membershipStartAt: saved.membershipStartAt || '',
+    membershipEndAt: saved.membershipEndAt == null ? null : saved.membershipEndAt,
+    expireAt: saved.membershipEndAt == null ? null : saved.membershipEndAt,
+    aiDailyLimit: saved.aiDailyLimit,
+    aiMonthlyLimit: saved.aiMonthlyLimit
+  }
+  wx.setStorageSync('memberProfile', memberProfile)
   upsertStudentUser(saved, {
     isMember: Boolean(saved.hasAdvancedAccess),
     memberType: saved.hasAdvancedAccess ? 'vip' : 'free',
@@ -161,6 +187,8 @@ function mergeUserInfo(cloudUser = {}, profile = {}) {
     if (app && app.globalData) {
       app.globalData.userInfo = saved
       app.globalData.isLogin = phoneBound
+      app.globalData.isAuthenticated = phoneBound
+      app.globalData.memberProfile = memberProfile
       app.globalData.profileCompleted = true
       app.globalData.skippedProfileAuth = false
     }
@@ -170,7 +198,17 @@ function mergeUserInfo(cloudUser = {}, profile = {}) {
 }
 
 async function loginWithProfile(profile = {}) {
-  const nickname = String(profile.nickname || '').trim() || '同学'
+  if (!auth.isPhoneBound()) {
+    const error = new Error('请先完成手机号快捷登录')
+    error.code = 'PHONE_LOGIN_REQUIRED'
+    throw error
+  }
+  const nickname = normalizeNickname(profile.nickname)
+  if (!isValidNickname(nickname)) {
+    const error = new Error('请设置有效昵称后再登录')
+    error.code = 'INVALID_NICKNAME'
+    throw error
+  }
   let avatarUrl = profile.avatarUrl || ''
 
   try {
@@ -189,8 +227,8 @@ async function loginWithProfile(profile = {}) {
     skippedProfileAuth: false
   }
 
-  const code = await wxLogin()
-  const cloudUser = await callLoginFunction(code, nextProfile)
+  const result = await updateMyProfile(nextProfile)
+  const cloudUser = result.user || result.userProfile || {}
   return mergeUserInfo(cloudUser, nextProfile)
 }
 
